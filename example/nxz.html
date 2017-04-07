@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Nexus threejs</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>body { margin: 0px; overflow: hidden; }</style>
+<script src="js/three.js"></script>
+<script src="js/TrackballControls.js"></script>
+<script src="js/tunstall.js"></script>
+<script src="js/attribute.js"></script>
+<script src="js/nxz.js"></script>
+<script src="js/nxz_three.js"></script>
+</head>
+
+<body>
+	<div id="container"></div>
+</body>
+
+<script>
+//var camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.1, 100 );
+//camera.position.z = 4;
+
+var camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.1, 100 );
+camera.position.z = 4;
+
+var controls = new THREE.TrackballControls( camera );
+controls.rotateSpeed = 10.0;
+controls.zoomSpeed = 1.5;
+controls.panSpeed = 0.8;
+controls.noZoom = false;
+controls.noPan = false;
+controls.staticMoving = true;
+controls.dynamicDampingFactor = 0.3;
+controls.keys = [ 65, 83, 68 ];
+controls.addEventListener( 'change', render );
+
+var scene = new THREE.Scene();
+scene.fog = new THREE.Fog( 0x050505, 2000, 3500 );
+scene.add( new THREE.AmbientLight( 0x444444 ) );
+
+var light1 = new THREE.DirectionalLight( 0xffffff, 1.0 );
+light1.position.set( 1, 1, -0.5 );
+scene.add( light1 );
+
+var light2 = new THREE.DirectionalLight( 0xffffff, 1.0 );
+light2.position.set( -1, -0.5, 1 );
+scene.add( light2 );
+
+var renderer = new THREE.WebGLRenderer( { antialias: false } );
+renderer.setClearColor( scene.fog.color );
+renderer.setPixelRatio( window.devicePixelRatio );
+renderer.setSize( window.innerWidth, window.innerHeight);
+
+var container = document.getElementById( 'container');
+container.appendChild( renderer.domElement );
+
+var profile = false;
+
+var loader = new THREE.NXZLoader();//This will add a starfield to the background of a scene
+
+loader.load( 'models/bunny.nxz', function(geometry) {
+
+	geometry.computeBoundingBox();
+
+	if(geometry.index) {
+		var material = new THREE.MeshStandardMaterial( { vertexColors: THREE.VertexColors, shading: THREE.SmoothShading, side: THREE.DoubleSide } );
+		var mesh = new THREE.Mesh( geometry, material );
+	} else {
+		var material = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, vertexColors: THREE.VertexColors } );
+		var mesh = new THREE.Points(geometry, material);
+	}
+	geometry.center();
+	mesh.scale.divideScalar(geometry.boundingBox.getSize().length());
+	scene.add( mesh ); 
+	if(!profile)
+		render();
+} );
+
+window.addEventListener( 'resize', onWindowResize, false );
+render();
+
+
+function onWindowResize() {
+	if(profile)
+		return;
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+
+	renderer.setSize( window.innerWidth, window.innerHeight );
+
+	controls.handleResize();
+	controls.update();
+	render();
+}
+
+function animate() {
+	if(profile)
+		return;
+
+	requestAnimationFrame( animate );
+	controls.update();
+}
+
+function render() {
+	if(profile)
+		return;
+
+	renderer.render( scene, camera );
+}
+
+animate();
+
+</script>
+
+
+</html>
+

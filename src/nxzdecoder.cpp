@@ -50,29 +50,34 @@ NxzDecoder::NxzDecoder(int len, uchar *input): vertex_count(0) {
 
 	for(int i = 0; i < nattr; i++) {
 		std::string name =  stream.readString();
+		int codec = stream.read<int>();
 		float q = stream.read<float>();
 		uint32_t components = stream.read<uchar>();
 		uint32_t format = stream.read<uchar>();
 		uint32_t strategy = stream.read<uchar>();
 
 		VertexAttribute *attr = nullptr;
-		if(name == "position")
+		switch(codec) {
+		case VertexAttribute::NORMAL_CODEC: attr = new NormalAttr(); break;
+		case VertexAttribute::COLOR_CODEC: attr = new ColorAttr(); break;
+
+		case VertexAttribute::GENERIC_CODEC:
+		default:  //
 			attr = new GenericAttr<int>(components);
-		else if(name == "normal")
-			attr = new NormalAttr();
-		else if(name == "color")
-			attr = new ColorAttr();
-		else if(name == "uv")
-			attr = new GenericAttr<int>(components);
-		else if(name == "radius")
-			attr = new GenericAttr<int>(components);
+		}
 
 		attr->q = q;
+		attr->format = (VertexAttribute::Format)format;
 		attr->strategy = strategy;
 		data[name] = attr;
 	}
 	nvert = stream.read<uint32_t>();
 	nface = stream.read<uint32_t>();
+}
+
+NxzDecoder::~NxzDecoder() {
+	for(auto it: data)
+		delete it.second;
 }
 
 bool NxzDecoder::setAttribute(const char *name, char *buffer, VertexAttribute::Format format) {

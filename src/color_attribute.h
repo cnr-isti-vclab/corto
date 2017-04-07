@@ -30,6 +30,7 @@ public:
 		qc[0] = qc[1] = qc[2] = 4;
 		qc[3] = 8;
 	}
+	virtual int codec() { return COLOR_CODEC; }
 
 	void setQ(int lumabits, int chromabits, int alphabits) {
 		qc[0] = 1<<(8 - lumabits);

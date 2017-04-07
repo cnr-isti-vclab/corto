@@ -17,7 +17,6 @@ SOURCES += main.cpp \
     cstream.cpp \
     color_attribute.cpp \
     normal_attribute.cpp \
-    ../../../vcglib/wrap/ply/plylib.cpp \
     tinyply.cpp \
     meshloader.cpp
 HEADERS += \
@@ -33,7 +32,6 @@ HEADERS += \
     normal_attribute.h \
     index_attribute.h \
     vertex_attribute.h \
-    ../../../vcglib/wrap/ply/plylib.h \
     timer.h \
     tinyply.h \
     meshloader.h \

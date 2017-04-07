@@ -180,6 +180,7 @@ void NxzEncoder::encode() {
 	stream.write<int>(data.size());
 	for(auto it: data) {
 		stream.writeString(it.first.c_str());                //name
+		stream.write<int>(it.second->codec());
 		stream.write<float>(it.second->q);
 		stream.write<uchar>(it.second->N);
 		stream.write<uchar>(it.second->format);

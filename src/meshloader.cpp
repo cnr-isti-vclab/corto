@@ -74,32 +74,57 @@ bool MeshLoader::loadObj(const std::string &filename) {
 }
 
 void MeshLoader::splitWedges() {
+	if(wedge_uvs.size() == 0 && wedge_norms.size() == 0)
+		return;
+
 	std::vector<bool> visited(nvert, false);
+	bool has_wedge_uvs = wedge_uvs.size();
+	bool has_wedge_norms = wedge_norms.size();
+
+	if(has_wedge_uvs)
 	uvs.resize(nvert*2);
+	if(has_wedge_norms)
+		norms.resize(nvert*3);
+
 	std::multimap<uint32_t, uint32_t> duplicated;
 	for(uint32_t i = 0; i < index.size(); i++) {
 		uint32_t k = index[i];
 		Point3f p = *(Point3f *)&coords[k*3];
+
+		bool split = false;
+
+		if(has_wedge_uvs) {
 		Point2f wuv = *(Point2f *)&wedge_uvs[i*2]; //wedge uv
 		Point2f &uv = *(Point2f *)&uvs[k*2];
+			if(!visited[k])
+				uv = wuv;
+			else
+				split = (uv != wuv);
+		}
+		if(has_wedge_norms) {
+			Point2f wn = *(Point2f *)&wedge_norms[i*3]; //wedge uv
+			Point2f &n = *(Point2f *)&norms[k*3];
+			if(!visited[k])
+				n = wn;
+			else
+				split = (n != wn);
+		}
 		if(!visited[k]) {
 			visited[k] = true;
-			uv = wuv;
 			continue;
 		}
-		if(uv == wuv)
+		if(!split)
 			continue;
 
 		uint32_t found = 0xffffffff;
 		auto d = duplicated.find(k);
 		if(d != duplicated.end()) {
 			auto range = duplicated.equal_range(k);
-			for (auto i = range.first; i != range.second; ++i) {
-				uint32_t j = i->second;
-				if(*(Point2f *)&uvs[j*2] == wuv) {
-					found = i->first;
-					break;
-				}
+			for (auto it = range.first; it != range.second; ++it) {
+				uint32_t j = it->second;
+				if((!has_wedge_uvs || *(Point2f *)&uvs[j*2] == *(Point2f *)&wedge_uvs[i*2]) &&
+				(!has_wedge_norms || *(Point2f *)&norms[j*3] == *(Point2f *)&wedge_norms[i*3]))
+					found = it->first;
 			}
 		}
 		if(found == 0xffffffff) {
@@ -108,15 +133,22 @@ void MeshLoader::splitWedges() {
 			coords.push_back(p[1]);
 			coords.push_back(p[2]);
 
-			uvs.push_back(wuv[0]);
-			uvs.push_back(wuv[1]);
+			if(has_wedge_uvs) {
+				uvs.push_back(wedge_uvs[i*2 + 0]);
+				uvs.push_back(wedge_uvs[i*2 + 1]);
+			}
+
+			if(has_wedge_norms) {
+				norms.push_back(wedge_norms[i*3 + 0]);
+				norms.push_back(wedge_norms[i*3 + 1]);
+				norms.push_back(wedge_norms[i*3 + 2]);
+			}
 
 			if(colors.size())
 				for(int j = 0; j < 4; j++)
 					colors.push_back(colors[k*4 + j]);
 
 			//TODO do the same thing for all other attributes
-
 			duplicated.insert(std::make_pair(k, found));
 		}
 		assert(found < coords.size()/3);

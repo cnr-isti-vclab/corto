@@ -40,6 +40,7 @@ public:
 		strategy |= VertexAttribute::CORRELATED;
 	}
 
+	virtual int codec() { return NORMAL_CODEC; }
 	//return number of bits
 	virtual void quantize(uint32_t nvert, char *buffer);
 	virtual void preDelta(uint32_t nvert,  uint32_t nface, std::map<std::string, VertexAttribute *> &attrs, IndexAttribute &index);

@@ -59,6 +59,7 @@ struct ObjModel {
     std::vector<float> normal; //< 3 * N entries
 
     std::map<std::string, FaceList > faces;
+	std::vector<std::string> mtllibs;
 };
 
 inline ObjModel parseObjModel( std::istream & in);
@@ -156,6 +157,12 @@ ObjModel parseObjModel( std::istream & in ){
                 fl.second.push_back(fl.first.size());
                 fl.first.insert(fl.first.end(), list.begin(), list.end());
             }
+		} else if(op == "mtllib") {
+			line_in >> op;
+			data.mtllibs.push_back(op);
+		} else if(op == "usemtl") {
+			line_in >> op;
+			data.mtls.push_back(op);
         }
     }
     for(std::map<std::string, ObjModel::FaceList>::iterator g = data.faces.begin(); g != data.faces.end(); ++g){

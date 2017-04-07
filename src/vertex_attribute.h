@@ -29,6 +29,7 @@ class VertexAttribute {
 public:
 	enum Format { UINT32 = 0, INT32, UINT16, INT16, UINT8, INT8, FLOAT, DOUBLE };
 	enum Strategy { PARALLEL = 0x1, CORRELATED = 0x2 };
+	enum CODEC { GENERIC_CODEC = 1, NORMAL_CODEC = 2, COLOR_CODEC = 3, CUSTOM_CODEC = 100 };
 
 	char *buffer;     //output data buffer, input is not needed
 	int N;            //number of components
@@ -41,6 +42,8 @@ public:
 
 	VertexAttribute(): buffer(nullptr), N(0), q(0.0f), strategy(0), format(INT32), size(0) {}
 	virtual ~VertexAttribute(){}
+
+	virtual int codec() = 0; //identifies attribute class.
 
 	//quantize and store as values
 	virtual void quantize(uint32_t nvert, char *buffer) = 0;
@@ -69,7 +72,7 @@ public:
 
 	GenericAttr(int _N) { N = _N; }
 	virtual ~GenericAttr(){}
-
+	virtual int codec() { return GENERIC_CODEC; }
 
 	virtual void quantize(uint32_t nvert, char *buffer) {
 		uint32_t n = N*nvert;

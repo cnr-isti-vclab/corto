@@ -28,15 +28,9 @@ for more details.
 #include "meshloader.h"
 #include "timer.h"
 
-#include </home/ponchio/devel/vcglib/vcg/complex/complex.h>
-#include </home/ponchio/devel/vcglib/wrap/io_trimesh/import_obj.h>
-
 using namespace nx;
 using namespace std;
 using namespace tinyply;
-
-
-
 
 int main(int argc, char *argv[]) {
 	if(argc != 2) {

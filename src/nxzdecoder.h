@@ -24,7 +24,6 @@ for more details.
 
 #include "cstream.h"
 #include "tunstall.h"
-#include "../nxszip/fpu_precision.h"
 #include "zpoint.h"
 #include "index_attribute.h"
 #include "vertex_attribute.h"
@@ -43,6 +42,7 @@ public:
 	IndexAttribute index;
 
 	NxzDecoder(int len, uchar *input);
+	~NxzDecoder();
 
 	bool hasAttr(const char *name) { return data.count(name); }
 

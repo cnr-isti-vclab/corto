@@ -30,6 +30,7 @@ public:
 
 	std::vector<uint32_t> groups;
 	std::vector<std::string> comments;
+	std::vector<std::string> textures;
 };
 
 } //namespace

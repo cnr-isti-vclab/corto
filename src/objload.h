@@ -36,10 +36,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 namespace obj {
 
 struct Model {
-    std::vector<float> vertex; //< 3 * N entries
+	std::vector<float> vertex;   //< 3 * N entries
     std::vector<float> texCoord; //< 2 * N entries
-    std::vector<float> normal; //< 3 * N entries
-    
+	std::vector<float> normal;   //< 3 * N entries
+
+	//faces split into set with groups and material
 	std::map<std::string, std::vector<uint32_t> > faces; //< assume triangels and uniform indexing
 };
 
@@ -157,7 +158,7 @@ ObjModel parseObjModel( std::istream & in ){
                 fl.second.push_back(fl.first.size());
                 fl.first.insert(fl.first.end(), list.begin(), list.end());
             }
-		} else if(op == "mtllib") {
+	   } else if(op == "mtllib") {
 			line_in >> op;
 			data.mtllibs.push_back(op);
 		} else if(op == "usemtl") {

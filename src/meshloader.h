@@ -1,10 +1,10 @@
-#ifndef NX_MESHLOADER_H
-#define NX_MESHLOADER_H
+#ifndef CRT_MESHLOADER_H
+#define CRT_MESHLOADER_H
 
 #include <string>
 #include <vector>
 
-namespace nx {
+namespace crt {
 
 class MeshLoader {
 public:
@@ -34,4 +34,4 @@ public:
 };
 
 } //namespace
-#endif // NX_MESHLOADER_H
+#endif // CRT_MESHLOADER_H

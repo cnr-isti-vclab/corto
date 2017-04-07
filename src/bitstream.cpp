@@ -22,7 +22,7 @@ for more details.
 // allows a specific bit to be masked from a number
 #include <iostream>
 using namespace std;
-using namespace nx;
+using namespace crt;
 // usage: bmask[k] has the rightmost k bits == 1, other bits 0
 //
 static uint32_t bmask[] = {

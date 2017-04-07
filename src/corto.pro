@@ -1,7 +1,7 @@
 QT += core
 QT -= gui
 
-TARGET = nxz
+TARGET = corto
 CONFIG += console
 CONFIG -= app_bundle
 
@@ -10,8 +10,8 @@ TEMPLATE = app
 QMAKE_CXXFLAGS += -std=c++11
 
 SOURCES += main.cpp \
-    nxzdecoder.cpp \
-    nxzencoder.cpp \
+	decoder.cpp \
+	encoder.cpp \
     tunstall.cpp \
     bitstream.cpp \
     cstream.cpp \
@@ -20,8 +20,8 @@ SOURCES += main.cpp \
     tinyply.cpp \
     meshloader.cpp
 HEADERS += \
-    nxzdecoder.h \
-    nxzencoder.h \
+	decoder.h \
+	encoder.h \
     point.h \
     zpoint.h \
     cstream.h \

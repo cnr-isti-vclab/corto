@@ -15,13 +15,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 for more details.
 */
-#ifndef NX_COLOR_ATTRIBUTE_H
-#define NX_COLOR_ATTRIBUTE_H
+#ifndef CRT_COLOR_ATTRIBUTE_H
+#define CRT_COLOR_ATTRIBUTE_H
 
 #include "vertex_attribute.h"
 #include "point.h"
 
-namespace nx {
+namespace crt {
 
 class ColorAttr: public GenericAttr<uchar> {
 public:
@@ -58,4 +58,4 @@ public:
 
 } //namespace
 
-#endif // NX_COLOR_ATTRIBUTE_H
+#endif // CRT_COLOR_ATTRIBUTE_H

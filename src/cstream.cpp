@@ -24,10 +24,10 @@ for more details.
 #include <zlib.h>
 #endif
 
-using namespace nx;
+using namespace crt;
 using namespace std;
 
-int nx::ilog2(uint64_t p) {
+int crt::ilog2(uint64_t p) {
 	int k = 0;
 	while ( p>>=1 ) { ++k; }
 	return k;

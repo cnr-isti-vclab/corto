@@ -21,14 +21,14 @@ for more details.
 #include <iostream>
 #include <map>
 
-#include "nxzencoder.h"
-#include "nxzdecoder.h"
+#include "encoder.h"
+#include "decoder.h"
 
 #include "tinyply.h"
 #include "meshloader.h"
 #include "timer.h"
 
-using namespace nx;
+using namespace crt;
 using namespace std;
 using namespace tinyply;
 
@@ -38,7 +38,10 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	nx::MeshLoader loader;
+	//options for obj: join by material (discard group info).
+	//exif pairs: -exif key=value //write and override what would put inside (mtllib for example).
+
+	crt::MeshLoader loader;
 	bool ok = loader.load(argv[1]);
 	if(!ok) {
 		cerr << "Failed loading model: " << argv[1] << endl;
@@ -48,16 +51,16 @@ int main(int argc, char *argv[]) {
 	bool pointcloud = (loader.nface == 0);
 	//if(force_pointcloud)
 	//	nface = 0;
-	nx::Timer timer;
+	crt::Timer timer;
 
-	nx::NxzEncoder encoder(loader.nvert, loader.nface, nx::Stream::TUNSTALL);
+	crt::Encoder encoder(loader.nvert, loader.nface, crt::Stream::TUNSTALL);
 	if(pointcloud)
 		encoder.addPositions(&*loader.coords.begin());
 	else
 		encoder.addPositions(&*loader.coords.begin(), &*loader.index.begin());
 	//TODO add suppor for wedge and face attributes adding simplex attribute
 	if(loader.norms.size())
-		encoder.addNormals(&*loader.norms.begin(), 10, nx::NormalAttr::BORDER);
+		encoder.addNormals(&*loader.norms.begin(), 10, crt::NormalAttr::BORDER);
 
 	if(loader.colors.size())
 		encoder.addColors(&*loader.colors.begin());
@@ -66,7 +69,7 @@ int main(int argc, char *argv[]) {
 		encoder.addUvs(&*loader.uvs.begin(), 1.0f/1024.0f);
 
 	if(loader.radiuses.size())
-		encoder.addAttribute("radius", (char *)&*loader.radiuses.begin(), nx::VertexAttribute::FLOAT, 1, 1.0f);
+		encoder.addAttribute("radius", (char *)&*loader.radiuses.begin(), crt::VertexAttribute::FLOAT, 1, 1.0f);
 	encoder.encode();
 
 
@@ -83,30 +86,30 @@ int main(int argc, char *argv[]) {
 
 	cout << "Header: " << encoder.header_size << " bpv: " << (float)encoder.header_size/nvert << endl;
 
-	nx::VertexAttribute *coord = encoder.data["position"];
+	crt::VertexAttribute *coord = encoder.data["position"];
 	cout << "Coord bpv; " << 8.0f*coord->size/nvert << endl;
 	cout << "Coord q: " << coord->q << " bits: " << coord->bits << endl << endl;
 
-	nx::VertexAttribute *norm = encoder.data["normal"];
+	crt::VertexAttribute *norm = encoder.data["normal"];
 	if(norm) {
 		cout << "Normal bpv; " << 8.0f*norm->size/nvert << endl;
 		cout << "Normal q: " << norm->q << " bits: " << norm->bits << endl << endl;
 	}
 
-	nx::ColorAttr *color = dynamic_cast<nx::ColorAttr *>(encoder.data["color"]);
+	crt::ColorAttr *color = dynamic_cast<crt::ColorAttr *>(encoder.data["color"]);
 	if(color) {
 		cout << "Color bpv; " << 8.0f*color->size/nvert << endl;
 		cout << "Color q: " << color->qc[0] << " " << color->qc[1] << " " << color->qc[2] << " " << color->qc[3] << " bits: " << color->bits << endl << endl;
 	}
 
-	nx::GenericAttr<int> *uv = dynamic_cast<nx::GenericAttr<int> *>(encoder.data["uv"]);
+	crt::GenericAttr<int> *uv = dynamic_cast<crt::GenericAttr<int> *>(encoder.data["uv"]);
 	if(uv) {
 		cout << "Uv bpv; " << 8.0f*uv->size/nvert << endl;
 		cout << "Uv q: " << uv->q << " bits: " << uv->bits << endl << endl;
 	}
 
 
-	nx::GenericAttr<int> *radius = dynamic_cast<nx::GenericAttr<int> *>(encoder.data["radius"]);
+	crt::GenericAttr<int> *radius = dynamic_cast<crt::GenericAttr<int> *>(encoder.data["radius"]);
 	if(radius) {
 		cout << "Radius  bpv; " << 8.0f*radius->size/nvert << endl;
 		cout << "Radius q: " << radius->q << " bits: " << radius->bits << endl << endl;
@@ -118,11 +121,11 @@ int main(int argc, char *argv[]) {
 
 	timer.start();
 
-	nx::NxzDecoder decoder(encoder.stream.size(), encoder.stream.data());
+	crt::Decoder decoder(encoder.stream.size(), encoder.stream.data());
 	assert(decoder.nface == nface);
 	assert(decoder.nvert = nvert);
 
-	nx::MeshLoader out;
+	crt::MeshLoader out;
 	out.nvert = encoder.nvert;
 	out.nface = encoder.nface;
 	out.coords.resize(nvert*3);
@@ -141,7 +144,7 @@ int main(int argc, char *argv[]) {
 	}
 	if(decoder.data.count("radius")) {
 		out.radiuses.resize(nvert);
-		decoder.setAttribute("radius", (char *)&*out.radiuses.begin(), nx::VertexAttribute::FLOAT);
+		decoder.setAttribute("radius", (char *)&*out.radiuses.begin(), crt::VertexAttribute::FLOAT);
 	}
 	if(decoder.nface) {
 		out.index.resize(nface*3);
@@ -158,15 +161,15 @@ int main(int argc, char *argv[]) {
 		cout << "TOT M verts: " << mverts << " in: " << delta << "ms or " << 1000*mverts/delta << " MT/s" << endl;
 	}
 
-	FILE *file = fopen("test.nxz", "w");
+	FILE *file = fopen("test.crt", "w");
 	if(!file) {
-		cerr << "Couldl not open file: " << "test.nxz" << endl;
+		cerr << "Couldl not open file: " << "test.crt" << endl;
 		return 1;
 	}
 	size_t count = encoder.stream.size();
 	size_t written = fwrite ( encoder.stream.data(), 1, count, file);
 	if(written != count) {
-		cerr << "Failed saving file: " << "test.nxz" << endl;
+		cerr << "Failed saving file: " << "test.crt" << endl;
 		return 1;
 	}
 	std::vector<std::string> comments;

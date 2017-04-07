@@ -15,13 +15,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 for more details.
 */
-#ifndef NX_ZPOINT_H
-#define NX_ZPOINT_H
+#ifndef CRT_ZPOINT_H
+#define CRT_ZPOINT_H
 
 #include <stdint.h>
 #include "point.h"
 
-namespace nx {
+namespace crt {
 
 class ZPoint {
 public:
@@ -121,4 +121,4 @@ public:
 };
 
 }//namespace
-#endif // NX_ZPOINT_H
+#endif // CRT_ZPOINT_H

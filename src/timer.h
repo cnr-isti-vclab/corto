@@ -1,5 +1,5 @@
-#ifndef NX_TIMER_H
-#define NX_TIMER_H
+#ifndef CRT_TIMER_H
+#define CRT_TIMER_H
 
 #ifdef _WIN32
 #include <windows.h>
@@ -7,7 +7,7 @@
 #include <sys/time.h>
 #endif
 
-namespace nx {
+namespace crt {
 
 class Timer {
 public:
@@ -60,4 +60,4 @@ private:
 
 } //namespace
 
-#endif // NX_TIMER_H
+#endif // CRT_TIMER_H

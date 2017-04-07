@@ -30,19 +30,20 @@ for more details.
 #include "color_attribute.h"
 #include "normal_attribute.h"
 
-namespace nx {
+namespace crt {
 
 
 
-class NxzDecoder {
+class Decoder {
 public:
 	uint32_t nvert, nface;
+	std::map<std::string, std::string> exif; //mtllib ...,
 
 	std::map<std::string, VertexAttribute *> data;
 	IndexAttribute index;
 
-	NxzDecoder(int len, uchar *input);
-	~NxzDecoder();
+	Decoder(int len, uchar *input);
+	~Decoder();
 
 	bool hasAttr(const char *name) { return data.count(name); }
 

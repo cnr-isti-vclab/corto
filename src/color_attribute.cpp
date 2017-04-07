@@ -17,7 +17,7 @@ for more details.
 */
 #include "color_attribute.h"
 
-using namespace nx;
+using namespace crt;
 
 
 void ColorAttr::quantize(uint32_t nvert, char *buffer) {

@@ -15,15 +15,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 for more details.
 */
-#ifndef NX_VERTEX_ATTRIBUTE_H
-#define NX_VERTEX_ATTRIBUTE_H
+#ifndef CRT_VERTEX_ATTRIBUTE_H
+#define CRT_VERTEX_ATTRIBUTE_H
 
 #include <map>
 #include <string>
 #include "cstream.h"
 #include "index_attribute.h"
 
-namespace nx {
+namespace crt {
 
 class VertexAttribute {
 public:
@@ -219,4 +219,4 @@ public:
 
 }
 
-#endif // NX_VERTEX_ATTRIBUTE_H
+#endif // CRT_VERTEX_ATTRIBUTE_H

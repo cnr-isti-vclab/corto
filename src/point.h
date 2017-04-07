@@ -15,8 +15,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 for more details.
 */
-#ifndef NX_POINT_H
-#define NX_POINT_H
+#ifndef CRT_POINT_H
+#define CRT_POINT_H
 
 #include <math.h>
 #include <stdint.h>
@@ -24,7 +24,7 @@ for more details.
 
 typedef unsigned char uchar;
 
-namespace nx {
+namespace crt {
 
 template <typename S> class Point2 {
 private:
@@ -225,4 +225,4 @@ public:
 };
 
 } //namespace
-#endif // NX_POINT_H
+#endif // CRT_POINT_H

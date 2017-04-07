@@ -5,7 +5,7 @@
 #include "objload.h"
 #include "point.h"
 
-using namespace nx;
+using namespace crt;
 using namespace tinyply;
 using namespace std;
 

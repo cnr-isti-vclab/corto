@@ -23,9 +23,9 @@ for more details.
 //#include <QTime>
 
 #include "tunstall.h"
-#include "nxzencoder.h"
+#include "encoder.h"
 
-using namespace nx;
+using namespace crt;
 using namespace std;
 
 /*static int ilog2(uint64_t p) {
@@ -35,7 +35,7 @@ using namespace std;
 }*/
 
 
-NxzEncoder::NxzEncoder(uint32_t _nvert, uint32_t _nface, Stream::Entropy entropy):
+Encoder::Encoder(uint32_t _nvert, uint32_t _nface, Stream::Entropy entropy):
 	nvert(_nvert), nface(_nface),
 	header_size(0), current_vertex(0) {
 
@@ -49,7 +49,7 @@ NxzEncoder::NxzEncoder(uint32_t _nvert, uint32_t _nface, Stream::Entropy entropy
   for now just use volume and number of points
   could also quantize to find a side where the points halve and use 1/10 */
 
-bool NxzEncoder::addPositions(float *buffer, float q, Point3f o) {
+bool Encoder::addPositions(float *buffer, float q, Point3f o) {
 	std::vector<Point3f> coords(nvert);
 	Point3f *input = (Point3f *)buffer;
 	for(uint32_t i = 0; i < nvert; i++)
@@ -73,7 +73,7 @@ bool NxzEncoder::addPositions(float *buffer, float q, Point3f o) {
 
 
 /* if not q specified use 1/10th of average leght of edge  */
-bool NxzEncoder::addPositions(float *buffer, uint32_t *_index, float q, Point3f o) {
+bool Encoder::addPositions(float *buffer, uint32_t *_index, float q, Point3f o) {
 	memcpy(&*index.faces.begin(), _index,  nface*12);
 
 	Point3f *coords = (Point3f *)buffer;
@@ -86,7 +86,7 @@ bool NxzEncoder::addPositions(float *buffer, uint32_t *_index, float q, Point3f 
 	return addPositions(buffer, q, o);
 }
 
-bool NxzEncoder::addPositions(float *buffer, uint16_t *_index, float q, Point3f o) {
+bool Encoder::addPositions(float *buffer, uint16_t *_index, float q, Point3f o) {
 	vector<uint32_t> tmp(nface*3);
 	for(uint32_t i = 0; i < nvert*3; i++)
 		tmp[i] = _index[i];
@@ -112,7 +112,7 @@ bool NxzEncoder::addPositions(float *buffer, uint16_t *_index, float q, Point3f 
 	}
 } */
 
-bool NxzEncoder::addNormals(float *buffer, int bits, NormalAttr::Prediction no) {
+bool Encoder::addNormals(float *buffer, int bits, NormalAttr::Prediction no) {
 
 	NormalAttr *normal = new NormalAttr(bits);
 	normal->format = VertexAttribute::FLOAT;
@@ -123,7 +123,7 @@ bool NxzEncoder::addNormals(float *buffer, int bits, NormalAttr::Prediction no) 
 	return ok;
 }
 
-bool NxzEncoder::addNormals(int16_t *buffer, int bits, NormalAttr::Prediction no) {
+bool Encoder::addNormals(int16_t *buffer, int bits, NormalAttr::Prediction no) {
 	assert(bits <= 16);
 	vector<Point3f> tmp(nvert*3);
 	for(uint32_t i = 0; i < nvert; i++)
@@ -132,7 +132,7 @@ bool NxzEncoder::addNormals(int16_t *buffer, int bits, NormalAttr::Prediction no
 	return addNormals((float *)&*tmp.begin(), bits, no);
 }
 
-bool NxzEncoder::addColors(unsigned char *buffer, int lumabits, int chromabits, int alphabits) {
+bool Encoder::addColors(unsigned char *buffer, int lumabits, int chromabits, int alphabits) {
 	ColorAttr *color = new ColorAttr();
 	color->setQ(lumabits, chromabits, alphabits);
 	color->format = VertexAttribute::UINT8;
@@ -141,7 +141,7 @@ bool NxzEncoder::addColors(unsigned char *buffer, int lumabits, int chromabits, 
 	return ok;
 }
 
-bool NxzEncoder::addUvs(float *buffer, float q) {
+bool Encoder::addUvs(float *buffer, float q) {
 	GenericAttr<int> *uv = new GenericAttr<int>(2);
 	uv->q = q;
 	uv->format = VertexAttribute::FLOAT;
@@ -150,7 +150,7 @@ bool NxzEncoder::addUvs(float *buffer, float q) {
 	return ok;
 }
 
-bool NxzEncoder::addAttribute(const char *name, char *buffer, VertexAttribute::Format format, int components, float q, uint32_t strategy) {
+bool Encoder::addAttribute(const char *name, char *buffer, VertexAttribute::Format format, int components, float q, uint32_t strategy) {
 	if(data.count(name)) return false;
 	GenericAttr<int> *attr = new GenericAttr<int>(components);
 
@@ -162,7 +162,7 @@ bool NxzEncoder::addAttribute(const char *name, char *buffer, VertexAttribute::F
 	return true;
 }
 //whatever is inside is your job to fill attr variables.
-bool NxzEncoder::addAttribute(const char *name, char *buffer, VertexAttribute *attr) {
+bool Encoder::addAttribute(const char *name, char *buffer, VertexAttribute *attr) {
 	if(data.count(name)) return true;
 	attr->quantize(nvert, buffer);
 	data[name] = attr;
@@ -170,12 +170,18 @@ bool NxzEncoder::addAttribute(const char *name, char *buffer, VertexAttribute *a
 }
 
 
-void NxzEncoder::encode() {
+void Encoder::encode() {
 	stream.reserve(nvert);
 
 	stream.write<uint32_t>(0x787A6300);
 	stream.write<uint32_t>(0x1); //version
 	stream.write<uchar>(stream.entropy);
+
+	stream.write<uint32_t>(exif.size());
+	for(auto it: exif) {
+		stream.writeString(it.first.c_str());
+		stream.writeString(it.second.c_str());
+	}
 
 	stream.write<int>(data.size());
 	for(auto it: data) {
@@ -194,7 +200,7 @@ void NxzEncoder::encode() {
 }
 
 //TODO: test pointclouds
-void NxzEncoder::encodePointCloud() {
+void Encoder::encodePointCloud() {
 	//look for positions
 	if(data.find("position") == data.end())
 		throw "No position attribute found. Use DIFF normal strategy instead.";
@@ -263,15 +269,15 @@ void NxzEncoder::encodePointCloud() {
 	} */
 
 //compact in place faces in data, update patches information, compute topology and encode each patch.
-void NxzEncoder::encodeMesh() {
+void Encoder::encodeMesh() {
 	encoded.resize(nvert, -1);
 
 	if(!index.groups.size()) index.groups.push_back(nface);
 	//remove degenerate faces
 	uint32_t start =  0;
 	uint32_t count = 0;
-	for(uint32_t &end: index.groups) {
-		for(uint32_t i = start; i < end; i++) {
+	for(Group &g: index.groups) {
+		for(uint32_t i = start; i < g.end; i++) {
 			uint32_t *f = &index.faces[i*3];
 
 			if(f[0] == f[1] || f[0] == f[2] || f[1] == f[2])
@@ -285,8 +291,8 @@ void NxzEncoder::encodeMesh() {
 			}
 			count++;
 		}
-		start = end;
-		end = count;
+		start = g.end;
+		g.end = count;
 	}
 	index.faces.resize(count*3);
 	nface = count;
@@ -298,9 +304,9 @@ void NxzEncoder::encodeMesh() {
 	prediction.resize(nvert);
 
 	start =  0;
-	for(uint32_t &end: index.groups) {
-		encodeFaces(start, end);
-		start = end;
+	for(Group &g: index.groups) {
+		encodeFaces(start, g.end);
+		start = g.end;
 	}
 #ifdef PRESERVED_UNREFERENCED
 	//encoding unreferenced vertices
@@ -436,7 +442,7 @@ static int next_(int t) {
 	return t;
 }
 
-void NxzEncoder::encodeFaces(int start, int end) {
+void Encoder::encodeFaces(int start, int end) {
 
 	vector<McFace> faces(end - start);
 	for(int i = start; i < end; i++) {

@@ -15,13 +15,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 for more details.
 */
-#ifndef NX_BITSTREAM_H
-#define NX_BITSTREAM_H
+#ifndef CRT_BITSTREAM_H
+#define CRT_BITSTREAM_H
 
 #include <vector>
 #include <stdint.h>
 
-namespace nx {
+namespace crt {
 
 class BitStream {
 public:
@@ -52,4 +52,4 @@ private:
 };
 
 }//namespace
-#endif // NX_BITSTREAM_H
+#endif // CRT_BITSTREAM_H

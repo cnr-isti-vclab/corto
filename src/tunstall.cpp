@@ -24,7 +24,7 @@ for more details.
 #include "tunstall.h"
 
 using namespace std;
-using namespace nx;
+using namespace crt;
 
 struct TSymbol {
 	int offset;

@@ -15,13 +15,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 for more details.
 */
-#ifndef NX_TUNSTALL_H
-#define NX_TUNSTALL_H
+#ifndef CRT_TUNSTALL_H
+#define CRT_TUNSTALL_H
 
 #include <vector>
 
 
-namespace nx {
+namespace crt {
 
 /* SIMPLEST TUNSTALL encoding:
    1) build dictionary:
@@ -162,4 +162,4 @@ public:
 };*/
 
 }//namespace
-#endif // NX_TUNSTALL_H
+#endif // CRT_TUNSTALL_H

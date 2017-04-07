@@ -31,13 +31,13 @@ for more details.
 #include "color_attribute.h"
 #include "normal_attribute.h"
 
-namespace nx {
+namespace crt {
 
-class NxzEncoder {
+class Encoder {
 public:
 
 	uint32_t nvert, nface;
-
+	std::map<std::string, std::string> exif; //mtllib ...,
 
 	IndexAttribute index;
 	std::map<std::string, VertexAttribute *> data;
@@ -45,7 +45,7 @@ public:
 
 	Stream stream;
 
-	NxzEncoder(uint32_t _nvert, uint32_t _nface = 0, Stream::Entropy entropy = Stream::TUNSTALL);
+	Encoder(uint32_t _nvert, uint32_t _nface = 0, Stream::Entropy entropy = Stream::TUNSTALL);
 
 	bool addPositions(float *buffer, float q = 0.0f, Point3f o = Point3f(0.0f));
 	bool addPositions(float *buffer, uint32_t *index, float q = 0.0f, Point3f o = Point3f(0.0f));
@@ -62,7 +62,12 @@ public:
 	//its your job to fill attr variables appropriately (type and number of components in particular.
 	bool addAttribute(const char *name, char *buffer, VertexAttribute *attr);
 
-	void addGroup(int end_triangle) { index.groups.push_back(end_triangle); }
+	void addGroup(int end_triangle) { index.groups.push_back(Group(end_triangle)); }
+	void addGroup(int end_triangle, std::map<std::string, std::string> &props) {
+		Group g(end_triangle);
+		g.properties = props;
+		index.groups.push_back(g);
+	}
 
 	void encode();
 

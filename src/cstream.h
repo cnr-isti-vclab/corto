@@ -15,8 +15,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 for more details.
 */
-#ifndef NX_CSTREAM_H
-#define NX_CSTREAM_H
+#ifndef CRT_CSTREAM_H
+#define CRT_CSTREAM_H
 
 #include <string.h>
 #include <iostream>
@@ -27,7 +27,7 @@ typedef unsigned char uchar;
 
 using namespace std;
 
-namespace nx {
+namespace crt {
 
 int ilog2(uint64_t p);
 
@@ -297,4 +297,4 @@ public:
 };
 
 } //namespace
-#endif // NX_CSTREAM_H
+#endif // CRT_CSTREAM_H

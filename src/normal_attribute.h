@@ -15,14 +15,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 for more details.
 */
-#ifndef NX_NORMAL_ATTRIBUTE_H
-#define NX_NORMAL_ATTRIBUTE_H
+#ifndef CRT_NORMAL_ATTRIBUTE_H
+#define CRT_NORMAL_ATTRIBUTE_H
 
 #include "point.h"
 #include "vertex_attribute.h"
 
 
-namespace nx {
+namespace crt {
 
 class NormalAttr: public VertexAttribute {
 public:
@@ -110,4 +110,4 @@ public:
 };
 
 } //namespace
-#endif // NX_NORMAL_ATTRIBUTE_H
+#endif // CRT_NORMAL_ATTRIBUTE_H

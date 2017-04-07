@@ -23,10 +23,10 @@ for more details.
 #include <deque>
 
 #include "tunstall.h"
-#include "nxzdecoder.h"
+#include "decoder.h"
 
 using namespace std;
-using namespace nx;
+using namespace crt;
 
 class DEdge2 { //decompression edges
 public:
@@ -37,14 +37,20 @@ public:
 		v0(a), v1(b), v2(c), prev(p), next(n), deleted(false) {}
 };
 
-NxzDecoder::NxzDecoder(int len, uchar *input): vertex_count(0) {
+Decoder::Decoder(int len, uchar *input): vertex_count(0) {
 
 	stream.init(len, input);
 	uint32_t magic = stream.read<uint32_t>();
 	if(magic != 0x787A6300)
-		throw "Not an nxz file.";
+		throw "Not a crt file.";
 	uint32_t version = stream.read<uint32_t>();
 	stream.entropy = (Stream::Entropy)stream.read<uchar>();
+
+	int size = stream.read<uint32_t>();
+	for(uint32_t i = 0; i < size; i++) {
+		const char *key = stream.readString();
+		exif[key] = stream.readString();
+	}
 
 	int nattr = stream.read<int>();
 
@@ -75,12 +81,12 @@ NxzDecoder::NxzDecoder(int len, uchar *input): vertex_count(0) {
 	nface = stream.read<uint32_t>();
 }
 
-NxzDecoder::~NxzDecoder() {
+Decoder::~Decoder() {
 	for(auto it: data)
 		delete it.second;
 }
 
-bool NxzDecoder::setAttribute(const char *name, char *buffer, VertexAttribute::Format format) {
+bool Decoder::setAttribute(const char *name, char *buffer, VertexAttribute::Format format) {
 	if(data.find(name) == data.end()) return false;
 	VertexAttribute *attr = data[name];
 	attr->format = format;
@@ -88,7 +94,7 @@ bool NxzDecoder::setAttribute(const char *name, char *buffer, VertexAttribute::F
 	return true;
 }
 
-bool NxzDecoder::setAttribute(const char *name, char *buffer, VertexAttribute *attr) {
+bool Decoder::setAttribute(const char *name, char *buffer, VertexAttribute *attr) {
 	if(data.find(name) == data.end()) return false;
 	VertexAttribute *found = data[name];
 	attr->q = found->q;
@@ -101,16 +107,16 @@ bool NxzDecoder::setAttribute(const char *name, char *buffer, VertexAttribute *a
 }
 
 
-void NxzDecoder::decode() {
+void Decoder::decode() {
 	if(nface > 0)
 		decodeMesh();
 	else
 		decodePointCloud();
 }
 
-void NxzDecoder::decodePointCloud() {
+void Decoder::decodePointCloud() {
 
-	std::vector<nx::Face> dummy;
+	std::vector<crt::Face> dummy;
 
 	for(auto it: data)
 		it.second->decode(nvert, stream);
@@ -138,7 +144,7 @@ void NxzDecoder::decodePointCloud() {
 	}
 	*/
 
-void NxzDecoder::decodeMesh() {
+void Decoder::decodeMesh() {
 	index.decode(stream);
 
 	for(auto it: data)
@@ -148,9 +154,9 @@ void NxzDecoder::decodeMesh() {
 
 	uint32_t start = 0;
 	uint32_t cler = 0; //keeps track of current cler
-	for(uint32_t &end: index.groups) {
-		decodeFaces(start*3, end*3, cler);
-		start = end;
+	for(Group &g: index.groups) {
+		decodeFaces(start*3, g.end*3, cler);
+		start = g.end;
 	}
 
 #ifdef PRESERVED_UNREFERENCED
@@ -177,7 +183,7 @@ void NxzDecoder::decodeMesh() {
 	return k;
 }*/
 
-void NxzDecoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
+void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 
 	//edges of the mesh to be processed
 	vector<DEdge2> front;

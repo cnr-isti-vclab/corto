@@ -17,7 +17,7 @@ for more details.
 */
 #include "normal_attribute.h"
 
-using namespace nx;
+using namespace crt;
 
 //Normal estimation
 

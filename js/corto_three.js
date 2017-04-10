@@ -1,31 +1,31 @@
 
 
-THREE.NXZLoader = function(manager) {
-    this.manager = (manager !== undefined) ? manager : THREE.DefaultLoadingManager;
+THREE.CORTOLoader = function(manager) {
+	this.manager = (manager !== undefined) ? manager : THREE.DefaultLoadingManager;
 };
 
 
-THREE.NXZLoader.prototype = {
+THREE.CORTOLoader.prototype = {
 
-    constructor: THREE.PLYLoader,
+	constructor: THREE.CORTOLoader,
 
-    load: function(url, onLoad, onProgress, onError) {
-        const scope = this;
-        const loader = new THREE.FileLoader(scope.manager);
-        loader.setPath(this.path);
-        loader.setResponseType('arraybuffer');
-        loader.load(url, function(blob) {
-            onLoad(scope.decodeNxz(blob));
-        }, onProgress, onError);
-    },
+	load: function(url, onLoad, onProgress, onError) {
+		const scope = this;
+		const loader = new THREE.FileLoader(scope.manager);
+		loader.setPath(this.path);
+		loader.setResponseType('arraybuffer');
+		loader.load(url, function(blob) {
+			onLoad(scope.decode(blob));
+		}, onProgress, onError);
+	},
 
-    decodeNxz: function(buffer) {
+	decode: function(buffer) {
 
 		var now = performance.now();
-		var iter = 10;
+		var iter = 1;
 		for(var i = 0; i < iter; i++) {
-	        var decoder = new NxzDecoder(buffer);
-	        var mesh = decoder.decode();	
+			var decoder = new CortoDecoder(buffer);
+			var mesh = decoder.decode();	
 		}
 		console.log(Math.floor(performance.now() - now), "MT/s:", (iter*mesh.nface/1000)/((performance.now() - now)/1));
 

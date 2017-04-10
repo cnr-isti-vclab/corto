@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Nexus threejs</title>
+<title>Corto threejs</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <style>body { margin: 0px; overflow: hidden; }</style>
-<script src="js/three.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.js"></script>
 <script src="js/TrackballControls.js"></script>
 <script src="js/tunstall.js"></script>
 <script src="js/attribute.js"></script>
-<script src="js/nxz.js"></script>
-<script src="js/nxz_three.js"></script>
+<script src="js/corto.js"></script>
+<script src="js/corto_three.js"></script>
 </head>
 
 <body>
@@ -57,15 +57,39 @@ container.appendChild( renderer.domElement );
 
 var profile = false;
 
-var loader = new THREE.NXZLoader();//This will add a starfield to the background of a scene
+var loader = new THREE.CORTOLoader();//This will add a starfield to the background of a scene
 
-loader.load( 'models/bunny.nxz', function(geometry) {
+loader.load( 'models/test.crt', function(geometry) {
 
 	geometry.computeBoundingBox();
 
+//single texture loader, see obj loader for multimaterial.
+//	var loader = new THREE.TextureLoader();
+//	loader.load('texture.jpg', onLoad, onProgress, onError);
+
+/*	if(geometry.mtllib) {
+		var mtlLoader = new THREE.MTLLoader();
+		mtlLoader.setPath( 'models/' );
+		mtlLoader.load(geometry.mtllib, function( materials ) {
+			materials.preload();
+		}
+	} */
+
 	if(geometry.index) {
-		var material = new THREE.MeshStandardMaterial( { vertexColors: THREE.VertexColors, shading: THREE.SmoothShading, side: THREE.DoubleSide } );
+		var options = { side: THREE.DoubleSide };
+		if(geometry.attributes.normal)
+			options.shading = THREE.SmoothShading;
+		else
+			options.shading = THREE.FlatShading;
+
+		if(geometry.attributes.color)
+			options.vertexColors = THREE.VertexColors;
+		else
+			options.color = 0xffffffff;
+
+		var material = new THREE.MeshStandardMaterial(options);
 		var mesh = new THREE.Mesh( geometry, material );
+
 	} else {
 		var material = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, vertexColors: THREE.VertexColors } );
 		var mesh = new THREE.Points(geometry, material);
@@ -73,6 +97,7 @@ loader.load( 'models/bunny.nxz', function(geometry) {
 	geometry.center();
 	mesh.scale.divideScalar(geometry.boundingBox.getSize().length());
 	scene.add( mesh ); 
+
 	if(!profile)
 		render();
 } );

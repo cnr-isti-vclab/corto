@@ -373,11 +373,19 @@ decode: function(stream) {
 
 	var max_front = stream.readInt();
 	t.front = new Int32Array(max_front*5);
+
 	var n = stream.readInt();
 	t.groups = new Array(n);
-	for(var i = 0; i < n; i++)
-		t.groups[i] = stream.readInt();
-		var stunstall = new Tunstall;
+	for(var i = 0; i < n; i++) {
+		var end = stream.readInt();
+		var np = stream.readUChar();
+		var g = { end: end, properties: {} };
+		for(var k = 0; k < np; k++) {
+			var key = stream.readString();
+			g.properties[key] = stream.readString();
+		}
+		t.groups[i] = g;
+	}
 
 	var tunstall = new Tunstall;
 	t.clers = tunstall.decompress(stream);

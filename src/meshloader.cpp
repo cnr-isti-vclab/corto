@@ -14,6 +14,10 @@ static bool endsWith(const std::string& str, const std::string& suffix) {
 	return str.size() >= suffix.size() && !str.compare(str.size()-suffix.size(), suffix.size(), suffix);
 }
 
+static bool startsWith(const std::string& str, const std::string& prefix) {
+	return str.size() >= prefix.size() && !str.compare(0, prefix.size(), prefix);
+}
+
 bool MeshLoader::load(const std::string &filename) {
 	if(endsWith(filename, ".ply") || endsWith(filename, ".PLY"))
 		return loadPly(filename);
@@ -37,6 +41,8 @@ bool MeshLoader::loadPly(const std::string &filename) {
 
 	ply.request_properties_from_element("face", { "vertex_indices" }, index, 3);
 	ply.request_properties_from_element("face", { "texcoord" }, wedge_uvs, 6);
+	ply.request_properties_from_element("face", { "texnumber" }, tex_number, 1);
+
 	ply.read(ss);
 
 	nface = index.size()/3;
@@ -47,24 +53,67 @@ bool MeshLoader::loadPly(const std::string &filename) {
 	for(uint32_t i = 0; i < index.size(); i++)
 		assert(index[i] < coords.size()/3);
 
-	comments = ply.comments;
+	//create groups:
+	if(tex_number.size()) {
+		vector<uint32_t> count;
+		//allocate space for faces
+		for(size_t t: tex_number) {
+			if(t >= count.size()) {
+				count.resize(t+1, 0);
+			}
+			count[t]++;
+		}
+		groups.resize(count.size(), 0);
+		for(size_t i = 0; i < count.size()-1; i++)
+			groups[i+1].end = groups[i].end + count[i];
+
+		vector<uint32_t> tmp(index.size());
+		for(size_t i = 0; i < tex_number.size(); i++) {
+			uint32_t &o = groups[i].end;
+			tmp[o*3] = index[i*3];
+			tmp[o*3+1] = index[i*3+1];
+			tmp[o*3+2] = index[i*3+2];
+			o++;
+		}
+		swap(tmp, index);
+	} else {
+		groups.push_back(Group(index.size()/3));
+	}
+
+	int texcount = 0;
+	for(auto &str: ply.comments)
+		if(startsWith(str, "TextureFile"))
+			groups[texcount++].properties["texture"] = str.substr(12, str.size());
+
 	return true;
 }
 
 bool MeshLoader::loadObj(const std::string &filename) {
 
-	obj::Model m = obj::loadModelFromFile(filename);
+	obj::IndexedModel m = obj::loadModelFromFile(filename);
 
 	swap(m.vertex, coords);
 	swap(m.texCoord, uvs);
 	swap(m.normal, norms);
+	swap(m.faces, index);
 
 	nvert = coords.size()/3;
-	nface = 0;
-	for(auto it: m.faces) {
-		nface += it.second.size()/3;
-		index.insert(index.end(), it.second.begin(), it.second.end());
-		groups.push_back(nface);
+	nface = index.size()/3;
+
+	for(auto &block: m.blocks) {
+		Group g(block.end);
+		if(block.material.size())
+			g.properties["material"] = block.material;
+		if(block.groups.size()) {
+			std::string str;
+			for(auto &group: block.groups) {
+				str.append(group);
+				str.append(" ");
+			}
+			str.pop_back();
+			g.properties["groups"] = str;
+		}
+		groups.push_back(g);
 	}
 
 	for(uint32_t i = 0; i < index.size(); i++)

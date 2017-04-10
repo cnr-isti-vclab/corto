@@ -46,7 +46,7 @@ Decoder::Decoder(int len, uchar *input): vertex_count(0) {
 	uint32_t version = stream.read<uint32_t>();
 	stream.entropy = (Stream::Entropy)stream.read<uchar>();
 
-	int size = stream.read<uint32_t>();
+	uint32_t size = stream.read<uint32_t>();
 	for(uint32_t i = 0; i < size; i++) {
 		const char *key = stream.readString();
 		exif[key] = stream.readString();

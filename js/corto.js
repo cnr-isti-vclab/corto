@@ -16,7 +16,7 @@ GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 for more details.
 */
 
-function NxzDecoder(data) {
+function CortoDecoder(data) {
 	var t = this;
 	var stream = t.stream = new Stream(data);
 	
@@ -25,21 +25,32 @@ function NxzDecoder(data) {
 
 	var version = stream.readInt();
 	t.entropy = stream.readUChar();
+	//exif
+	t.exif = {};
 	var n = stream.readInt();
+	for(var i = 0; i < n; i++) {
+		var key = stream.readString();
+		t.exif[key] = stream.readString();
+	}
 
+	//attributes
+	var n = stream.readInt();
 	t.geometry = {};
 	t.attributes = {};
-	for(let i = 0; i < n; i++) {
+	for(var i = 0; i < n; i++) {
 		var a = {};
 		var name = stream.readString();
+		var codec = stream.readInt();
 		var q = stream.readFloat();
 		var components = stream.readUChar(); //internal number of components
 		var type = stream.readUChar();     //default type (same as it was in input), can be overridden
 		var strategy = stream.readUChar();
-		var attr = Attribute;
-		switch(name) {
-		case "color":  attr = ColorAttr; break;
-		case "normal": attr = NormalAttr; break;
+		var attr;
+		switch(codec) {
+		case 2: attr = NormalAttr; break;
+		case 3: attr = ColorAttr; break;
+		case 1: //generic codec
+		default: attr = Attribute; break;
 		}
 		t.attributes[name] = new attr(name, q, components, type, strategy);
 	}
@@ -49,7 +60,7 @@ function NxzDecoder(data) {
 	t.geometry.nface = t.nface = t.stream.readInt();
 }
 
-NxzDecoder.prototype = {
+CortoDecoder.prototype = {
 
 decode: function() {
 	var t = this;
@@ -88,7 +99,7 @@ decodeMesh: function() {
 	var start = 0;
 	t.cler = 0;
 	for(var p = 0; p < t.index.groups.length; p++) {
-		var end = t.index.groups[p];
+		var end = t.index.groups[p].end;
 		this.decodeFaces(start *3, end *3);
 		start = end;
 	}
@@ -429,11 +440,11 @@ decodeFaces: function(start, end) {
 
 			var current_edge = front_count;
 			faceorder[order_back++] = front_count;
-			addFront(vindex[1], vindex[2], vindex[0], (current_edge + 2)*5, (current_edge + 1)*5);
+			addFront(vindex[1], vindex[2], vindex[0], current_edge + 2*5, current_edge + 1*5);
 			faceorder[order_back++] = front_count;
-			addFront(vindex[2], vindex[0], vindex[1], (current_edge + 0)*5, (current_edge + 2)*5);
+			addFront(vindex[2], vindex[0], vindex[1], current_edge + 0*5, current_edge + 2*5);
 			faceorder[order_back++] = front_count;
-			addFront(vindex[0], vindex[1], vindex[2], (current_edge + 1)*5, (current_edge + 0)*5);
+			addFront(vindex[0], vindex[1], vindex[2], current_edge + 1*5, current_edge + 0*5);
 			continue;
 		}
 		var edge;
@@ -529,6 +540,7 @@ decodeFaces: function(start, end) {
 		} else if(c == 3) { //END
 			front[front[prev + 3] + 4] = front[next + 4];
 			front[front[next + 4] + 3] = front[prev + 3];
+			
 			opposite = front[prev];
 
 			front[prev] = -1;

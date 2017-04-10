@@ -3,11 +3,18 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 namespace crt {
 
 class MeshLoader {
 public:
+
+	struct Group {
+		std::map<std::string, std::string> properties;
+		uint32_t end;
+		Group(uint32_t e = 0): end(e) {}
+	};
 
 	bool load(const std::string &filename);
 	bool loadPly(const std::string &filename);
@@ -25,12 +32,13 @@ public:
 	std::vector<uint8_t> colors;
 
 	std::vector<uint32_t> index;
+
 	std::vector<float> wedge_uvs;
 	std::vector<float> wedge_norms;
+	std::vector<int>   tex_number; //per face texture number
 
-	std::vector<uint32_t> groups;
-	std::vector<std::string> comments;
-	std::vector<std::string> textures;
+	std::vector<Group> groups;
+	std::map<std::string, std::string> exif;
 };
 
 } //namespace

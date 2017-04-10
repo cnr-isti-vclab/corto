@@ -54,6 +54,10 @@ int main(int argc, char *argv[]) {
 	crt::Timer timer;
 
 	crt::Encoder encoder(loader.nvert, loader.nface, crt::Stream::TUNSTALL);
+	encoder.exif = loader.exif;
+	for(auto &g: loader.groups)
+		encoder.addGroup(g.end, g.properties);
+
 	if(pointcloud)
 		encoder.addPositions(&*loader.coords.begin());
 	else

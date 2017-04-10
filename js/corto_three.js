@@ -1,7 +1,11 @@
 
 
-THREE.CORTOLoader = function(manager) {
+THREE.CORTOLoader = function(options, manager) {
 	this.manager = (manager !== undefined) ? manager : THREE.DefaultLoadingManager;
+
+	if(!options)
+		options = {};
+	this.path = options.path? options.path : '';
 };
 
 
@@ -15,40 +19,76 @@ THREE.CORTOLoader.prototype = {
 		loader.setPath(this.path);
 		loader.setResponseType('arraybuffer');
 		loader.load(url, function(blob) {
-			onLoad(scope.decode(blob));
+
+			var now = performance.now();
+			var decoder = new CortoDecoder(blob);
+			var model = decoder.decode();
+			console.log(Math.floor(performance.now() - now), "MT/s:", (model.nface/1000)/((performance.now() - now)/1));
+			var geometry = scope.geometry(model);
+			var materials = scope.materials(model);
+			if(model.nface)
+				var mesh = new THREE.Mesh(geometry, materials);
+			else
+				var mesh = new THREE.Points(geometry, materials);
+			onLoad(mesh);
+
 		}, onProgress, onError);
 	},
 
-	decode: function(buffer) {
-
-		var now = performance.now();
-		var iter = 1;
-		for(var i = 0; i < iter; i++) {
-			var decoder = new CortoDecoder(buffer);
-			var mesh = decoder.decode();	
+	geometry: function(model) {
+		var geometry = new THREE.BufferGeometry();
+		if (model.nface) {
+			geometry.setIndex(new THREE.BufferAttribute(model.index, 1));
+			if(model.groups.length > 1) {
+				var start = 0;
+				for(var i = 0; i < model.groups.lenght; i++) {
+					var g = model.groups[i];
+					geometry.addGroup(start, g.end, i);
+					start = g.end;
+				}
+			}
 		}
-		console.log(Math.floor(performance.now() - now), "MT/s:", (iter*mesh.nface/1000)/((performance.now() - now)/1));
 
-//Mesh is an an array made like this.
-/*        mesh = {
-            index:    new Uint32Array(nface*3),
-            position: new Float32Array(nvert*3),
-            normal:   new Float32Array(nvert*3),
-            uv:       new Float32Array(nvert*2),
-            color:    new Float32Array(nvert)
-        };  */
-
-        var geometry = new THREE.BufferGeometry();
-        if (mesh.nface) 
-          geometry.setIndex(new THREE.BufferAttribute(mesh.index, 1));
-
-		geometry.addAttribute('position', new THREE.BufferAttribute(mesh.position, 3));
-		if(mesh.color)
-			geometry.addAttribute('color', new THREE.BufferAttribute(mesh.color, 3, true));
-        if (mesh.normal)
-          geometry.addAttribute('normal', new THREE.BufferAttribute(mesh.normal, 3, true));
-        if (mesh.uv)
-            geometry.addAttribute('uv', new THREE.BufferAttribute(mesh.uv, 2));
+		geometry.addAttribute('position', new THREE.BufferAttribute(model.position, 3));
+		if(model.color)
+			geometry.addAttribute('color', new THREE.BufferAttribute(model.color, 3, true));
+		if (model.normal)
+			geometry.addAttribute('normal', new THREE.BufferAttribute(model.normal, 3, true));
+		if (model.uv)
+			geometry.addAttribute('uv', new THREE.BufferAttribute(model.uv, 2));
 		return geometry;
-    }
+	},
+
+	materials: function(model) {
+		var options = {}
+		options.shading = model.normal? THREE.SmoothShading : THREE.FlatShading;
+		if(model.color)
+			options.vertexColors = THREE.VertexColors;
+		else
+			options.color = 0xffffffff;
+
+		if(model.nface) {
+			options.side = THREE.DoubleSide;
+
+			var materials = [];
+			for(var i = 0; i < model.groups.length; i++) {
+				var group = model.groups[i];
+				if(group.properties.texture) {
+					var textureLoader = new THREE.TextureLoader();
+					var texture = textureLoader.load("models/" + group.properties.texture);
+					options.map = texture;
+				}
+				materials.push(new THREE.MeshLambertMaterial(options));
+			}
+			if(materials.length > 1)
+				return new THREE.MultiMaterial(materials);
+			else
+				return materials[0];
+
+		} else {
+			options.size = 2;
+			options.sizeAttenuation = false;
+			return new THREE.PointsMaterial(options);
+		}
+	}
 };

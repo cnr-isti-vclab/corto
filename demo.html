@@ -57,11 +57,11 @@ container.appendChild( renderer.domElement );
 
 var profile = false;
 
-var loader = new THREE.CORTOLoader();//This will add a starfield to the background of a scene
+var loader = new THREE.CORTOLoader({ path: 'models/' }); //can pass a material or a multimaterial if you know whats' in the model.
 
-loader.load( 'models/test.crt', function(geometry) {
+loader.load( 'test.crt', function(mesh) {
 
-	geometry.computeBoundingBox();
+	mesh.geometry.computeBoundingBox();
 
 //single texture loader, see obj loader for multimaterial.
 //	var loader = new THREE.TextureLoader();
@@ -75,27 +75,9 @@ loader.load( 'models/test.crt', function(geometry) {
 		}
 	} */
 
-	if(geometry.index) {
-		var options = { side: THREE.DoubleSide };
-		if(geometry.attributes.normal)
-			options.shading = THREE.SmoothShading;
-		else
-			options.shading = THREE.FlatShading;
-
-		if(geometry.attributes.color)
-			options.vertexColors = THREE.VertexColors;
-		else
-			options.color = 0xffffffff;
-
-		var material = new THREE.MeshStandardMaterial(options);
-		var mesh = new THREE.Mesh( geometry, material );
-
-	} else {
-		var material = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, vertexColors: THREE.VertexColors } );
-		var mesh = new THREE.Points(geometry, material);
-	}
-	geometry.center();
-	mesh.scale.divideScalar(geometry.boundingBox.getSize().length());
+	
+	mesh.geometry.center();
+	mesh.scale.divideScalar(mesh.geometry.boundingBox.getSize().length());
 	scene.add( mesh ); 
 
 	if(!profile)

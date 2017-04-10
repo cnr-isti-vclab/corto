@@ -104,6 +104,7 @@ decodeMesh: function() {
 		start = end;
 	}
 	t.geometry['index'] = t.index.faces;
+	t.geometry.groups = t.index.groups;
 	for(var i in t.attributes) 
 		t.attributes[i].decode(t.nvert, t.stream);
 	for(var i in t.attributes) 

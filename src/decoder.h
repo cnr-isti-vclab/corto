@@ -64,7 +64,7 @@ public:
 private:
 	Stream stream;
 
-	int vertex_count; //keep tracks of current decoding vertex
+	uint32_t vertex_count; //keep tracks of current decoding vertex
 
 	void decodePointCloud();
 	void decodeMesh();

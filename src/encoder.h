@@ -72,7 +72,9 @@ public:
 	void encode();
 
 private:
-	int current_vertex;
+	uint32_t current_vertex;
+	uint32_t last_index; //moved here so that it works across groups
+
 
 	std::vector<bool> boundary;
 	std::vector<int> encoded;    //encoded vertex number

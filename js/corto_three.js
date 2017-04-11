@@ -30,6 +30,7 @@ THREE.CORTOLoader.prototype = {
 				var mesh = new THREE.Mesh(geometry, materials);
 			else
 				var mesh = new THREE.Points(geometry, materials);
+			//TODO check if waiting for textures.
 			onLoad(mesh);
 
 		}, onProgress, onError);
@@ -41,9 +42,9 @@ THREE.CORTOLoader.prototype = {
 			geometry.setIndex(new THREE.BufferAttribute(model.index, 1));
 			if(model.groups.length > 1) {
 				var start = 0;
-				for(var i = 0; i < model.groups.lenght; i++) {
+				for(var i = 0; i < model.groups.length; i++) {
 					var g = model.groups[i];
-					geometry.addGroup(start, g.end, i);
+					geometry.addGroup(start*3, g.end*3, i);
 					start = g.end;
 				}
 			}
@@ -72,13 +73,13 @@ THREE.CORTOLoader.prototype = {
 
 			var materials = [];
 			for(var i = 0; i < model.groups.length; i++) {
+				var opt = Object.assign({}, options);
 				var group = model.groups[i];
 				if(group.properties.texture) {
 					var textureLoader = new THREE.TextureLoader();
-					var texture = textureLoader.load("models/" + group.properties.texture);
-					options.map = texture;
+					opt.map = textureLoader.load("models/" + group.properties.texture);
 				}
-				materials.push(new THREE.MeshLambertMaterial(options));
+				materials.push(new THREE.MeshLambertMaterial(opt));
 			}
 			if(materials.length > 1)
 				return new THREE.MultiMaterial(materials);

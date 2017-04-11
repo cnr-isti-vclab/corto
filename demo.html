@@ -59,9 +59,18 @@ var profile = false;
 
 var loader = new THREE.CORTOLoader({ path: 'models/' }); //can pass a material or a multimaterial if you know whats' in the model.
 
-loader.load( 'test.crt', function(mesh) {
+
+function getURLParameter(name) {
+  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
+}
+
+var model = getURLParameter('model');
+if(!model) model = 'budda.crt';
+
+loader.load(model, function(mesh) {
 
 	mesh.geometry.computeBoundingBox();
+	mesh.geometry.computeVertexNormals();
 
 //single texture loader, see obj loader for multimaterial.
 //	var loader = new THREE.TextureLoader();

@@ -28,16 +28,9 @@ for more details.
 using namespace crt;
 using namespace std;
 
-/*static int ilog2(uint64_t p) {
-	int k = 0;
-	while ( p>>=1 ) { ++k; }
-	return k;
-}*/
-
-
 Encoder::Encoder(uint32_t _nvert, uint32_t _nface, Stream::Entropy entropy):
 	nvert(_nvert), nface(_nface),
-	header_size(0), current_vertex(0) {
+	header_size(0), current_vertex(0), last_index(0) {
 
 	stream.entropy = entropy;
 	index.faces.resize(nface*3);
@@ -465,8 +458,6 @@ void Encoder::encodeFaces(int start, int end) {
 
 	int splitbits = ilog2(nvert) + 1;
 
-	int last_index = -1;
-	//	vector<int> test_faces;
 	int counting = 0;
 	while(totfaces > 0) {
 		if(!faceorder.size() && !delayed.size()) {
@@ -481,7 +472,6 @@ void Encoder::encodeFaces(int start, int end) {
 			unsigned int current_edge = front.size();
 			McFace &face = faces[current];
 
-			//int last_index = current_vertex -1; //ecccalla' la cazzata. mi servirebbe l'ultimo NON sorted.
 			int split = 0;
 			for(int k = 0; k < 3; k++) {
 				int vindex = face.f[k];
@@ -496,12 +486,14 @@ void Encoder::encodeFaces(int start, int end) {
 
 			for(int k = 0; k < 3; k++) {
 				uint32_t vindex = face.f[k];
+				assert(vindex < nvert);
 				int &enc = encoded[vindex];
 
 				if(enc != -1) {
 					index.bitstream.write(enc, splitbits);
 				} else {
 					//quad uses presorting indexing. (diff in attribute are sorted, values are not).
+					assert(current_vertex == 0 || (last_index < nvert && last_index >= 0));
 					prediction[current_vertex] = Quad(vindex, last_index, last_index, last_index);
 					enc = current_vertex++;
 					last_index = vindex;

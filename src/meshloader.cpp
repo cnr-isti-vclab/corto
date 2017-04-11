@@ -69,7 +69,8 @@ bool MeshLoader::loadPly(const std::string &filename) {
 
 		vector<uint32_t> tmp(index.size());
 		for(size_t i = 0; i < tex_number.size(); i++) {
-			uint32_t &o = groups[i].end;
+			int &t = tex_number[i];
+			uint32_t &o = groups[t].end;
 			tmp[o*3] = index[i*3];
 			tmp[o*3+1] = index[i*3+1];
 			tmp[o*3+2] = index[i*3+2];
@@ -143,12 +144,12 @@ void MeshLoader::splitWedges() {
 		bool split = false;
 
 		if(has_wedge_uvs) {
-		Point2f wuv = *(Point2f *)&wedge_uvs[i*2]; //wedge uv
-		Point2f &uv = *(Point2f *)&uvs[k*2];
+			Point2f wuv = *(Point2f *)&wedge_uvs[i*2]; //wedge uv
+			Point2f &uv = *(Point2f *)&uvs[k*2];
 			if(!visited[k])
 				uv = wuv;
 			else
-				split = (uv != wuv);
+				split |= (uv != wuv);
 		}
 		if(has_wedge_norms) {
 			Point2f wn = *(Point2f *)&wedge_norms[i*3]; //wedge uv
@@ -156,7 +157,7 @@ void MeshLoader::splitWedges() {
 			if(!visited[k])
 				n = wn;
 			else
-				split = (n != wn);
+				split |= (n != wn);
 		}
 		if(!visited[k]) {
 			visited[k] = true;
@@ -173,7 +174,7 @@ void MeshLoader::splitWedges() {
 				uint32_t j = it->second;
 				if((!has_wedge_uvs || *(Point2f *)&uvs[j*2] == *(Point2f *)&wedge_uvs[i*2]) &&
 				(!has_wedge_norms || *(Point2f *)&norms[j*3] == *(Point2f *)&wedge_norms[i*3]))
-					found = it->first;
+					found = j;
 			}
 		}
 		if(found == 0xffffffff) {

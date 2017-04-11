@@ -15,7 +15,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
 for more details.
 */
+
+#include <unistd.h>
 #include <assert.h>
+
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -32,29 +35,114 @@ using namespace crt;
 using namespace std;
 using namespace tinyply;
 
+void usage() {
+	cerr <<
+R"use(Usage: corto [OPTIONS] <FILE>
+
+FILE is the path to a .ply or a .obj 3D model.
+  -o <output>: filename of the .crt compressed file.
+			   if not specified the extension of the input file will be replaced.
+  -e <key=value>: add an exif property, or more than one.
+  -p : treat the input as a point cloud."
+  -v <bits>: vertex bits quantization. If not specified an euristic is used
+  -n <bits>: normal bits quantization. Default 10.
+  -c <bits>: color bits quantization. Default 6.
+  -u <bits>: texture coordinate bits. Default 10.
+  -q <step>: quantization step unit (float) instead of bits for vertex coordinates
+  -N <prediction>: normal prediction can be:
+	  delta: use difference from previous normal (fastest)
+	  estimated: use difference from compute normals (cheaper)
+	  border: store difference only for boundary vertices (cheapest, inaccurate)
+)use";
+}
+
+static bool endsWith(const std::string& str, const std::string& suffix) {
+	return str.size() >= suffix.size() && !str.compare(str.size()-suffix.size(), suffix.size(), suffix);
+}
+
 int main(int argc, char *argv[]) {
-	if(argc != 2) {
-		cerr << "Usage: " << argv[0] << " [file.ply]\n";
-		return 0;
+
+	std::string input;
+	std::string output;
+	std::string plyfile;
+	bool pointcloud = false;
+	float vertex_q = 0.0f;
+	int vertex_bits = 0;
+	int norm_bits = 0;
+	int color_bits = 0;
+	int uv_bits = 0;
+
+	char *normal_prediction = nullptr;
+	std::map<std::string, std::string> exif;
+
+	int c;
+	while((c = getopt(argc, argv, "po:v:n:c:u:q:N:e:")) != -1) {
+		switch(c) {
+		case 'o': output = optarg;  break;  //output filename
+		case 'p': pointcloud = true; break; //force pointcloud
+		case 'v': vertex_bits = atoi(optarg); break;
+		case 'n': norm_bits   = atoi(optarg); break;
+		case 'c': color_bits  = atoi(optarg); break;
+		case 'u': uv_bits     = atoi(optarg); break;
+		case 'q': vertex_q    = atof(optarg); break;
+		case 'N': normal_prediction = optarg; break;
+//TODO add option to generate normals before splitting wedges (for plys).
+		case 'P': plyfile = optarg; break; //save ply for debugging purpouses
+		case 'e': {
+			std::string opt(optarg);
+			size_t pos = opt.find('=');
+			if(pos == string::npos || pos == 0 || pos == opt.size()-1) {
+				cerr << "Expecting key=value or \"key=another value\" for exif arguments" << endl;
+				return 1;
+			}
+			std::string key = opt.substr(0, pos);
+			std::string value = opt.substr(pos+1, string::npos);
+			exif[key] = value;
+			break;
+		}
+		break;
+		case '?': usage(); return 0; break;
+		default:
+			cerr << "Unknown option: " << (char)c << endl;
+			usage();
+			return 1;
+		}
 	}
+	if(optind == argc) {
+		cerr << "Missing filename" << endl;
+		usage();
+		return 1;
+	}
+
+	if(optind != argc-1) {
+		cerr << "Too many arguments\n";
+		usage();
+		return 1;
+	}
+	input = argv[optind];
 
 	//options for obj: join by material (discard group info).
 	//exif pairs: -exif key=value //write and override what would put inside (mtllib for example).
 
 	crt::MeshLoader loader;
-	bool ok = loader.load(argv[1]);
+	bool ok = loader.load(input);
 	if(!ok) {
 		cerr << "Failed loading model: " << argv[1] << endl;
 		return 1;
 	}
 
-	bool pointcloud = (loader.nface == 0);
+	pointcloud = (loader.nface == 0 || pointcloud);
 	//if(force_pointcloud)
 	//	nface = 0;
 	crt::Timer timer;
 
 	crt::Encoder encoder(loader.nvert, loader.nface, crt::Stream::TUNSTALL);
+
 	encoder.exif = loader.exif;
+	//add and override exif properties
+	for(auto it: exif)
+		encoder.exif[it.first] = it.second;
+
 	for(auto &g: loader.groups)
 		encoder.addGroup(g.end, g.properties);
 
@@ -165,9 +253,16 @@ int main(int argc, char *argv[]) {
 		cout << "TOT M verts: " << mverts << " in: " << delta << "ms or " << 1000*mverts/delta << " MT/s" << endl;
 	}
 
-	FILE *file = fopen("test.crt", "w");
+	if(output.empty()) {
+		size_t lastindex = input.find_last_of(".");
+		output = input.substr(0, lastindex);
+	}
+	if(!endsWith(output, ".crt"))
+		output += ".crt";
+
+	FILE *file = fopen(output.c_str(), "w");
 	if(!file) {
-		cerr << "Couldl not open file: " << "test.crt" << endl;
+		cerr << "Couldl not open file: " << output << endl;
 		return 1;
 	}
 	size_t count = encoder.stream.size();
@@ -177,7 +272,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	std::vector<std::string> comments;
-	out.savePly("test.ply", comments);
+	if(!plyfile.empty())
+		out.savePly(plyfile, comments);
 
 	return 0;
 }

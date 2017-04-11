@@ -22,7 +22,7 @@ public:
 	void splitWedges();
 	bool savePly(const std::string &filename, std::vector<std::string> &comments);
 
-
+	bool add_normals;    //add normals (if not present) before splitting groups.
 	uint32_t nface;
 	uint32_t nvert;
 	std::vector<float> coords;
@@ -39,6 +39,9 @@ public:
 
 	std::vector<Group> groups;
 	std::map<std::string, std::string> exif;
+
+protected:
+	void addNormals();
 };
 
 } //namespace

@@ -47,6 +47,9 @@ bool MeshLoader::loadPly(const std::string &filename) {
 
 	nface = index.size()/3;
 	nvert = coords.size()/3;
+	if(add_normals && !norms.size() && !wedge_norms.size())
+		addNormals();
+
 	if(wedge_uvs.size() || wedge_norms.size())
 		splitWedges();
 
@@ -182,6 +185,11 @@ void MeshLoader::splitWedges() {
 			coords.push_back(p[0]);
 			coords.push_back(p[1]);
 			coords.push_back(p[2]);
+			if(norms.size()) {
+				norms.push_back(norms[k*3]);
+				norms.push_back(norms[k*3+1]);
+				norms.push_back(norms[k*3+2]);
+			}
 
 			if(has_wedge_uvs) {
 				uvs.push_back(wedge_uvs[i*2 + 0]);
@@ -238,4 +246,27 @@ bool MeshLoader::savePly(const string &filename, std::vector<std::string> &comme
 	out.write(outputStream, true);
 	fb.close();
 	return true;
+}
+
+void MeshLoader::addNormals() {
+
+	norms.resize(nvert*3, 0);
+
+	uint32_t *end = index.data() + index.size();
+	for(uint32_t *f = index.data(); f < end; f += 3) {
+		assert(f[0]*3 < coords.size());
+		Point3f p0 = *(Point3f *)&coords[f[0]*3];
+		Point3f p1 = *(Point3f *)&coords[f[1]*3];
+		Point3f p2 = *(Point3f *)&coords[f[2]*3];
+		Point3f n = (( p1 - p0) ^ (p2 - p0));
+		*(Point3f *)&norms[f[0]*3] += n;
+		*(Point3f *)&norms[f[1]*3] += n;
+		*(Point3f *)&norms[f[2]*3] += n;
+	}
+	for(uint32_t i = 0; i < nvert*3; i+= 3) {
+		Point3f &n = *(Point3f *)&norms[i];
+		float len = n.norm();
+		if(len < 0.00001) n = Point3f(0, 0, 1);
+		else n /= len;
+	}
 }

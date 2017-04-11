@@ -66,6 +66,7 @@ int main(int argc, char *argv[]) {
 	std::string output;
 	std::string plyfile;
 	bool pointcloud = false;
+	bool add_normals = false;
 	float vertex_q = 0.0f;
 	int vertex_bits = 0;
 	int norm_bits = 0;
@@ -76,7 +77,7 @@ int main(int argc, char *argv[]) {
 	std::map<std::string, std::string> exif;
 
 	int c;
-	while((c = getopt(argc, argv, "po:v:n:c:u:q:N:e:")) != -1) {
+	while((c = getopt(argc, argv, "pAo:v:n:c:u:q:N:e:")) != -1) {
 		switch(c) {
 		case 'o': output = optarg;  break;  //output filename
 		case 'p': pointcloud = true; break; //force pointcloud
@@ -85,6 +86,7 @@ int main(int argc, char *argv[]) {
 		case 'c': color_bits  = atoi(optarg); break;
 		case 'u': uv_bits     = atoi(optarg); break;
 		case 'q': vertex_q    = atof(optarg); break;
+		case 'A': add_normals = true; break;
 		case 'N': normal_prediction = optarg; break;
 //TODO add option to generate normals before splitting wedges (for plys).
 		case 'P': plyfile = optarg; break; //save ply for debugging purpouses
@@ -125,6 +127,7 @@ int main(int argc, char *argv[]) {
 	//exif pairs: -exif key=value //write and override what would put inside (mtllib for example).
 
 	crt::MeshLoader loader;
+	loader.add_normals = true;
 	bool ok = loader.load(input);
 	if(!ok) {
 		cerr << "Failed loading model: " << argv[1] << endl;

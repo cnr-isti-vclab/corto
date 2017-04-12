@@ -32,13 +32,14 @@ public:
 	}
 	virtual int codec() { return COLOR_CODEC; }
 
-	void setQ(int lumabits, int chromabits, int alphabits) {
-		qc[0] = 1<<(8 - lumabits);
-		qc[1] = qc[2] = 1<<(8 - chromabits);
-		qc[3] = 1<<(8-alphabits);
+	void setQ(int r_bits, int g_bits, int b_bits, int a_bits) {
+		qc[0] = 1<<(8 - r_bits);
+		qc[1] = 1<<(8 - g_bits);
+		qc[2] = 1<<(8 - b_bits);
+		qc[3] = 1<<(8 - a_bits);
 	}
 
-        virtual void quantize(uint32_t nvert, char *buffer);
+	virtual void quantize(uint32_t nvert, char *buffer);
 	virtual void dequantize(uint32_t nvert);
 
 	virtual void encode(uint32_t nvert, Stream &stream) {

@@ -62,18 +62,22 @@ static bool endsWith(const std::string& str, const std::string& suffix) {
 
 int main(int argc, char *argv[]) {
 
-	std::string input;
-	std::string output;
-	std::string plyfile;
+	string input;
+	string output;
+	string plyfile;
 	bool pointcloud = false;
 	bool add_normals = false;
 	float vertex_q = 0.0f;
 	int vertex_bits = 0;
-	int norm_bits = 0;
-	int color_bits = 0;
-	int uv_bits = 0;
+	int norm_bits = 10;
+	int r_bits = 6;
+	int g_bits = 7;
+	int b_bits = 6;
+	int a_bits = 5;
 
-	char *normal_prediction = nullptr;
+	int uv_bits = 10;
+
+	string normal_prediction;
 	std::map<std::string, std::string> exif;
 
 	int c;
@@ -83,7 +87,12 @@ int main(int argc, char *argv[]) {
 		case 'p': pointcloud = true; break; //force pointcloud
 		case 'v': vertex_bits = atoi(optarg); break;
 		case 'n': norm_bits   = atoi(optarg); break;
-		case 'c': color_bits  = atoi(optarg); break;
+		case 'c': r_bits = g_bits = a_bits = b_bits  = atoi(optarg); break;
+		case 'r': r_bits = atoi(optarg); break;
+		case 'g': g_bits = atoi(optarg); break;
+		case 'b': b_bits = atoi(optarg); break;
+		case 'a': a_bits = atoi(optarg); break;
+
 		case 'u': uv_bits     = atoi(optarg); break;
 		case 'q': vertex_q    = atof(optarg); break;
 		case 'A': add_normals = true; break;
@@ -135,8 +144,20 @@ int main(int argc, char *argv[]) {
 	}
 
 	pointcloud = (loader.nface == 0 || pointcloud);
-	//if(force_pointcloud)
-	//	nface = 0;
+	crt::NormalAttr::Prediction prediction = crt::NormalAttr::BORDER;
+	if(!normal_prediction.empty()) {
+		if(normal_prediction == "delta")
+			prediction = crt::NormalAttr::DIFF;
+		else if(normal_prediction == "border")
+			prediction = crt::NormalAttr::BORDER;
+		else if(normal_prediction == "estimated")
+			prediction = crt::NormalAttr::ESTIMATED;
+		else {
+			cerr << "Unknown normal prediction: " << prediction << " expecting: delta, border or estimated" << endl;
+			return 1;
+		}
+	}
+
 	crt::Timer timer;
 
 	crt::Encoder encoder(loader.nvert, loader.nface, crt::Stream::TUNSTALL);
@@ -149,19 +170,27 @@ int main(int argc, char *argv[]) {
 	for(auto &g: loader.groups)
 		encoder.addGroup(g.end, g.properties);
 
-	if(pointcloud)
-		encoder.addPositions(&*loader.coords.begin());
-	else
-		encoder.addPositions(&*loader.coords.begin(), &*loader.index.begin());
+	if(pointcloud) {
+		if(vertex_bits)
+			encoder.addPositionsBits(&*loader.coords.begin(), vertex_bits);
+		else
+			encoder.addPositions(&*loader.coords.begin(), vertex_q);
+
+	} else {
+		if(vertex_bits)
+			encoder.addPositionsBits(&*loader.coords.begin(), &*loader.index.begin(), vertex_bits);
+		else
+			encoder.addPositions(&*loader.coords.begin(), &*loader.index.begin(), vertex_q);
+	}
 	//TODO add suppor for wedge and face attributes adding simplex attribute
 	if(loader.norms.size())
-		encoder.addNormals(&*loader.norms.begin(), 10, crt::NormalAttr::BORDER);
+		encoder.addNormals(&*loader.norms.begin(), norm_bits, prediction);
 
 	if(loader.colors.size())
-		encoder.addColors(&*loader.colors.begin());
+		encoder.addColors(&*loader.colors.begin(), r_bits, g_bits, b_bits, a_bits);
 
 	if(loader.uvs.size())
-		encoder.addUvs(&*loader.uvs.begin(), 1.0f/1024.0f);
+		encoder.addUvs(&*loader.uvs.begin(), pow(2, -uv_bits));
 
 	if(loader.radiuses.size())
 		encoder.addAttribute("radius", (char *)&*loader.radiuses.begin(), crt::VertexAttribute::FLOAT, 1, 1.0f);

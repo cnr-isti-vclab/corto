@@ -47,14 +47,20 @@ public:
 
 	Encoder(uint32_t _nvert, uint32_t _nface = 0, Stream::Entropy entropy = Stream::TUNSTALL);
 
+
+
 	bool addPositions(float *buffer, float q = 0.0f, Point3f o = Point3f(0.0f));
 	bool addPositions(float *buffer, uint32_t *index, float q = 0.0f, Point3f o = Point3f(0.0f));
 	bool addPositions(float *buffer, uint16_t *index, float q = 0.0f, Point3f o = Point3f(0.0f));
 
+	bool addPositionsBits(float *buffer, int bits);
+	bool addPositionsBits(float *buffer, uint32_t *index, int bits);
+	bool addPositionsBits(float *buffer, uint16_t *index, int bits);
+
 	bool addNormals(float *buffer, int bits, NormalAttr::Prediction no = NormalAttr::ESTIMATED);
 	bool addNormals(int16_t *buffer, int bits, NormalAttr::Prediction no = NormalAttr::ESTIMATED);
 
-	bool addColors(unsigned char *buffer, int lumabits = 6, int chromabits = 6, int alphabits = 5);
+	bool addColors(unsigned char *buffer, int rbits = 6, int gbits = 7, int bbits = 6, int abits = 5);
 
 	bool addUvs(float *buffer, float q = 0);
 

@@ -42,6 +42,34 @@ Encoder::Encoder(uint32_t _nvert, uint32_t _nface, Stream::Entropy entropy):
   for now just use volume and number of points
   could also quantize to find a side where the points halve and use 1/10 */
 
+static float quantizationStep(int nvert, float *buffer, int bits) {
+	Point3f *input = (Point3f *)buffer;
+
+	Point3f min = input[0];
+	Point3f max = input[0];
+	for(int i = 0; i < nvert; i++) {
+		min.setMin(input[i]);
+		max.setMax(input[i]);
+	}
+	max -= min;
+	float intervals = pow(2.0f, (float)bits+1);
+	max /= intervals;
+	float q = std::max(std::max(max[0], max[1]), max[2]);
+	return q;
+}
+
+bool Encoder::addPositionsBits(float *buffer, int bits) {
+	return addPositions(buffer, quantizationStep(nvert, buffer, bits));
+}
+
+bool Encoder::addPositionsBits(float *buffer, uint32_t *index, int bits) {
+	return addPositions(buffer, index, quantizationStep(nvert, buffer, bits));
+}
+
+bool Encoder::addPositionsBits(float *buffer, uint16_t *index, int bits) {
+	return addPositions(buffer, index, quantizationStep(nvert, buffer, bits));
+}
+
 bool Encoder::addPositions(float *buffer, float q, Point3f o) {
 	std::vector<Point3f> coords(nvert);
 	Point3f *input = (Point3f *)buffer;
@@ -125,9 +153,9 @@ bool Encoder::addNormals(int16_t *buffer, int bits, NormalAttr::Prediction no) {
 	return addNormals((float *)&*tmp.begin(), bits, no);
 }
 
-bool Encoder::addColors(unsigned char *buffer, int lumabits, int chromabits, int alphabits) {
+bool Encoder::addColors(unsigned char *buffer, int rbits, int gbits, int bbits, int abits) {
 	ColorAttr *color = new ColorAttr();
-	color->setQ(lumabits, chromabits, alphabits);
+	color->setQ(rbits, gbits, bbits, abits);
 	color->format = VertexAttribute::UINT8;
 	bool ok = addAttribute("color", (char *)buffer, color);
 	if(!ok) delete color;
@@ -493,7 +521,7 @@ void Encoder::encodeFaces(int start, int end) {
 					index.bitstream.write(enc, splitbits);
 				} else {
 					//quad uses presorting indexing. (diff in attribute are sorted, values are not).
-					assert(current_vertex == 0 || (last_index < nvert && last_index >= 0));
+					assert(last_index < nvert);
 					prediction[current_vertex] = Quad(vindex, last_index, last_index, last_index);
 					enc = current_vertex++;
 					last_index = vindex;

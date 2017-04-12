@@ -96,6 +96,8 @@ bool MeshLoader::loadObj(const std::string &filename) {
 
 	obj::IndexedModel m = obj::loadModelFromFile(filename);
 
+	for(auto &mat: m.mtllibs)
+		exif["mtllib"] = mat;
 	swap(m.vertex, coords);
 	swap(m.texCoord, uvs);
 	swap(m.normal, norms);
@@ -121,7 +123,7 @@ bool MeshLoader::loadObj(const std::string &filename) {
 	}
 
 	for(uint32_t i = 0; i < index.size(); i++)
-		assert(index[i] < coords.size()/3);
+		assert(index[i] < nvert);
 
 	return nvert > 0;
 }

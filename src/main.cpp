@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 	std::map<std::string, std::string> exif;
 
 	int c;
-	while((c = getopt(argc, argv, "pAo:v:n:c:u:q:N:e:")) != -1) {
+	while((c = getopt(argc, argv, "pAo:v:n:c:u:q:N:e:P:")) != -1) {
 		switch(c) {
 		case 'o': output = optarg;  break;  //output filename
 		case 'p': pointcloud = true; break; //force pointcloud
@@ -97,7 +97,6 @@ int main(int argc, char *argv[]) {
 		case 'q': vertex_q    = atof(optarg); break;
 		case 'A': add_normals = true; break;
 		case 'N': normal_prediction = optarg; break;
-//TODO add option to generate normals before splitting wedges (for plys).
 		case 'P': plyfile = optarg; break; //save ply for debugging purpouses
 		case 'e': {
 			std::string opt(optarg);

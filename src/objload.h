@@ -185,19 +185,25 @@ ObjModel parseObjModel( std::istream & in ){
 	}
 	if(data.blocks.size())
 		data.blocks.back().end = data.face_offsets.size();
-	data.face_offsets.push_back(data.face_offsets.size()); //add guard at the end.
+	data.face_offsets.push_back(data.index.size()); //add guard at the end.
+
 	return data;
 }
 
-inline void tesselateObjModel( std::vector<ObjModel::FaceVertex> & input, std::vector<unsigned> & offsets){
+void tesselateObjModel( ObjModel & obj){
+	std::vector<ObjModel::FaceVertex> & input = obj.index;
+	std::vector<unsigned> & offsets = obj.face_offsets;
+
 	std::vector<ObjModel::FaceVertex> output;
 	std::vector<unsigned> output_offsets;
 	output.reserve(input.size());
 	output_offsets.reserve(offsets.size());
 
-	for(size_t i = 0; i < offsets.size(); i++) {
+	std::vector<uint32_t> remap(offsets.size());
+	for(size_t i = 0; i < offsets.size()-1; i++) { //-1 because of guard.
 		unsigned start = offsets[i];
 		unsigned end = offsets[i+1];
+		remap[i] = output_offsets.size();
 		for(unsigned k = start+1; k < end-1; k++) {
 			output_offsets.push_back(output.size());
 			output.push_back(input[start]);
@@ -205,17 +211,21 @@ inline void tesselateObjModel( std::vector<ObjModel::FaceVertex> & input, std::v
 			output.push_back(input[k+1]);
 		}
 	}
+	remap.back() = output_offsets.size();
 	output_offsets.push_back(output.size());
+
 	input.swap(output);
 	offsets.swap(output_offsets);
-}
 
-void tesselateObjModel( ObjModel & obj){
-	tesselateObjModel(obj.index, obj.face_offsets);
+	for(Block &block: obj.blocks) {
+		block.start = remap[block.start];
+		block.end = remap[block.end];
+	}
 }
 
 IndexedModel convertToModel( const ObjModel & obj ) {
 	IndexedModel model;
+	model.mtllibs = obj.mtllibs;
 
 	std::vector<std::pair<ObjModel::FaceVertex, uint32_t>> vertices;
 	vertices.reserve(obj.index.size());
@@ -225,23 +235,40 @@ IndexedModel convertToModel( const ObjModel & obj ) {
 	std::sort(vertices.begin(), vertices.end());
 	//build vertex remap
 	std::vector<uint32_t> remap;
-	remap.reserve(vertices.size());
+	remap.resize(vertices.size());
 	ObjModel::FaceVertex last;
+	int count = 0; //number of denormalized vertices
 	for(uint32_t i = 0; i < vertices.size(); i++) {
-		if(vertices[i].first == last)
+		int id = vertices[i].second;
+		if(vertices[i].first == last) {
+			remap[id] = count-1;
 			continue;
+		}
 		last = vertices[i].first;
-//		obj.index[count] = vertex;
-		remap[vertices[i].second] = obj.vertex.size();
-		model.vertex.push_back(obj.vertex[last.v]);
-		if(last.n >= 0)
-			model.normal.push_back(obj.normal[last.n]);
-		if(last.t >= 0)
-			model.texCoord.push_back(obj.texCoord[last.t]);
+		remap[id] = count++;
+		model.vertex.push_back(obj.vertex[last.v*3+0]);
+		model.vertex.push_back(obj.vertex[last.v*3+1]);
+		model.vertex.push_back(obj.vertex[last.v*3+2]);
+
+		if(last.n >= 0) {
+			model.normal.push_back(obj.normal[last.n*3+0]);
+			model.normal.push_back(obj.normal[last.n*3+1]);
+			model.normal.push_back(obj.normal[last.n*3+2]);
+		}
+		if(last.t >= 0) {
+			model.texCoord.push_back(obj.texCoord[last.t*2+0]);
+			model.texCoord.push_back(obj.texCoord[last.t*2+1]);
+		}
 	}
+
+
 	for(uint32_t i = 0; i < obj.index.size(); i++)
 		model.faces.push_back(remap[i]);
 
+	model.blocks = obj.blocks;
+
+	for(auto i: model.faces)
+		assert(i < model.vertex.size()/3);
 	return model;
 
 

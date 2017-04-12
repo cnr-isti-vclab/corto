@@ -26,16 +26,16 @@ function CortoDecoder(data) {
 	var version = stream.readInt();
 	t.entropy = stream.readUChar();
 	//exif
-	t.exif = {};
+	t.geometry = {};
 	var n = stream.readInt();
 	for(var i = 0; i < n; i++) {
 		var key = stream.readString();
-		t.exif[key] = stream.readString();
+		t.geometry[key] = stream.readString();
 	}
 
 	//attributes
 	var n = stream.readInt();
-	t.geometry = {};
+
 	t.attributes = {};
 	for(var i = 0; i < n; i++) {
 		var a = {};
@@ -118,7 +118,7 @@ decodeMesh: function() {
 	}
 },
 
-decodeNormals: function() {
+/*decodeNormals: function() {
 	var norm_q = this.stream.readChar();
 
 	var dtunstall = new Tunstall;
@@ -251,7 +251,7 @@ decodeColors: function() {
 		this.colors[offset + 1] = e0;
 		this.colors[offset + 2] = (e1 + e0)&0xff;
 	}
-},
+}, 
 
 //how to determine if a vertex is a boundary without topology:
 //for each edge a vertex is in, add or subtract the id of the other vertex depending on order
@@ -370,7 +370,7 @@ decodeDiff: function(diff, bitstream) {
 	else
 		val = val>>1;
 	return val;
-},
+}, */
 
 /* an edge is:   uint16_t face, uint16_t side, uint32_t prev, next, bool deleted
 I do not want to create millions of small objects, I will use aUint32Array.

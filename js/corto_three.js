@@ -25,11 +25,13 @@ THREE.CORTOLoader.prototype = {
 			var model = decoder.decode();
 			console.log(Math.floor(performance.now() - now), "MT/s:", (model.nface/1000)/((performance.now() - now)/1));
 			var geometry = scope.geometry(model);
-			var materials = scope.materials(model);
 			if(model.nface)
-				var mesh = new THREE.Mesh(geometry, materials);
+				var mesh = new THREE.Mesh(geometry);
 			else
-				var mesh = new THREE.Points(geometry, materials);
+				var mesh = new THREE.Points(geometry);
+
+			scope.materials(model, mesh);
+			
 			//TODO check if waiting for textures.
 			onLoad(mesh);
 
@@ -60,7 +62,9 @@ THREE.CORTOLoader.prototype = {
 		return geometry;
 	},
 
-	materials: function(model) {
+	materials: function(model, mesh) {
+
+
 		var options = {}
 		options.shading = model.normal? THREE.SmoothShading : THREE.FlatShading;
 		if(model.color)
@@ -77,19 +81,32 @@ THREE.CORTOLoader.prototype = {
 				var group = model.groups[i];
 				if(group.properties.texture) {
 					var textureLoader = new THREE.TextureLoader();
-					opt.map = textureLoader.load("models/" + group.properties.texture);
+					opt.map = textureLoader.load(this.path + group.properties.texture);
 				}
 				materials.push(new THREE.MeshLambertMaterial(opt));
 			}
-			if(materials.length > 1)
-				return new THREE.MultiMaterial(materials);
-			else
-				return materials[0];
+			mesh.material = new THREE.MultiMaterial(materials);
 
 		} else {
 			options.size = 2;
 			options.sizeAttenuation = false;
-			return new THREE.PointsMaterial(options);
+			mesh.material = THREE.PointsMaterial(options);
+		}
+
+		//replace default material with mtl from lib if present
+		if(model.mtllib) {
+			var mtlLoader = new THREE.MTLLoader();
+			mtlLoader.setPath( this.path );
+			mtlLoader.load(model.mtllib, function( matcreator ) {
+				matcreator.preload();
+		
+				for(var i = 0; i < model.groups.length; i++) {
+					var group = model.groups[i];
+					if(group.properties.material)
+						mesh.material.materials[i] = matcreator.create(group.properties.material);
+				}
+			});
+			return;
 		}
 	}
 };

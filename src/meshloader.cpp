@@ -58,21 +58,30 @@ bool MeshLoader::loadPly(const std::string &filename) {
 
 	//create groups:
 	if(tex_number.size()) {
+		uint32_t notexcount = 0;
 		vector<uint32_t> count;
-		//allocate space for faces
-		for(size_t t: tex_number) {
-			if(t >= count.size()) {
+		//count each tex numner (including no texture ones.
+		for(int t: tex_number) {
+			if(t >= (int)count.size()) {
 				count.resize(t+1, 0);
 			}
-			count[t]++;
+			if(t < 0)
+				notexcount++;
+			else
+				count[t]++;
 		}
+		if(notexcount)
+			count.push_back(notexcount);
+
+		//init each end with what is actually the start, we will increase it later.
 		groups.resize(count.size(), 0);
 		for(size_t i = 0; i < count.size()-1; i++)
 			groups[i+1].end = groups[i].end + count[i];
 
 		vector<uint32_t> tmp(index.size());
 		for(size_t i = 0; i < tex_number.size(); i++) {
-			int &t = tex_number[i];
+			int t = tex_number[i];
+			if(t < 0) t = groups.size()-1;
 			uint32_t &o = groups[t].end;
 			tmp[o*3] = index[i*3];
 			tmp[o*3+1] = index[i*3+1];
@@ -86,7 +95,7 @@ bool MeshLoader::loadPly(const std::string &filename) {
 
 	int texcount = 0;
 	for(auto &str: ply.comments)
-		if(startsWith(str, "TextureFile"))
+		if(startsWith(str, "TextureFile") && texcount < groups.size())
 			groups[texcount++].properties["texture"] = str.substr(12, str.size());
 
 	return true;

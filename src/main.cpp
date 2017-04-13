@@ -53,6 +53,7 @@ FILE is the path to a .ply or a .obj 3D model.
 	  delta: use difference from previous normal (fastest)
 	  estimated: use difference from compute normals (cheaper)
 	  border: store difference only for boundary vertices (cheapest, inaccurate)
+  -P <file.ply>: decompress and save as .ply for debugging purpouses
 )use";
 }
 

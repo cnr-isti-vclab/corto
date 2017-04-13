@@ -24,16 +24,14 @@ THREE.CORTOLoader.prototype = {
 			var decoder = new CortoDecoder(blob);
 			var model = decoder.decode();
 			console.log(Math.floor(performance.now() - now), "MT/s:", (model.nface/1000)/((performance.now() - now)/1));
+
 			var geometry = scope.geometry(model);
 			if(model.nface)
 				var mesh = new THREE.Mesh(geometry);
 			else
 				var mesh = new THREE.Points(geometry);
 
-			scope.materials(model, mesh);
-			
-			//TODO check if waiting for textures.
-			onLoad(mesh);
+			scope.materials(model, mesh, onLoad);
 
 		}, onProgress, onError);
 	},
@@ -42,7 +40,7 @@ THREE.CORTOLoader.prototype = {
 		var geometry = new THREE.BufferGeometry();
 		if (model.nface) {
 			geometry.setIndex(new THREE.BufferAttribute(model.index, 1));
-			if(model.groups.length > 1) {
+			if(model.groups.length > 0) {
 				var start = 0;
 				for(var i = 0; i < model.groups.length; i++) {
 					var g = model.groups[i];
@@ -62,9 +60,9 @@ THREE.CORTOLoader.prototype = {
 		return geometry;
 	},
 
-	materials: function(model, mesh) {
+	materials: function(model, mesh, onLoad) {
 
-
+		var promise = { waiting: 0 }
 		var options = {}
 		options.shading = model.normal? THREE.SmoothShading : THREE.FlatShading;
 		if(model.color)
@@ -81,7 +79,8 @@ THREE.CORTOLoader.prototype = {
 				var group = model.groups[i];
 				if(group.properties.texture) {
 					var textureLoader = new THREE.TextureLoader();
-					opt.map = textureLoader.load(this.path + group.properties.texture);
+					promise.waiting++;
+					opt.map = textureLoader.load(this.path + group.properties.texture, function() { if(--promise.waiting == 0) onLoad(mesh); });
 				}
 				materials.push(new THREE.MeshLambertMaterial(opt));
 			}
@@ -92,6 +91,7 @@ THREE.CORTOLoader.prototype = {
 			options.sizeAttenuation = false;
 			mesh.material = THREE.PointsMaterial(options);
 		}
+
 
 		//replace default material with mtl from lib if present
 		if(model.mtllib) {
@@ -106,7 +106,8 @@ THREE.CORTOLoader.prototype = {
 						mesh.material.materials[i] = matcreator.create(group.properties.material);
 				}
 			});
-			return;
 		}
+		if(promise.waiting == 0)
+			onLoad(mesh);
 	}
 };

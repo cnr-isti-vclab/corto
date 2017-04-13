@@ -137,7 +137,7 @@ ColorAttr.prototype.dequantize = function(nvert) {
 		t.buffer[rgboff + 0] = ((e2 + e0)* t.qc[0])&0xff;
 		t.buffer[rgboff + 1] = e0* t.qc[1];
 		t.buffer[rgboff + 2] = ((e1 + e0)* t.qc[2])&0xff;
-//		t.buffer[offset + 0] = t.values[offset + 3] * t.qc[3];
+//		t.buffer[offset + 3] = t.values[offset + 3] * t.qc[3];
 	}
 }
 
@@ -241,7 +241,7 @@ NormalAttr.prototype.computeNormals = function(nvert) {
 				t.toSphere(count, t.values, i, t.buffer, t.q);
 				count++;
 
-			} else {//no correction
+			} else { //no correction
 				var len = 1/Math.sqrt(norm[k]*norm[k] + norm[k+1]*norm[k+1] + norm[k+2]*norm[k+2]);
 				if(t.type == t.Type.INT16)
 					len *= 32767;
@@ -254,11 +254,11 @@ NormalAttr.prototype.computeNormals = function(nvert) {
 	}
 }
 
-NormalAttr.prototype.markBoundary = function( nvert,  nface, index, boundary) {
+NormalAttr.prototype.markBoundary = function( nvert,  nface, index, boundary) {	
 	for(var f = 0; f < nface*3; f += 3) {
-		boundary[index[f+0]] += index[f+1] - index[f+2];
-		boundary[index[f+1]] += index[f+2] - index[f+0];
-		boundary[index[f+2]] += index[f+0] - index[f+1];
+		boundary[index[f+0]] += index[f+1] ^ index[f+2];
+		boundary[index[f+1]] += index[f+2] ^ index[f+0];
+		boundary[index[f+2]] += index[f+0] ^ index[f+1];
 	}
 }
 

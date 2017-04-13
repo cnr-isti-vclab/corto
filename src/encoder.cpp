@@ -334,11 +334,16 @@ void Encoder::encodeMesh() {
 	for(uint32_t i = 0; i < nvert; i++) {
 		if(encoded[i] != -1)
 			continue;
-		int last = cur`rent_vertex-1;
+		int last = current_vertex-1;
 		prediction.emplace_back(Quad(i, last, last, last));
 		current_vertex++;
 	}
 #endif
+
+	//predelta works using the original indexes, we will deal with unreferenced vertices later (due to prediction resize)
+	for(auto it: data)
+		it.second->preDelta(nvert, nface, data, index);
+
 	cout << "Unreference vertices: " << nvert - current_vertex << " remaining: " << current_vertex << endl;
 	nvert = current_vertex;
 	prediction.resize(nvert);
@@ -347,9 +352,6 @@ void Encoder::encodeMesh() {
 	stream.write<int>(nface);
 
 	header_size = stream.elapsed();
-
-	for(auto it: data)
-		it.second->preDelta(nvert, nface, data, index);
 
 	for(auto it: data)
 		it.second->deltaEncode(prediction);

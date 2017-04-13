@@ -56,7 +56,7 @@ renderer.setSize( window.innerWidth, window.innerHeight);
 var container = document.getElementById( 'container');
 container.appendChild( renderer.domElement );
 
-var profile = false;
+var profile = false; //use when profiling javascript
 
 var loader = new THREE.CORTOLoader({ path: 'models/' }); //can pass a material or a multimaterial if you know whats' in the model.
 
@@ -71,24 +71,12 @@ if(!model) model = 'budda.crt';
 loader.load(model, function(mesh) {
 
 	mesh.geometry.computeBoundingBox();
-	mesh.geometry.computeVertexNormals();
+	if(!mesh.geometry.attributes.normal)
+		mesh.geometry.computeVertexNormals();
 
-//single texture loader, see obj loader for multimaterial.
-//	var loader = new THREE.TextureLoader();
-//	loader.load('texture.jpg', onLoad, onProgress, onError);
-
-/*	if(geometry.mtllib) {
-		var mtlLoader = new THREE.MTLLoader();
-		mtlLoader.setPath( 'models/' );
-		mtlLoader.load(geometry.mtllib, function( materials ) {
-			materials.preload();
-		}
-	} */
-
-	
 	mesh.geometry.center();
 	mesh.scale.divideScalar(mesh.geometry.boundingBox.getSize().length());
-	scene.add( mesh ); 
+	scene.add(mesh); 
 
 	if(!profile)
 		render();

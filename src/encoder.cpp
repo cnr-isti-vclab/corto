@@ -644,5 +644,5 @@ void Encoder::encodeFaces(int start, int end) {
 		visited[opposite_face] = true;
 		totfaces--;
 	}
-	index.max_front = front.size();
+	index.max_front = std::max(index.max_front, (uint32_t)front.size());
 }

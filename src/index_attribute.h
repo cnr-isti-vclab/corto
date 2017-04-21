@@ -80,6 +80,7 @@ public:
 	void decode(Stream &stream) {
 
 		max_front = stream.read<uint32_t>();
+
 		groups.resize(stream.read<uint32_t>());
 		for(Group &g: groups) {
 			g.end = stream.read<uint32_t>();

@@ -11,7 +11,7 @@
 <script src="js/tunstall.js"></script>
 <script src="js/attribute.js"></script>
 <script src="js/corto.js"></script>
-<script src="js/corto_three.js"></script>
+<script src="js/CORTOLoader.js"></script>
 </head>
 
 <body>
@@ -58,7 +58,7 @@ container.appendChild( renderer.domElement );
 
 var profile = false; //use when profiling javascript
 
-var loader = new THREE.CORTOLoader({ path: 'models/' }); //can pass a material or a multimaterial if you know whats' in the model.
+
 
 
 function getURLParameter(name) {
@@ -66,8 +66,11 @@ function getURLParameter(name) {
 }
 
 var model = getURLParameter('model');
+var path = getURLParameter('path');
+if(!path) path = 'models/';
 if(!model) model = 'budda.crt';
 
+var loader = new THREE.CORTOLoader({ path: path }); //can pass a material or a multimaterial if you know whats' in the model.
 loader.load(model, function(mesh) {
 
 	mesh.geometry.computeBoundingBox();

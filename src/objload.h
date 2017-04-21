@@ -250,15 +250,26 @@ IndexedModel convertToModel( const ObjModel & obj ) {
 		model.vertex.push_back(obj.vertex[last.v*3+1]);
 		model.vertex.push_back(obj.vertex[last.v*3+2]);
 
-		if(last.n >= 0) {
-			model.normal.push_back(obj.normal[last.n*3+0]);
-			model.normal.push_back(obj.normal[last.n*3+1]);
-			model.normal.push_back(obj.normal[last.n*3+2]);
+		if(obj.normal.size()) {
+
+			if(last.n >= 0) {
+				model.normal.push_back(obj.normal[last.n*3+0]);
+				model.normal.push_back(obj.normal[last.n*3+1]);
+				model.normal.push_back(obj.normal[last.n*3+2]);
+			} else {
+				model.normal.push_back(0);
+				model.normal.push_back(0);
+				model.normal.push_back(0);
+			}
 		}
-		if(last.t >= 0) {
-			model.texCoord.push_back(obj.texCoord[last.t*2+0]);
-			model.texCoord.push_back(obj.texCoord[last.t*2+1]);
-		}
+		if(obj.texCoord.size())
+			if(last.t >= 0) {
+				model.texCoord.push_back(obj.texCoord[last.t*2+0]);
+				model.texCoord.push_back(obj.texCoord[last.t*2+1]);
+			} else {
+				model.texCoord.push_back(0);
+				model.texCoord.push_back(0);
+			}
 	}
 
 

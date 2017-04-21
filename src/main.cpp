@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 	int b_bits = 6;
 	int a_bits = 5;
 
-	int uv_bits = 10;
+	int uv_bits = 12;
 
 	string normal_prediction;
 	std::map<std::string, std::string> exif;

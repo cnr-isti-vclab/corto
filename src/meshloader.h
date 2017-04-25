@@ -16,6 +16,7 @@ public:
 		Group(uint32_t e = 0): end(e) {}
 	};
 
+	MeshLoader(): add_normals(false) {}
 	bool load(const std::string &filename);
 	bool loadPly(const std::string &filename);
 	bool loadObj(const std::string &filename);

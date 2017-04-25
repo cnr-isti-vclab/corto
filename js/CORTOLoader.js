@@ -6,6 +6,7 @@ THREE.CORTOLoader = function(options, manager) {
 	if(!options)
 		options = {};
 	this.path = options.path? options.path : '';
+	this.loadMaterial = options.loadMaterial ? options.loadMaterial : true;
 };
 
 
@@ -23,15 +24,21 @@ THREE.CORTOLoader.prototype = {
 			var now = performance.now();
 			var decoder = new CortoDecoder(blob);
 			var model = decoder.decode();
-			console.log(Math.floor(performance.now() - now), "MT/s:", (model.nface/1000)/((performance.now() - now)/1));
+			var ms = performance.now() - now;
 
 			var geometry = scope.geometry(model);
-			if(model.nface)
+			if(model.nface) {
+				console.log((model.nface/1024.0).toFixed(0) + "KT", ms.toFixed(0) + "ms", ((model.nface/1000)/ms).toFixed(2) + "MT/s");
 				var mesh = new THREE.Mesh(geometry);
-			else
+			} else {
+				console.log((model.nvert/1024.0).toFixed(0) + "KV", ms.toFixed(0) + "ms", ((model.nvert/1000)/ms).toFixed(2) + "MV/s");
 				var mesh = new THREE.Points(geometry);
+			}
 
-			scope.materials(model, mesh, onLoad);
+			if(scope.loadMaterial)
+				scope.materials(model, mesh, onLoad);
+			else
+				onLoad(mesh);
 
 		}, onProgress, onError);
 	},

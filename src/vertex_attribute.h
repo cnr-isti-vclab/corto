@@ -111,7 +111,9 @@ public:
 				if(max < values[i]) max = values[i];
 			}
 			max -= min;
-			bits = std::max(bits, ilog2(max));
+			bits = std::max(bits, ilog2(max) + 1);
+			cout << "max: " << max << " " << " bits: " << bits << endl;
+
 		}
 	}
 

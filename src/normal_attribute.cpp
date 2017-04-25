@@ -90,7 +90,7 @@ void NormalAttr::quantize(uint32_t nvert, char *buffer) {
 		max.setMax(normals[i]);
 	}
 	max -= min;
-	bits = std::max(ilog2(max[0]), ilog2(max[1]));
+	bits = std::max(ilog2(max[0]), ilog2(max[1])) + 1;
 }
 
 

@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
 	//exif pairs: -exif key=value //write and override what would put inside (mtllib for example).
 
 	crt::MeshLoader loader;
-	loader.add_normals = true;
+	loader.add_normals = add_normals;
 	bool ok = loader.load(input);
 	if(!ok) {
 		cerr << "Failed loading model: " << argv[1] << endl;
@@ -183,13 +183,13 @@ int main(int argc, char *argv[]) {
 			encoder.addPositions(&*loader.coords.begin(), &*loader.index.begin(), vertex_q);
 	}
 	//TODO add suppor for wedge and face attributes adding simplex attribute
-	if(loader.norms.size())
+	if(loader.norms.size() && norm_bits > 0)
 		encoder.addNormals(&*loader.norms.begin(), norm_bits, prediction);
 
-	if(loader.colors.size())
+	if(loader.colors.size() && r_bits > 0)
 		encoder.addColors(&*loader.colors.begin(), r_bits, g_bits, b_bits, a_bits);
 
-	if(loader.uvs.size())
+	if(loader.uvs.size() && uv_bits > 0)
 		encoder.addUvs(&*loader.uvs.begin(), pow(2, -uv_bits));
 
 	if(loader.radiuses.size())
@@ -223,7 +223,7 @@ int main(int argc, char *argv[]) {
 	crt::ColorAttr *color = dynamic_cast<crt::ColorAttr *>(encoder.data["color"]);
 	if(color) {
 		cout << "Color bpv; " << 8.0f*color->size/nvert << endl;
-		cout << "Color q: " << color->qc[0] << " " << color->qc[1] << " " << color->qc[2] << " " << color->qc[3] << " bits: " << color->bits << endl << endl;
+		cout << "Color q: " << color->qc[0] << " " << color->qc[1] << " " << color->qc[2] << " " << color->qc[3] << endl;
 	}
 
 	crt::GenericAttr<int> *uv = dynamic_cast<crt::GenericAttr<int> *>(encoder.data["uv"]);
@@ -279,10 +279,10 @@ int main(int argc, char *argv[]) {
 	int delta = timer.elapsed();
 	if(nface) {
 		float mfaces = nface/1000000.0f;
-		cout << "TOT M faces: " << mfaces << " in: " << delta << "ms or " << 1000*mfaces/delta << " MT/s" << endl;
+		cout << "TOT M faces: " << mfaces << " in: " << delta << "ms, " << 1000*mfaces/delta << " MT/s" << endl;
 	} else {
 		float mverts = nvert/1000000.0f;
-		cout << "TOT M verts: " << mverts << " in: " << delta << "ms or " << 1000*mverts/delta << " MT/s" << endl;
+		cout << "TOT M verts: " << mverts << " in: " << delta << "ms, " << 1000*mverts/delta << " MT/s" << endl;
 	}
 
 	if(output.empty()) {

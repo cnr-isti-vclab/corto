@@ -68,7 +68,7 @@ decode: function() {
 	t.last = new Uint32Array(t.nvert*3); //for parallelogram prediction
 	t.last_count = 0;
 
-	for(let i in t.attributes)
+	for(var i in t.attributes)
 		t.attributes[i].init(t.nvert, t.nface);
 
 	if(t.nface == 0)
@@ -307,7 +307,5 @@ decodeFaces: function(start, end) {
 }
 
 };
-
-var tot = 0;
 
 

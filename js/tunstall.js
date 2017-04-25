@@ -198,7 +198,7 @@ Tunstall.prototype = {
 		var n_words = 0;
 
 		//Here probs will range from 0 to 0xffff for better precision
-		for(let i = 0; i < n_symbols; i++)
+		for(var i = 0; i < n_symbols; i++)
 			queue[i] = t.probs[2*i+1] << 8;
 
 		var max_repeat = (t.dictionary_size - 1)/(n_symbols - 1);

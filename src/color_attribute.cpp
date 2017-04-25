@@ -54,16 +54,6 @@ void ColorAttr::quantize(uint32_t nvert, char *buffer) {
 	default: throw "Unsupported color input format.";
 	}
 	bits = 0;
-	for(int k = 0; k < N; k++) {
-		int min = values[k];
-		int max = min;
-		for(uint32_t i = k; i < n; i +=N) {
-			if(min > values[i]) min = values[i];
-			if(max < values[i]) max = values[i];
-		}
-		max -= min;
-		bits = std::max(bits, ilog2(max));
-	}
 }
 
 void ColorAttr::dequantize(uint32_t nvert) {

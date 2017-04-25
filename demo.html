@@ -2,16 +2,20 @@
 <html lang="en">
 <head>
 <title>Corto threejs</title>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <style>body { margin: 0px; overflow: hidden; }</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.js"></script>
 <script src="js/MTLLoader.js"></script>
 <script src="js/TrackballControls.js"></script>
+
 <script src="js/tunstall.js"></script>
 <script src="js/attribute.js"></script>
 <script src="js/corto.js"></script>
+<!-- <script src="js/corto.min.js"></script> -->
 <script src="js/CORTOLoader.js"></script>
+
 </head>
 
 <body>
@@ -19,9 +23,6 @@
 </body>
 
 <script>
-//var camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.1, 100 );
-//camera.position.z = 4;
-
 var camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.1, 100 );
 camera.position.z = 4;
 
@@ -58,11 +59,8 @@ container.appendChild( renderer.domElement );
 
 var profile = false; //use when profiling javascript
 
-
-
-
 function getURLParameter(name) {
-  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
+	return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
 }
 
 var model = getURLParameter('model');

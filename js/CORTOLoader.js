@@ -36,9 +36,9 @@ THREE.CORTOLoader.prototype = {
 			}
 
 			if(scope.loadMaterial)
-				scope.materials(model, mesh, onLoad);
-			else
-				onLoad(mesh);
+				scope.materials(model, mesh);
+
+			onLoad(mesh);
 
 		}, onProgress, onError);
 	},
@@ -67,7 +67,7 @@ THREE.CORTOLoader.prototype = {
 		return geometry;
 	},
 
-	materials: function(model, mesh, onLoad) {
+	materials: function(model, mesh) {
 
 		var promise = { waiting: 0 }
 		var options = {}
@@ -87,7 +87,8 @@ THREE.CORTOLoader.prototype = {
 				if(group.properties.texture) {
 					var textureLoader = new THREE.TextureLoader();
 					promise.waiting++;
-					opt.map = textureLoader.load(this.path + group.properties.texture, function() { if(--promise.waiting == 0) onLoad(mesh); });
+					opt.map = textureLoader.load(this.path + group.properties.texture, 
+						function() { mesh.dispatchEvent("change"); });
 					materials.push(new THREE.MeshBasicMaterial(opt));
 				} else
 					materials.push(new THREE.MeshLambertMaterial(opt));
@@ -103,6 +104,7 @@ THREE.CORTOLoader.prototype = {
 
 		//replace default material with mtl from lib if present
 		if(model.mtllib) {
+			var scope = this;
 			var mtlLoader = new THREE.MTLLoader();
 			mtlLoader.setPath( this.path );
 			mtlLoader.load(model.mtllib, function( matcreator ) {
@@ -110,12 +112,18 @@ THREE.CORTOLoader.prototype = {
 		
 				for(var i = 0; i < model.groups.length; i++) {
 					var group = model.groups[i];
-					if(group.properties.material)
-						mesh.material.materials[i] = matcreator.create(group.properties.material);
+					if(group.properties.material) {
+						var mat = mesh.material.materials[i] = matcreator.create(group.properties.material);
+						function checkTex() {
+							if(mat.map.image && mat.map.image.complete)
+								mesh.dispatchEvent({type: "change"});
+							else
+								setTimeout(checkTex, 10);
+						}
+						checkTex();
+					}
 				}
 			});
 		}
-		if(promise.waiting == 0)
-			onLoad(mesh);
 	}
 };

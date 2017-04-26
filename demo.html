@@ -68,8 +68,11 @@ var path = getURLParameter('path');
 if(!path) path = 'models/';
 if(!model) model = 'budda.crt';
 
+
 var loader = new THREE.CORTOLoader({ path: path }); //can pass a material or a multimaterial if you know whats' in the model.
+
 loader.load(model, function(mesh) {
+	mesh.addEventListener("change", render);
 
 	mesh.geometry.computeBoundingBox();
 	if(!mesh.geometry.attributes.normal)

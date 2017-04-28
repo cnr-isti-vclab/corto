@@ -34,7 +34,7 @@ Bunny mesh 34K vertices (12 bits precision) courtesy of [Stanford](http://graphi
 Proserpina mesh 128K vertices (14 bits), textures (12 bits), normals (10 bits) courtesy of [egiptologo91 in Sketchfab](https://sketchfab.com/models/dd671b1fc15c481b8592284e155cd8cb)
 
 | Proserpina      | Corto   | Draco  | OpenCTM |
-| -------------   | -------:| ------:| -------:0
+| -------------   | -------:| ------:| -------:|
 |                 |   982KB |  779KB |  1.13MB |
 | C++ decode      |    23ms | 220ms* |  100ms* |
 | Js first run    |   100ms | 1120ms |   420ms |

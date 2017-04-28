@@ -28,9 +28,12 @@ template <class T> void markBoundary(uint32_t nvert, uint32_t nface, T *index, s
 
 	T *end = index + nface*3;
 	for(T *f = index; f < end; f += 3) {
-		boundary[f[0]] += (int)f[1] ^ (int)f[2];
-		boundary[f[1]] += (int)f[2] ^ (int)f[0];
-		boundary[f[2]] += (int)f[0] ^ (int)f[1];
+		boundary[f[0]] ^= (int)f[1];
+		boundary[f[0]] ^= (int)f[2];
+		boundary[f[1]] ^= (int)f[2];
+		boundary[f[1]] ^= (int)f[0];
+		boundary[f[2]] ^= (int)f[0];
+		boundary[f[2]] ^= (int)f[1];
 	}
 }
 
@@ -90,7 +93,7 @@ void NormalAttr::quantize(uint32_t nvert, char *buffer) {
 		max.setMax(normals[i]);
 	}
 	max -= min;
-	bits = std::max(ilog2(max[0]), ilog2(max[1])) + 1;
+	bits = std::max(ilog2(max[0]-1), ilog2(max[1]-1)) + 1;
 }
 
 
@@ -110,7 +113,6 @@ void NormalAttr::preDelta(uint32_t nvert,  uint32_t nface, std::map<std::string,
 	std::vector<Point3i> estimated;
 	estimateNormals<uint32_t>(nvert, (Point3i *)&*coord->values.begin(), nface, start, estimated);
 
-	//'catrottola: boundary is not reliable for non manifold. and not invariant for vertex reordering.
 	if(prediction == BORDER)
 		markBoundary<uint32_t>(nvert, nface, start, boundary); //mark boundary points on original vertices.
 

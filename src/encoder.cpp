@@ -52,7 +52,7 @@ static float quantizationStep(int nvert, float *buffer, int bits) {
 		max.setMax(input[i]);
 	}
 	max -= min;
-	float intervals = pow(2.0f, (float)bits+1);
+	float intervals = pow(2.0f, (float)bits);
 	max /= intervals;
 	float q = std::max(std::max(max[0], max[1]), max[2]);
 	return q;
@@ -89,7 +89,7 @@ bool Encoder::addPositions(float *buffer, float q, Point3f o) {
 	if(nface > 0)
 		strategy |= VertexAttribute::PARALLEL;
 
-	return addAttribute("position", (char *)buffer, VertexAttribute::FLOAT, 3, q, strategy );
+	return addAttribute("position", (char *)coords.data(), VertexAttribute::FLOAT, 3, q, strategy );
 }
 
 
@@ -220,6 +220,7 @@ void Encoder::encode() {
 		encodePointCloud();
 }
 
+
 //TODO: test pointclouds
 void Encoder::encodePointCloud() {
 	//look for positions
@@ -261,6 +262,7 @@ void Encoder::encodePointCloud() {
 	stream.write<uint32_t>(nvert);
 	stream.write<uint32_t>(0); //nface
 
+	index.encodeGroups(stream);
 
 	prediction.resize(nvert);
 	prediction[0] = Quad(zpoints[0].pos, -1, -1, -1);
@@ -318,8 +320,6 @@ void Encoder::encodeMesh() {
 	index.faces.resize(count*3);
 	nface = count;
 
-
-
 	//BitStream bitstream(nvert/4);
 	index.bitstream.reserve(nvert/4);
 	prediction.resize(nvert);
@@ -348,15 +348,15 @@ void Encoder::encodeMesh() {
 	nvert = current_vertex;
 	prediction.resize(nvert);
 
-	stream.write<int>(nvert);
-	stream.write<int>(nface);
 
-	header_size = stream.elapsed();
 
 	for(auto it: data)
 		it.second->deltaEncode(prediction);
 
-
+	stream.write<int>(nvert);
+	stream.write<int>(nface);
+	header_size = stream.elapsed();
+	index.encodeGroups(stream);
 	index.encode(stream);
 
 	for(auto it: data)

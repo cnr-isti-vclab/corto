@@ -374,6 +374,13 @@ decode: function(stream) {
 	var max_front = stream.readInt();
 	t.front = new Int32Array(max_front*5);
 
+	var tunstall = new Tunstall;
+	t.clers = tunstall.decompress(stream);
+	t.bitstream = stream.readBitStream();
+},
+
+decodeGroups: function(stream) {
+	var t = this;
 	var n = stream.readInt();
 	t.groups = new Array(n);
 	for(var i = 0; i < n; i++) {
@@ -386,10 +393,6 @@ decode: function(stream) {
 		}
 		t.groups[i] = g;
 	}
-
-	var tunstall = new Tunstall;
-	t.clers = tunstall.decompress(stream);
-	t.bitstream = stream.readBitStream();
 }
 };
 

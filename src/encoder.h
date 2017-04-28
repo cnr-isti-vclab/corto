@@ -40,6 +40,8 @@ public:
 	std::map<std::string, std::string> exif; //mtllib ...,
 
 	IndexAttribute index;
+	std::vector<Group> groups;
+
 	std::map<std::string, VertexAttribute *> data;
 	int header_size;
 

@@ -25,13 +25,12 @@ THREE.CORTOLoader.prototype = {
 			var decoder = new CortoDecoder(blob);
 			var model = decoder.decode();
 			var ms = performance.now() - now;
+			console.log((model.nvert/1024.0).toFixed(1) + "KV", ms.toFixed(1) + "ms", ((model.nvert/1000)/ms).toFixed(2) + "MV/s");
 
 			var geometry = scope.geometry(model);
 			if(model.nface) {
-				console.log((model.nface/1024.0).toFixed(0) + "KT", ms.toFixed(0) + "ms", ((model.nface/1000)/ms).toFixed(2) + "MT/s");
 				var mesh = new THREE.Mesh(geometry);
 			} else {
-				console.log((model.nvert/1024.0).toFixed(0) + "KV", ms.toFixed(0) + "ms", ((model.nvert/1000)/ms).toFixed(2) + "MV/s");
 				var mesh = new THREE.Points(geometry);
 			}
 
@@ -45,15 +44,15 @@ THREE.CORTOLoader.prototype = {
 
 	geometry: function(model) {
 		var geometry = new THREE.BufferGeometry();
-		if (model.nface) {
+		if (model.nface)
 			geometry.setIndex(new THREE.BufferAttribute(model.index, 1));
-			if(model.groups.length > 0) {
-				var start = 0;
-				for(var i = 0; i < model.groups.length; i++) {
-					var g = model.groups[i];
-					geometry.addGroup(start*3, g.end*3, i);
-					start = g.end;
-				}
+
+		if(model.groups.length > 0) {
+			var start = 0;
+			for(var i = 0; i < model.groups.length; i++) {
+				var g = model.groups[i];
+				geometry.addGroup(start*3, g.end*3, i);
+				start = g.end;
 			}
 		}
 
@@ -98,7 +97,8 @@ THREE.CORTOLoader.prototype = {
 		} else {
 			options.size = 2;
 			options.sizeAttenuation = false;
-			mesh.material = THREE.PointsMaterial(options);
+			mesh.material = new THREE.PointsMaterial(options);
+
 		}
 
 
@@ -109,7 +109,8 @@ THREE.CORTOLoader.prototype = {
 			mtlLoader.setPath( this.path );
 			mtlLoader.load(model.mtllib, function( matcreator ) {
 				matcreator.preload();
-		
+				if(model.nface == 0)
+					mesh.material = new THREE.MultiMaterial(materials); //point cloud has a mesh.material...
 				for(var i = 0; i < model.groups.length; i++) {
 					var group = model.groups[i];
 					if(group.properties.material) {
@@ -120,7 +121,8 @@ THREE.CORTOLoader.prototype = {
 							else
 								setTimeout(checkTex, 10);
 						}
-						checkTex();
+						if(mat.map)
+							checkTex();
 					}
 				}
 			});

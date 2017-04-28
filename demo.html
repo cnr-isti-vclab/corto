@@ -39,7 +39,8 @@ controls.addEventListener( 'change', render );
 
 var scene = new THREE.Scene();
 scene.fog = new THREE.Fog( 0x050505, 2000, 3500 );
-scene.add( new THREE.AmbientLight( 0x444444 ) );
+var ambient = new THREE.AmbientLight( 0xffffff, 0.3 );
+scene.add( ambient);
 
 var light1 = new THREE.DirectionalLight( 0xffffff, 1.0 );
 light1.position.set( 1, 1, -0.5 );
@@ -69,14 +70,37 @@ if(!path) path = 'models/';
 if(!model) model = 'budda.crt';
 
 
+
+	var request = new XMLHttpRequest();
+	request.open('GET', 'models/bun_zipper.crt');
+	request.responseType = 'arraybuffer';
+	request.onload = function() {
+		var decoder = new CortoDecoder(this.response);
+		var model = decoder.decode();
+		console.log(model.nvert, model.nface, model.groups);
+		console.log('Index: ', model.index);
+		console.log('Positions: ', model.position);
+		console.log('Colors: ', model.color);
+		console.log('Nornmals: ', model.normal);
+		console.log('Tex coords: ', model.uv);
+		//custom attributes can be encoded, see cortolib below for details.
+	}
+	request.send();
+
+
 var loader = new THREE.CORTOLoader({ path: path }); //can pass a material or a multimaterial if you know whats' in the model.
 
 loader.load(model, function(mesh) {
 	mesh.addEventListener("change", render);
 
 	mesh.geometry.computeBoundingBox();
-	if(!mesh.geometry.attributes.normal)
-		mesh.geometry.computeVertexNormals();
+	if(!mesh.geometry.attributes.normal) {
+		if(!mesh.geometry.attributes.uv) {
+			mesh.geometry.computeVertexNormals();
+		}
+		else ambient.intensity = 1.0;
+	}
+
 
 	mesh.geometry.center();
 	mesh.scale.divideScalar(mesh.geometry.boundingBox.getSize().length());

@@ -60,6 +60,14 @@ public:
 	IndexAttribute(): faces32(nullptr), faces16(nullptr), max_front(0) {}
 	void encode(Stream &stream) {
 		stream.write<uint32_t>(max_front);
+
+		stream.restart();
+		stream.compress(clers.size(), &*clers.begin());
+		stream.write(bitstream);
+		size = stream.elapsed();
+	}
+
+	void encodeGroups(Stream &stream) {
 		stream.write<uint32_t>(groups.size());
 		for(Group &g: groups) {
 			stream.write<uint32_t>(g.end);
@@ -69,18 +77,15 @@ public:
 				stream.writeString(it.second.c_str());
 			}
 		}
-
-		stream.restart();
-		stream.compress(clers.size(), &*clers.begin());
-		stream.write(bitstream);
-		size = stream.elapsed();
-
 	}
 
 	void decode(Stream &stream) {
-
 		max_front = stream.read<uint32_t>();
+		stream.decompress(clers);
+		stream.read(bitstream);
+	}
 
+	void decodeGroups(Stream &stream) {
 		groups.resize(stream.read<uint32_t>());
 		for(Group &g: groups) {
 			g.end = stream.read<uint32_t>();
@@ -90,9 +95,6 @@ public:
 				g.properties[key] = stream.readString();
 			}
 		}
-
-		stream.decompress(clers);
-		stream.read(bitstream);
 	}
 };
 

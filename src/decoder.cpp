@@ -118,6 +118,7 @@ void Decoder::decodePointCloud() {
 
 	std::vector<crt::Face> dummy;
 
+	index.decodeGroups(stream);
 	for(auto it: data)
 		it.second->decode(nvert, stream);
 	for(auto it: data)
@@ -145,6 +146,7 @@ void Decoder::decodePointCloud() {
 	*/
 
 void Decoder::decodeMesh() {
+	index.decodeGroups(stream);
 	index.decode(stream);
 
 	for(auto it: data)

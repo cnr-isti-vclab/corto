@@ -81,6 +81,9 @@ decode: function() {
 
 decodePointCloud: function() {
 	var t = this;
+	t.index = new IndexAttr(t.nvert, t.nface, 0);
+	t.index.decodeGroups(t.stream);
+	t.geometry.groups = t.index.groups;
 	for(var i in t.attributes) {
 		var a = t.attributes[i];
 		a.decode(t.nvert, t.stream);
@@ -92,7 +95,8 @@ decodePointCloud: function() {
 
 decodeMesh: function() {
 	var t = this;
-	t.index = new IndexAttr(t.nvert, t.nface, 0); //USE
+	t.index = new IndexAttr(t.nvert, t.nface, 0);
+	t.index.decodeGroups(t.stream);
 	t.index.decode(t.stream);
 
 	t.vertex_count = 0;

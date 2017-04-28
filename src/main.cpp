@@ -139,10 +139,12 @@ int main(int argc, char *argv[]) {
 	loader.add_normals = add_normals;
 	bool ok = loader.load(input);
 	if(!ok) {
-		cerr << "Failed loading model: " << argv[1] << endl;
+		cerr << "Failed loading model: " << input << endl;
 		return 1;
 	}
 
+	if(pointcloud)
+		loader.nface = 0;
 	pointcloud = (loader.nface == 0 || pointcloud);
 	crt::NormalAttr::Prediction prediction = crt::NormalAttr::BORDER;
 	if(!normal_prediction.empty()) {

@@ -69,25 +69,6 @@ var path = getURLParameter('path');
 if(!path) path = 'models/';
 if(!model) model = 'budda.crt';
 
-
-
-	var request = new XMLHttpRequest();
-	request.open('GET', 'models/bun_zipper.crt');
-	request.responseType = 'arraybuffer';
-	request.onload = function() {
-		var decoder = new CortoDecoder(this.response);
-		var model = decoder.decode();
-		console.log(model.nvert, model.nface, model.groups);
-		console.log('Index: ', model.index);
-		console.log('Positions: ', model.position);
-		console.log('Colors: ', model.color);
-		console.log('Nornmals: ', model.normal);
-		console.log('Tex coords: ', model.uv);
-		//custom attributes can be encoded, see cortolib below for details.
-	}
-	request.send();
-
-
 var loader = new THREE.CORTOLoader({ path: path }); //can pass a material or a multimaterial if you know whats' in the model.
 
 loader.load(model, function(mesh) {

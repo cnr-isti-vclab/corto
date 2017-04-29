@@ -1,4 +1,4 @@
-<p><img width="144" src="http://vcg.isti.cnr.it/corto/img/logo.svg"></p>
+<p><img width="128" src="http://pc-ponchio.isti.cnr.it/corto/img/logo1.svg"></p>
 
 **Corto** is a library for compression and decompression meshes and point clouds (C++ and Javascript).
 
@@ -11,11 +11,16 @@ texture coordinates and custom attributes.
 
 The main focus is on decompression speed, see [performances](#performances), both for C++ lib and javascript.
 
-[corto](#corto) is program to compress .ply and .obj models, [corto.js](#corto.js) a javascript library for WebGL applications and [CORTOLoader](#cortoloader, a threejs loader.
+* [corto](#corto) is program to compress **.ply** and **.obj** models
+* [corto.js](#corto_js) a javascript library for WebGL applications
+* [CORTOLoader](#cortoloader), a threejs loader
 
 This work is based on the compression algorithm developed for the 
 [Nexus](https://github.com/cnr-isti-vclab/nexus) project for multiresolution for creation
 and visualization models.
+
+Entropy compression is based on [Tunstall](#tunstall) coding, decompression require only table lookup and is very fast while
+similar in compression ratio to Huffman where the number of symbols is small.
 
 
 ## Performances
@@ -119,10 +124,12 @@ CORTOLoader.js is similar to [THREE.OBJLoader](https://threejs.org/docs/index.ht
 
 See demo.html for details.
 
-### corto.js
+### corto_js
 
-CortoDecoder decodes a .crt  model
+CortoDecoder decodes a .crt as an arraybuffer and returns an objects with attributes (positions, index, colors etc).
 
+	<script src="js/corto.js"/>
+	<script>
 	var request = new XMLHttpRequest();
 	request.open('GET', 'bun_zipper.crt');
 	request.responseType = 'arraybuffer';
@@ -138,6 +145,7 @@ CortoDecoder decodes a .crt  model
 		//custom attributes can be encoded, see cortolib below for details.
 	}
 	request.send();
+	</script>
 
 ### cortolib
 
@@ -152,4 +160,6 @@ Decoder
 (get nvert nface groups)
 setCoords
 
+### Tunstall
 
+TODO.

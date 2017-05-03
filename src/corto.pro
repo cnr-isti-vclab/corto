@@ -35,7 +35,8 @@ HEADERS += \
     timer.h \
     tinyply.h \
     meshloader.h \
-    objload.h
+    objload.h \
+    corto.h
 
 DISTFILES += \
     plan.md

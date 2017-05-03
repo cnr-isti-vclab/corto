@@ -115,12 +115,23 @@ inline std::istream & operator>>( std::istream & in, ObjModel::FaceVertex & f){
 	if(in >> f.v){
 		if(in.peek() == '/'){
 			in.get();
-			in >> f.t;
-			in.clear();
-			if(in.peek() == '/'){
+
+			if(in.peek() == ' ' || in.peek() == '/') //  12//  unusual Obj format added.
 				in.get();
-				in >> f.n;
+			else {
+
+				in >> f.t;
 				in.clear();
+				if(in.peek() == '/'){
+					in.get();
+
+					if(in.peek() == ' ') //  12/13/  unusual Obj format added.
+						in.get();
+					else {
+						in >> f.n;
+						in.clear();
+					}
+				}
 			}
 		}
 		in.clear();
@@ -128,7 +139,6 @@ inline std::istream & operator>>( std::istream & in, ObjModel::FaceVertex & f){
 		--f.t;
 		--f.n;
 	}
-	// std::cout << f << std::endl;
 	return in;
 }
 

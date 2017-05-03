@@ -20,6 +20,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <deque>
 #include <algorithm>
 
+#include "zpoint.h"
 #include "tunstall.h"
 #include "encoder.h"
 

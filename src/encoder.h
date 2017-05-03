@@ -26,7 +26,6 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <float.h>
 
 #include "cstream.h"
-#include "zpoint.h"
 #include "index_attribute.h"
 #include "vertex_attribute.h"
 #include "color_attribute.h"

@@ -259,7 +259,7 @@ Tunstall.prototype = {
 		}
 
 		//at each step we grow all queues using the most probable sequence
-		while(n_words < t.dictionary_size - n_symbols +1) {
+		while(n_words < t.dictionary_size -1) {
 			//find highest probability word
 			var best = 0;
 			var max_prob = 0;
@@ -284,8 +284,11 @@ Tunstall.prototype = {
 					t.table[pos + k] = t.table[offset + k]; //copy sequence of symbols
 				pos += len;
 				t.table[pos++] = t.probs[i*2]; //append symbol
+				if(i + n_words == t.dictionary_size - 1)
+					break;
 			}
-			t.starts[best] += n_symbols; //move one column
+			if(i == n_symbols)
+				t.starts[best] += n_symbols; //move one column
 			n_words += n_symbols -1;
 		}
 

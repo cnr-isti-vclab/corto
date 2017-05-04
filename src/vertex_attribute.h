@@ -21,6 +21,7 @@ If not, see <http://www.gnu.org/licenses/>.
 
 #include <map>
 #include <string>
+ #include <algorithm>
 #include "cstream.h"
 #include "index_attribute.h"
 

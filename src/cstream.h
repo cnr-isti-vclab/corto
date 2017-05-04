@@ -188,7 +188,8 @@ public:
 	template <class T> void encodeValues(uint32_t size, T *values, int N) {
 		BitStream bitstream(size);
 		//Storing bitstream before logs, allows in decompression to allocate only 1 logs array and reuse it.
-		std::vector<uchar> clogs[N];
+		std::vector<std::vector<uchar> > clogs((size_t)N);
+
 		for(int c = 0; c < N; c++) {
 			auto &logs = clogs[c];
 			logs.resize(size);

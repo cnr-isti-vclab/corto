@@ -51,22 +51,22 @@ public:
 
 
 
-	bool addPositions(float *buffer, float q = 0.0f, Point3f o = Point3f(0.0f));
-	bool addPositions(float *buffer, uint32_t *index, float q = 0.0f, Point3f o = Point3f(0.0f));
-	bool addPositions(float *buffer, uint16_t *index, float q = 0.0f, Point3f o = Point3f(0.0f));
+	bool addPositions(const float *buffer, float q = 0.0f, Point3f o = Point3f(0.0f));
+	bool addPositions(const float *buffer, const uint32_t *index, float q = 0.0f, Point3f o = Point3f(0.0f));
+	bool addPositions(const float *buffer, const uint16_t *index, float q = 0.0f, Point3f o = Point3f(0.0f));
 
-	bool addPositionsBits(float *buffer, int bits);
-	bool addPositionsBits(float *buffer, uint32_t *index, int bits);
-	bool addPositionsBits(float *buffer, uint16_t *index, int bits);
+	bool addPositionsBits(const float *buffer, int bits);
+	bool addPositionsBits(const float *buffer, uint32_t *index, int bits);
+	bool addPositionsBits(const float *buffer, uint16_t *index, int bits);
 
-	bool addNormals(float *buffer, int bits, NormalAttr::Prediction no = NormalAttr::ESTIMATED);
-	bool addNormals(int16_t *buffer, int bits, NormalAttr::Prediction no = NormalAttr::ESTIMATED);
+	bool addNormals(const float *buffer, int bits, NormalAttr::Prediction no = NormalAttr::ESTIMATED);
+	bool addNormals(const int16_t *buffer, int bits, NormalAttr::Prediction no = NormalAttr::ESTIMATED);
 
-	bool addColors(unsigned char *buffer, int rbits = 6, int gbits = 7, int bbits = 6, int abits = 5);
+	bool addColors(const unsigned char *buffer, int rbits = 6, int gbits = 7, int bbits = 6, int abits = 5);
 
-	bool addUvs(float *buffer, float q = 0);
+	bool addUvs(const float *buffer, float q = 0);
 
-	bool addAttribute(const char *name, char *buffer, VertexAttribute::Format format, int components, float q, uint32_t strategy = 0);
+	bool addAttribute(const char *name, const char *buffer, VertexAttribute::Format format, int components, float q, uint32_t strategy = 0);
 	//its your job to fill attr variables appropriately (type and number of components in particular.
 	bool addAttribute(const char *name, char *buffer, VertexAttribute *attr);
 

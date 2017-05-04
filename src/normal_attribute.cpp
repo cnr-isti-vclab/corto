@@ -37,16 +37,18 @@ template <class T> void markBoundary(uint32_t nvert, uint32_t nface, T *index, s
 }
 
 
-template <class T> void estimateNormals(uint32_t nvert, Point3i *coords, uint32_t nface, T *index, std::vector<Point3i> &estimated) {
+template <class T> void estimateNormals(uint32_t nvert, Point3i *coords, uint32_t nface, T *index, std::vector<Point3f> &estimated) {
 	estimated.clear();
-	estimated.resize(nvert, Point3i(0, 0, 0));
+	estimated.resize(nvert, Point3f(0, 0, 0));
 	T *end = index + nface*3;
 	for(T *f = index; f < end; f += 3) {
-		assert(f[0] < nvert && f[1] < nvert && f[2] < nvert);
-		Point3i &p0 = coords[f[0]];
+		Point3i &p0 = coords[f[0]]; //overflow!
 		Point3i &p1 = coords[f[1]];
 		Point3i &p2 = coords[f[2]];
-		Point3i n = (( p1 - p0) ^ (p2 - p0));
+		Point3f v0(p0[0], p0[1], p0[2]);
+		Point3f v1(p1[0], p1[1], p1[2]);
+		Point3f v2(p2[0], p2[1], p2[2]);
+		Point3f n = (( v1 - v0) ^ (v2 - v0));
 		estimated[f[0]] += n;
 		estimated[f[1]] += n;
 		estimated[f[2]] += n;
@@ -62,8 +64,9 @@ void NormalAttr::quantize(uint32_t nvert, char *buffer) {
 	Point2i *normals = (Point2i *)&*values.begin();
 	switch(format) {
 	case FLOAT:
-		for(uint32_t i = 0; i < nvert; i++)
+		for(uint32_t i = 0; i < nvert; i++) {
 			normals[i] = toOcta(((Point3f *)buffer)[i], (int)q);
+		}
 		break;
 	case INT32:
 		for(uint32_t i = 0; i < nvert; i++)
@@ -109,15 +112,17 @@ void NormalAttr::preDelta(uint32_t nvert,  uint32_t nface, std::map<std::string,
 
 	uint32_t *start = &*index.faces.begin();
 	//estimate normals using vertices and faces existing.
-	std::vector<Point3i> estimated;
+	std::vector<Point3f> estimated;
 	estimateNormals<uint32_t>(nvert, (Point3i *)&*coord->values.begin(), nface, start, estimated);
 
 	if(prediction == BORDER)
 		markBoundary<uint32_t>(nvert, nface, start, boundary); //mark boundary points on original vertices.
 
 	Point2i *v= (Point2i *)&*values.begin();
-	for(uint32_t i = 0; i < nvert; i++)
-		v[i] -= toOcta(estimated[i], q);
+	for(uint32_t i = 0; i < nvert; i++) {
+		Point2i n = toOcta(estimated[i], q);
+		v[i] -= n;
+	}
 }
 
 void NormalAttr::deltaEncode(std::vector<Quad> &context) {
@@ -127,10 +132,13 @@ void NormalAttr::deltaEncode(std::vector<Quad> &context) {
 		diffs[0] = values[context[0].t*2];
 		diffs[1] = values[context[0].t*2+1];
 
+		cout << "Normal: " << diffs[0] << endl;
 		for(uint32_t i = 1; i < context.size(); i++) {
 			Quad &quad = context[i];
 			diffs[i*2 + 0] = values[quad.t*2 + 0] - values[quad.a*2 + 0];
 			diffs[i*2 + 1] = values[quad.t*2 + 1] - values[quad.a*2 + 1];
+			if(i < 10)
+				cout << "Normal: " << values[quad.t*2 + 0] << endl;
 		}
 		diffs.resize(context.size()*2); //unreferenced vertices
 
@@ -140,8 +148,8 @@ void NormalAttr::deltaEncode(std::vector<Quad> &context) {
 		for(uint32_t i = 0; i < context.size(); i++) {
 			Quad &quad = context[i];
 			if(prediction != BORDER || boundary[quad.t] != 0) { //boundary mark is in old index.
-				for(int c = 0; c < 2; c++)
-					diffs[count*2 + c] = values[quad.t*2 + c];
+				diffs[count*2 + 0] = values[quad.t*2 + 0];
+				diffs[count*2 + 1] = values[quad.t*2 + 1];
 				count++;
 			}
 		}
@@ -200,7 +208,7 @@ void NormalAttr::postDelta(uint32_t nvert, uint32_t nface,
 	if(!coord)
 		throw "Position attr has been overloaded, Use DIFF normal strategy instead.";
 
-	vector<Point3i> estimated(nvert, Point3i(0, 0, 0));
+	vector<Point3f> estimated(nvert, Point3f(0, 0, 0));
 	if(index.faces32)
 		estimateNormals<uint32_t>(nvert, (Point3i *)coord->buffer, nface, index.faces32, estimated);
 	else
@@ -236,27 +244,28 @@ void NormalAttr::dequantize(uint32_t nvert) {
 	case INT16:
 		for(uint32_t i = 0; i < nvert; i++)
 			((Point3s *)buffer)[i] = toSphere(Point2s(diffs[i*2], diffs[i*2 + 1]), (int)q);
+		break;
 	default: throw "Format not supported for normal attribute (float, int32 or int16 only)";
 	}
 }
 
-void NormalAttr::computeNormals(Point3s *normals, std::vector<Point3i> &estimated) {
+void NormalAttr::computeNormals(Point3s *normals, std::vector<Point3f> &estimated) {
 	uint32_t nvert = estimated.size();
 
+	Point2i *diffp = (Point2i *)&*diffs.begin();
 	int count = 0; //here for the border.
 	for(unsigned int i = 0; i < nvert; i++) {
-		Point3i &e = estimated[i];
+		Point3f &e = estimated[i];
 		Point3s &n = normals[i];
 
 		if(prediction == ESTIMATED || boundary[i]) {
-			int32_t *d = &diffs[count*2];
+			Point2i &d = diffp[count++];
 			Point2i qn = toOcta(e, (int)q);
-			n = toSphere(Point2s(qn[0] + d[0], qn[0] + d[1]), (int)q);
-			count++;
+			n = toSphere(Point2s(qn[0] + d[0], qn[1] + d[1]), (int)q);
 		} else {//no correction
 			float len = e.norm();
 			if(len < 0.00001f)
-				e = Point3i(0, 0, 1);
+				e = Point3f(0, 0, 1);
 			else {
 				len = 32767.0f/len;
 				for(int k = 0; k < 3; k++)
@@ -266,14 +275,15 @@ void NormalAttr::computeNormals(Point3s *normals, std::vector<Point3i> &estimate
 	}
 }
 
-void NormalAttr::computeNormals(Point3f *normals, std::vector<Point3i> &estimated) {
+void NormalAttr::computeNormals(Point3f *normals, std::vector<Point3f> &estimated) {
 	uint32_t nvert = estimated.size();
 
 	Point2i *diffp = (Point2i *)&*diffs.begin();
 	int count = 0; //here for the border.
 	for(unsigned int i = 0; i < nvert; i++) {
-		Point3i &e = estimated[i];
+		Point3f &e = estimated[i];
 		Point3f &n = normals[i];
+
 		if(prediction == ESTIMATED || boundary[i]) {
 			Point2i &d = diffp[count++];
 			Point2i qn = toOcta(e, (int)q);

@@ -54,8 +54,8 @@ public:
 	virtual void dequantize(uint32_t nvert);
 
 	//Normal estimation
-	void computeNormals(Point3s *normals, std::vector<Point3i> &estimated);
-	void computeNormals(Point3f *normals, std::vector<Point3i> &estimated);
+	void computeNormals(Point3s *normals, std::vector<Point3f> &estimated);
+	void computeNormals(Point3f *normals, std::vector<Point3f> &estimated);
 
 
 	//Conversion to Octahedron encoding.
@@ -74,10 +74,11 @@ public:
 
 	static Point2i toOcta(Point3i v, int unit) {
 
-		Point2i p(v[0]*unit, v[1]*unit);
 		int len = (abs(v[0]) + abs(v[1]) + abs(v[2]));
 		if(len == 0)
 			return Point2i(0, 0);
+
+		Point2i p(v[0]*unit, v[1]*unit);
 		p /= len;
 
 		if(v[2] < 0) {

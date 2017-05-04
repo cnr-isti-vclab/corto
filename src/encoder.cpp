@@ -41,7 +41,7 @@ Encoder::Encoder(uint32_t _nvert, uint32_t _nface, Stream::Entropy entropy):
   for now just use volume and number of points
   could also quantize to find a side where the points halve and use 1/10 */
 
-static float quantizationStep(int nvert, float *buffer, int bits) {
+static float quantizationStep(int nvert, const float *buffer, int bits) {
 	Point3f *input = (Point3f *)buffer;
 
 	Point3f min = input[0];
@@ -57,19 +57,19 @@ static float quantizationStep(int nvert, float *buffer, int bits) {
 	return q;
 }
 
-bool Encoder::addPositionsBits(float *buffer, int bits) {
+bool Encoder::addPositionsBits(const float *buffer, int bits) {
 	return addPositions(buffer, quantizationStep(nvert, buffer, bits));
 }
 
-bool Encoder::addPositionsBits(float *buffer, uint32_t *index, int bits) {
+bool Encoder::addPositionsBits(const float *buffer, uint32_t *index, int bits) {
 	return addPositions(buffer, index, quantizationStep(nvert, buffer, bits));
 }
 
-bool Encoder::addPositionsBits(float *buffer, uint16_t *index, int bits) {
+bool Encoder::addPositionsBits(const float *buffer, uint16_t *index, int bits) {
 	return addPositions(buffer, index, quantizationStep(nvert, buffer, bits));
 }
 
-bool Encoder::addPositions(float *buffer, float q, Point3f o) {
+bool Encoder::addPositions(const float *buffer, float q, Point3f o) {
 	std::vector<Point3f> coords(nvert);
 	Point3f *input = (Point3f *)buffer;
 	for(uint32_t i = 0; i < nvert; i++)
@@ -93,7 +93,7 @@ bool Encoder::addPositions(float *buffer, float q, Point3f o) {
 
 
 /* if not q specified use 1/10th of average leght of edge  */
-bool Encoder::addPositions(float *buffer, uint32_t *_index, float q, Point3f o) {
+bool Encoder::addPositions(const float *buffer, const uint32_t *_index, float q, Point3f o) {
 	memcpy(&*index.faces.begin(), _index,  nface*12);
 
 	Point3f *coords = (Point3f *)buffer;
@@ -106,9 +106,9 @@ bool Encoder::addPositions(float *buffer, uint32_t *_index, float q, Point3f o) 
 	return addPositions(buffer, q, o);
 }
 
-bool Encoder::addPositions(float *buffer, uint16_t *_index, float q, Point3f o) {
+bool Encoder::addPositions(const float *buffer, const uint16_t *_index, float q, Point3f o) {
 	vector<uint32_t> tmp(nface*3);
-	for(uint32_t i = 0; i < nvert*3; i++)
+	for(uint32_t i = 0; i < nface*3; i++)
 		tmp[i] = _index[i];
 	return addPositions(buffer, &*tmp.begin(), q, o);
 }
@@ -132,7 +132,7 @@ bool Encoder::addPositions(float *buffer, uint16_t *_index, float q, Point3f o) 
 	}
 } */
 
-bool Encoder::addNormals(float *buffer, int bits, NormalAttr::Prediction no) {
+bool Encoder::addNormals(const float *buffer, int bits, NormalAttr::Prediction no) {
 
 	NormalAttr *normal = new NormalAttr(bits);
 	normal->format = VertexAttribute::FLOAT;
@@ -143,7 +143,7 @@ bool Encoder::addNormals(float *buffer, int bits, NormalAttr::Prediction no) {
 	return ok;
 }
 
-bool Encoder::addNormals(int16_t *buffer, int bits, NormalAttr::Prediction no) {
+bool Encoder::addNormals(const int16_t *buffer, int bits, NormalAttr::Prediction no) {
 	assert(bits <= 16);
 	vector<Point3f> tmp(nvert*3);
 	for(uint32_t i = 0; i < nvert; i++)
@@ -152,7 +152,7 @@ bool Encoder::addNormals(int16_t *buffer, int bits, NormalAttr::Prediction no) {
 	return addNormals((float *)&*tmp.begin(), bits, no);
 }
 
-bool Encoder::addColors(unsigned char *buffer, int rbits, int gbits, int bbits, int abits) {
+bool Encoder::addColors(const unsigned char *buffer, int rbits, int gbits, int bbits, int abits) {
 	ColorAttr *color = new ColorAttr();
 	color->setQ(rbits, gbits, bbits, abits);
 	color->format = VertexAttribute::UINT8;
@@ -161,7 +161,7 @@ bool Encoder::addColors(unsigned char *buffer, int rbits, int gbits, int bbits, 
 	return ok;
 }
 
-bool Encoder::addUvs(float *buffer, float q) {
+bool Encoder::addUvs(const float *buffer, float q) {
 	GenericAttr<int> *uv = new GenericAttr<int>(2);
 	uv->q = q;
 	uv->format = VertexAttribute::FLOAT;
@@ -170,7 +170,7 @@ bool Encoder::addUvs(float *buffer, float q) {
 	return ok;
 }
 
-bool Encoder::addAttribute(const char *name, char *buffer, VertexAttribute::Format format, int components, float q, uint32_t strategy) {
+bool Encoder::addAttribute(const char *name, const char *buffer, VertexAttribute::Format format, int components, float q, uint32_t strategy) {
 	if(data.count(name)) return false;
 	GenericAttr<int> *attr = new GenericAttr<int>(components);
 
@@ -343,7 +343,7 @@ void Encoder::encodeMesh() {
 	for(auto it: data)
 		it.second->preDelta(nvert, nface, data, index);
 
-	cout << "Unreference vertices: " << nvert - current_vertex << " remaining: " << current_vertex << endl;
+	//cout << "Unreference vertices: " << nvert - current_vertex << " remaining: " << current_vertex << endl;
 	nvert = current_vertex;
 	prediction.resize(nvert);
 
@@ -440,6 +440,9 @@ static void buildTopology(vector<McFace> &faces) {
 			edges.push_back(McEdge(i, k, face.f[kk], face.f[kkk]));
 		}
 	}
+	for(auto &e: edges)
+		assert(!(e < e));
+
 	sort(edges.begin(), edges.end());
 
 	McEdge previous(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);

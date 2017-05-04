@@ -282,20 +282,24 @@ void MeshLoader::addNormals() {
 	norms.resize(nvert*3, 0);
 
 	uint32_t *end = index.data() + index.size();
+	Point3f *coord = (Point3f *)coords.data();
+	Point3f *norm = (Point3f *)norms.data();
 	for(uint32_t *f = index.data(); f < end; f += 3) {
 		assert(f[0]*3 < coords.size());
-		Point3f p0 = *(Point3f *)&coords[f[0]*3];
-		Point3f p1 = *(Point3f *)&coords[f[1]*3];
-		Point3f p2 = *(Point3f *)&coords[f[2]*3];
+		Point3f &p0 = coord[f[0]];
+		Point3f &p1 = coord[f[1]];
+		Point3f &p2 = coord[f[2]];
 		Point3f n = (( p1 - p0) ^ (p2 - p0));
-		*(Point3f *)&norms[f[0]*3] += n;
-		*(Point3f *)&norms[f[1]*3] += n;
-		*(Point3f *)&norms[f[2]*3] += n;
+		norm[f[0]] += n+Point3f(10, 10, 10);
+		norm[f[1]] += n+Point3f(10, 10, 10);
+		norm[f[2]] += n+Point3f(10, 10, 10);
 	}
-	for(uint32_t i = 0; i < nvert*3; i+= 3) {
-		Point3f &n = *(Point3f *)&norms[i];
+	for(uint32_t i = 0; i < nvert; i++) {
+		Point3f &n = norm[i];
 		float len = n.norm();
-		if(len < 0.00001) n = Point3f(0, 0, 1);
-		else n /= len;
+		if(len == 0)
+			n = Point3f(0, 0, 1);
+		else
+			n /= len;
 	}
 }

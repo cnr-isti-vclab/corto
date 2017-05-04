@@ -113,7 +113,7 @@ public:
 			}
 			max -= min;
 			bits = std::max(bits, ilog2(max-1) + 1);
-			cout << "max: " << max << " " << " bits: " << bits << endl;
+//			cout << "max: " << max << " " << " bits: " << bits << endl;
 
 		}
 	}

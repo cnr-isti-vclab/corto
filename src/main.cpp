@@ -52,8 +52,8 @@ FILE is the path to a .ply or a .obj 3D model.
   -q <step>: quantization step unit (float) instead of bits for vertex coordinates
   -N <prediction>: normal prediction can be:
 	  delta: use difference from previous normal (fastest)
-	  estimated: use difference from compute normals (cheaper)
-	  border: store difference only for boundary vertices (cheapest, inaccurate)
+	  estimated: use difference from compute normals (smaller)
+	  border: store difference only for boundary vertices (smaller, inaccurate)
   -P <file.ply>: decompress and save as .ply for debugging purpouses
 )use";
 }
@@ -158,6 +158,7 @@ int main(int argc, char *argv[]) {
 		else {
 			cerr << "Unknown normal prediction: " << prediction << " expecting: delta, border or estimated" << endl;
 			return 1;
+
 		}
 	}
 

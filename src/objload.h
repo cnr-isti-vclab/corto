@@ -272,7 +272,7 @@ IndexedModel convertToModel( const ObjModel & obj ) {
 				model.normal.push_back(0);
 			}
 		}
-		if(obj.texCoord.size())
+		if(obj.texCoord.size()) {
 			if(last.t >= 0) {
 				model.texCoord.push_back(obj.texCoord[last.t*2+0]);
 				model.texCoord.push_back(obj.texCoord[last.t*2+1]);
@@ -280,6 +280,7 @@ IndexedModel convertToModel( const ObjModel & obj ) {
 				model.texCoord.push_back(0);
 				model.texCoord.push_back(0);
 			}
+		}
 	}
 
 

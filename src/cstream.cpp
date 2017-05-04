@@ -59,7 +59,7 @@ void Stream::decompress(vector<uchar> &data) {
 		uint32_t size = read<uint32_t>();
 		data.resize(size);
 		uchar *c = readArray<uchar>(size);
-		memcpy(&*data.begin(), c, size);
+		memcpy(data.data(), c, size);
 		break;
 	}
 	case TUNSTALL: tunstall_decompress(data); break;
@@ -81,7 +81,7 @@ int Stream::tunstall_compress(uchar *data, int size) {
 	unsigned char *compressed_data = t.compress(data, size, compressed_size);
 
 	write<uchar>(t.probabilities.size());
-	writeArray<uchar>(t.probabilities.size()*2, (uchar *)&*t.probabilities.begin());
+	writeArray<uchar>(t.probabilities.size()*2, (uchar *)t.probabilities.data());
 
 
 	write<int>(size);
@@ -97,7 +97,7 @@ void Stream::tunstall_decompress(vector<uchar> &data) {
 	int nsymbols = read<uchar>();
 	uchar *probs = readArray<uchar>(nsymbols*2);
 	t.probabilities.resize(nsymbols);
-	memcpy(&*t.probabilities.begin(), probs, nsymbols*2);
+	memcpy(t.probabilities.data(), probs, nsymbols*2);
 
 	t.createDecodingTables2();
 
@@ -108,7 +108,7 @@ void Stream::tunstall_decompress(vector<uchar> &data) {
 	unsigned char *compressed_data = readArray<unsigned char>(compressed_size);
 
 	if(size)
-		t.decompress(compressed_data, compressed_size, &*data.begin(), size);
+		t.decompress(compressed_data, compressed_size, data.data(), size);
 }
 
 #ifdef ENTROPY_TESTS
@@ -134,7 +134,7 @@ void Stream::zlib_decompress(vector<uchar> &data) {
 	if(!size) return;
 
 	unsigned char *compressed_data = readArray<unsigned char>(compressed_size);
-	uncompress((Bytef *)&*data.begin(), &size, (Bytef *)compressed_data, compressed_size);
+	uncompress((Bytef *)data.data(), &size, (Bytef *)compressed_data, compressed_size);
 }
 
 int Stream::lz4_compress(uchar *data, int size) {
@@ -158,7 +158,7 @@ void Stream::lz4_decompress(vector<uchar> &data) {
 	if(!size) return;
 
 	uchar *compressed_data = readArray<uchar>(compressed_size);
-	LZ4_decompress_safe((const char *)compressed_data, (char *)&*data.begin(), compressed_size, size);
+	LZ4_decompress_safe((const char *)compressed_data, (char *)data.data(), compressed_size, size);
 }
 #endif
 

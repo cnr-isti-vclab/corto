@@ -73,7 +73,7 @@ void ColorAttr::dequantize(uint32_t nvert) {
 	case FLOAT:
 	{
 		std::vector<Color4b> colors(nvert);
-		memcpy(&*colors.begin(), buffer, nvert*sizeof(Color4b));
+		memcpy(colors.data(), buffer, nvert*sizeof(Color4b));
 		for(uint32_t i = 0; i < nvert; i++) {
 			Color4b &c = colors[i];
 			c = c.toRGB();

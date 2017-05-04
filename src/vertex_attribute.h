@@ -138,9 +138,9 @@ public:
 	virtual void encode(uint32_t nvert, Stream &stream) {
 		stream.restart();
 		if(strategy & CORRELATED)
-			stream.encodeArray<T>(nvert, &*diffs.begin(), N);
+			stream.encodeArray<T>(nvert, diffs.data(), N);
 		else
-			stream.encodeValues<T>(nvert, &*diffs.begin(), N);
+			stream.encodeValues<T>(nvert, diffs.data(), N);
 
 		size = stream.elapsed();
 	}

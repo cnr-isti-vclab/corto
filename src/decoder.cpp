@@ -222,7 +222,7 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 				if(split & (1<<k))
 					v = index.bitstream.read(splitbits);
 				else {
-					assert(vertex_count < (int)index.prediction.size());
+					assert(vertex_count < index.prediction.size());
 					index.prediction[vertex_count] = Face(last_index, last_index, last_index);
 					last_index = v = vertex_count++;
 				}

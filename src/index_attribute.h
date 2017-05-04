@@ -63,7 +63,7 @@ public:
 		stream.write<uint32_t>(max_front);
 
 		stream.restart();
-		stream.compress(clers.size(), &*clers.begin());
+		stream.compress(clers.size(), clers.data());
 		stream.write(bitstream);
 		size = stream.elapsed();
 	}

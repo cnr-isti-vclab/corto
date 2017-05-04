@@ -94,7 +94,7 @@ bool Encoder::addPositions(const float *buffer, float q, Point3f o) {
 
 /* if not q specified use 1/10th of average leght of edge  */
 bool Encoder::addPositions(const float *buffer, const uint32_t *_index, float q, Point3f o) {
-	memcpy(&*index.faces.begin(), _index,  nface*12);
+	memcpy(index.faces.data(), _index,  nface*12);
 
 	Point3f *coords = (Point3f *)buffer;
 	if(q == 0) { //estimate quantization on edge length average.
@@ -149,7 +149,7 @@ bool Encoder::addNormals(const int16_t *buffer, int bits, NormalAttr::Prediction
 	for(uint32_t i = 0; i < nvert; i++)
 		for(int k = 0; k < 3; k++)
 			tmp[i][k] = buffer[i*3 + k]/32767.0f;
-	return addNormals((float *)&*tmp.begin(), bits, no);
+	return addNormals((float *)tmp.data(), bits, no);
 }
 
 bool Encoder::addColors(const unsigned char *buffer, int rbits, int gbits, int bbits, int abits) {
@@ -230,7 +230,7 @@ void Encoder::encodePointCloud() {
 	if(!coord)
 		throw "Position attr has been overloaded, Use DIFF normal strategy instead.";
 
-	Point3i *coords = (Point3i *)&*coord->values.begin();
+	Point3i *coords = (Point3i *)coord->values.data();
 
 	std::vector<ZPoint> zpoints(nvert);
 

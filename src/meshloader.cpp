@@ -111,7 +111,7 @@ bool MeshLoader::loadPly(const std::string &filename) {
 		groups.push_back(Group(index.size()/3));
 	}
 
-	int texcount = 0;
+	uint32_t texcount = 0;
 	for(auto &str: ply.comments)
 		if(startsWith(str, "TextureFile") && texcount < groups.size())
 			groups[texcount++].properties["texture"] = str.substr(12, str.size());

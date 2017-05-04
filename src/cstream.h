@@ -210,7 +210,7 @@ public:
 
 		write(bitstream);
 		for(int c = 0; c < N; c++)
-			compress(clogs[c].size(), &*clogs[c].begin());
+			compress(clogs[c].size(), clogs[c].data());
 	}
 
 	template <class T> int decodeValues(T *values, int N) {
@@ -259,7 +259,7 @@ public:
 		}
 
 		write(bitstream);
-		compress(logs.size(), &*logs.begin());
+		compress(logs.size(), logs.data());
 	}
 
 	template <class T> int decodeArray(T *values, int N) {

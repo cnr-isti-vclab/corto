@@ -176,28 +176,28 @@ int main(int argc, char *argv[]) {
 
 	if(pointcloud) {
 		if(vertex_bits)
-			encoder.addPositionsBits(&*loader.coords.begin(), vertex_bits);
+			encoder.addPositionsBits(loader.coords.data(), vertex_bits);
 		else
-			encoder.addPositions(&*loader.coords.begin(), vertex_q);
+			encoder.addPositions(loader.coords.data(), vertex_q);
 
 	} else {
 		if(vertex_bits)
-			encoder.addPositionsBits(&*loader.coords.begin(), &*loader.index.begin(), vertex_bits);
+			encoder.addPositionsBits(loader.coords.data(), loader.index.data(), vertex_bits);
 		else
-			encoder.addPositions(&*loader.coords.begin(), &*loader.index.begin(), vertex_q);
+			encoder.addPositions(loader.coords.data(), loader.index.data(), vertex_q);
 	}
 	//TODO add suppor for wedge and face attributes adding simplex attribute
 	if(loader.norms.size() && norm_bits > 0)
-		encoder.addNormals(&*loader.norms.begin(), norm_bits, prediction);
+		encoder.addNormals(loader.norms.data(), norm_bits, prediction);
 
 	if(loader.colors.size() && r_bits > 0)
-		encoder.addColors(&*loader.colors.begin(), r_bits, g_bits, b_bits, a_bits);
+		encoder.addColors(loader.colors.data(), r_bits, g_bits, b_bits, a_bits);
 
 	if(loader.uvs.size() && uv_bits > 0)
-		encoder.addUvs(&*loader.uvs.begin(), pow(2, -uv_bits));
+		encoder.addUvs(loader.uvs.data(), pow(2, -uv_bits));
 
 	if(loader.radiuses.size())
-		encoder.addAttribute("radius", (char *)&*loader.radiuses.begin(), crt::VertexAttribute::FLOAT, 1, 1.0f);
+		encoder.addAttribute("radius", (char *)loader.radiuses.data(), crt::VertexAttribute::FLOAT, 1, 1.0f);
 	encoder.encode();
 
 
@@ -257,26 +257,26 @@ int main(int argc, char *argv[]) {
 	out.nvert = encoder.nvert;
 	out.nface = encoder.nface;
 	out.coords.resize(nvert*3);
-	decoder.setPositions(&*out.coords.begin());
+	decoder.setPositions(out.coords.data());
 	if(decoder.data.count("normal")) {
 		out.norms.resize(nvert*3);
-		decoder.setNormals(&*out.norms.begin());
+		decoder.setNormals(out.norms.data());
 	}
 	if(decoder.data.count("color")) {
 		out.colors.resize(nvert*4);
-		decoder.setColors(&*out.colors.begin());
+		decoder.setColors(out.colors.data());
 	}
 	if(decoder.data.count("uv")) {
 		out.uvs.resize(nvert*2);
-		decoder.setUvs(&*out.uvs.begin());
+		decoder.setUvs(out.uvs.data());
 	}
 	if(decoder.data.count("radius")) {
 		out.radiuses.resize(nvert);
-		decoder.setAttribute("radius", (char *)&*out.radiuses.begin(), crt::VertexAttribute::FLOAT);
+		decoder.setAttribute("radius", (char *)out.radiuses.data(), crt::VertexAttribute::FLOAT);
 	}
 	if(decoder.nface) {
 		out.index.resize(nface*3);
-		decoder.setIndex(&*out.index.begin());
+		decoder.setIndex(out.index.data());
 	}
 	decoder.decode();
 

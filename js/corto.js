@@ -16,7 +16,6 @@ a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 BitStream = function(array) {
 	var t = this;
 	t.a = array;
@@ -260,7 +259,7 @@ Tunstall.prototype = {
 		}
 
 		//at each step we grow all queues using the most probable sequence
-		while(n_words < t.dictionary_size - n_symbols +1) {
+		while(n_words < t.dictionary_size -1) {
 			//find highest probability word
 			var best = 0;
 			var max_prob = 0;
@@ -285,8 +284,11 @@ Tunstall.prototype = {
 					t.table[pos + k] = t.table[offset + k]; //copy sequence of symbols
 				pos += len;
 				t.table[pos++] = t.probs[i*2]; //append symbol
+				if(i + n_words == t.dictionary_size - 1)
+					break;
 			}
-			t.starts[best] += n_symbols; //move one column
+			if(i == n_symbols)
+				t.starts[best] += n_symbols; //move one column
 			n_words += n_symbols -1;
 		}
 
@@ -333,21 +335,21 @@ Tunstall.prototype = {
 	}
 }
 /*
-Nexus
+Corto
 
-Copyright(C) 2012 - Federico Ponchio
+Copyright(C) 2017 - Federico Ponchio
 ISTI - Italian National Research Council - Visual Computing Lab
 
 This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
 (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
-for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
+a copy of the GNU General Public License along with Corto.
+If not, see <http://www.gnu.org/licenses/>.
 */
 
 
@@ -731,22 +733,23 @@ decodeGroups: function(stream) {
 };
 
 /*
-Nexus
+Corto
 
-Copyright(C) 2012 - Federico Ponchio
+Copyright(C) 2017 - Federico Ponchio
 ISTI - Italian National Research Council - Visual Computing Lab
 
 This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
 (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License (http://www.gnu.org/licenses/gpl.txt)
-for more details.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
+a copy of the GNU General Public License along with Corto.
+If not, see <http://www.gnu.org/licenses/>.
 */
+
 
 function CortoDecoder(data) {
 	var t = this;

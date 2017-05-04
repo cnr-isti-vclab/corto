@@ -125,13 +125,16 @@ void Tunstall::createDecodingTables2() {
 	if(n_symbols <= 1) return;
 
 	uint32_t dictionary_size = 1<<wordsize;
-	std::vector<TSymbol> queues(2*dictionary_size);
+	//std::vector<TSymbol> queues(2*dictionary_size);
+	vector<uint32_t> queues(2*dictionary_size);
+	index.resize(2*dictionary_size);
+	lengths.resize(2*dictionary_size);
+
 	size_t end = 0;
 	vector<unsigned char> &buffer = table;
 	assert(wordsize == 8);
 	buffer.resize(8192);
-	//buffer.resize(65536);
-	uint32_t pos = 0; //keep track of buffer lenght/
+	uint32_t pos = 0;    //keep track of buffer lenght/
 	vector<uint32_t> starts(n_symbols);
 
 	uint32_t n_words = 0;
@@ -147,13 +150,8 @@ void Tunstall::createDecodingTables2() {
 	}
 
 	if(count >= 16) { //Very low entropy results in large tables > 8K.
-		//  AAAA...A count times.    //only 1 word
-		//  AAAA...B and we need all shorter to b so count
-		//  AAAA...Z
-		//nwords = (n_symbols-1)*count + 1 <= dictionary_size;
-		//count <= (dictionary_size -1)/(n_symbols -1);
-		//test 255/1 -> count = 255   A...A + 255 AAAAAB
-		//test 255/2 -> count = 127   A...A + 127*A..B + 127*A...C = 255.
+		//  AAAA...A first word
+		//  AAAA...B all shorter A...B can be compacted on the last one.
 
 		buffer[pos++] = probabilities[0].symbol;
 		for(uint32_t k = 1; k < n_symbols; k++) {
@@ -167,23 +165,26 @@ void Tunstall::createDecodingTables2() {
 
 		for(uint32_t col = 0; col < count; col++) {
 			for(uint32_t row = 1; row < n_symbols; row++) {
-				TSymbol &s = queues[row + col*n_symbols];
+				uint32_t dest = row + col*n_symbols;
+				uint32_t &probability = queues[dest];
 				if(col == 0)
-					s.probability = (probabilities[row].probability<<8);
+					probability = (probabilities[row].probability<<8);
 				else
-					s.probability = (prob * (probabilities[row].probability<<8)) >> 16;
-				s.offset = row*count - col;
-				s.length = col+1;
+					probability = (prob * (probabilities[row].probability<<8)) >> 16;
+				index[dest] = row*count - col;
+				lengths[dest] = col+1;
 			}
 			if(col == 0)
 				prob = p0;
 			else
 				prob = (prob*p0) >> 16;
 		}
-		TSymbol &first = queues[(count-1)*n_symbols];
-		first.probability = prob;
-		first.offset = 0;
-		first.length = count;
+
+		uint32_t first = (count-1)*n_symbols;
+		//TSymbol &first = queues[];
+		queues[first] = prob;
+		index[first] = 0;
+		lengths[first] = count;
 		n_words = 1 + count*(n_symbols - 1);
 		end = count*n_symbols;
 		assert(n_words == pos);
@@ -192,51 +193,50 @@ void Tunstall::createDecodingTables2() {
 		n_words = n_symbols;
 		//initialize adding all symbols to queues
 		for(uint32_t i = 0; i < n_symbols; i++) {
-			TSymbol s;
-			s.probability = (uint32_t)(probabilities[i].probability<<8);
-			s.offset = pos;
-			s.length = 1;
-
 			starts[i] = i;
-			queues[end++] = s;
+			queues[end] = (uint32_t)(probabilities[i].probability<<8);
+			index[end] = pos;
+			lengths[end++] = 1;
 			buffer[pos++] = probabilities[i].symbol;
 		}
 	}
 
-	while(n_words < dictionary_size - n_symbols +1) {
+	while(n_words < dictionary_size - 1) {
 		//find highest probability word
-		int best = 0;
+		uint32_t best = 0;
 		uint32_t max_prob = 0;
 		for(uint32_t i = 0; i < n_symbols; i++) {
-			uint32_t p = queues[starts[i]].probability ;
+			uint32_t p = queues[starts[i]];
 			if(p > max_prob) {
 				best = i;
 				max_prob = p;
 			}
 		}
-		TSymbol &symbol = queues[starts[best]];
+		uint32_t symbol = starts[best];
+		uint32_t probability = queues[symbol];
+		uint32_t offset = index[symbol];
+		uint32_t length = lengths[symbol];
+		uint32_t r = 0;
+		for(; r < n_symbols; r++) {
+			uint32_t p = probabilities[r].probability;
+			queues[end] = ( (probability * (unsigned int)(p<<8) )>>16);
+			index[end] = pos;
+			lengths[end++] = length + 1;
 
-		for(uint32_t i = 0; i < n_symbols; i++) {
-			uint32_t p = probabilities[i].probability;
-			TSymbol s;
-			s.probability = ( ( symbol.probability * (unsigned int)(p<<8) )>>16);
-			s.offset = pos;
-			s.length = symbol.length + 1;
-			assert(pos + symbol.length < buffer.size());
-			memcpy(&buffer[pos], &buffer[symbol.offset], symbol.length);
-			pos += symbol.length;
-			buffer[pos++] = probabilities[i].symbol;
-			queues[end++] = s;
+			assert(pos + length < buffer.size());
+			memcpy(&buffer[pos], &buffer[offset], length);
+			pos += length;
+			buffer[pos++] = probabilities[r].symbol;
+
+			if(n_words + r == dictionary_size -1)
+				break;
 		}
-		starts[best] += n_symbols;
+		if(r == n_symbols)
+			starts[best] += n_symbols; //remove word only if all other rows expanded.
 		n_words += n_symbols -1;
 	}
-	index.clear();
-	lengths.clear();
 
-	//build table and index
-	index.resize(n_words);
-	lengths.resize(n_words);
+	//compact index and lengths
 	size_t word = 0;
 	for(size_t i = 0, row = 0; i < end; i++, row++) {
 		if(row >= n_symbols)
@@ -244,12 +244,12 @@ void Tunstall::createDecodingTables2() {
 		if(starts[row] > i)
 			continue;
 
-		TSymbol &s = queues[i];
-		index[word] = s.offset;
-		lengths[word] = s.length;
+		index[word] = index[i];
+		lengths[word] = lengths[i];
 		word++;
 	}
-	//cout << "Table size: " << pos << endl;
+	index.resize(dictionary_size);
+	lengths.resize(dictionary_size);
 }
 
 void Tunstall::createDecodingTables() {
@@ -351,7 +351,7 @@ void Tunstall::createEncodingTables() {
 	offsets.resize(lookup_table_size, 0xffffff); //this is enough for quite large tables.
 	for(size_t i = 0; i < index.size(); i++) {
 		int low, high;
-		int offset = 0;
+		int offset = 0; //keeps track of how far we are in the word.
 		int table_offset = 0;
 		while(1) {
 			wordCode(&table[index[i] + offset], lengths[i] - offset, low, high);
@@ -364,11 +364,14 @@ void Tunstall::createEncodingTables() {
 
 			//word is too long
 			//check if some other word already did this:
-			if(offsets[table_offset + low] == 0xffffff) { //add
+			int w = offsets[table_offset + low];
+			//if w = 0xfffff (another incomplete word with same starting was found
+			// if w >= 0 (another complete word) we extend the table still pointing to w,
+			//    but will be overwritten by longer words.
+			if(w >= 0) { //add
 				offsets[table_offset + low] = -offsets.size();
-				offsets.resize(offsets.size() + lookup_table_size, 0xffffff);
+				offsets.resize(offsets.size() + lookup_table_size, w);
 			}
-
 			table_offset = -offsets[table_offset + low];
 			offset += lookup_size;
 		}

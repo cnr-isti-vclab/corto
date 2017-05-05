@@ -26,7 +26,7 @@ SET(SOURCES
 
 ADD_LIBRARY(corto STATIC ${SOURCES} ${HEADERS})
 
-SET(DEFINITIONS_CORTO CORTO_STATIC) 
+SET(DEFINITIONS_CORTO "") 
 
 if(MSVC)
 	SET(CFLAGS_CORTO /nologo /W3)
@@ -45,8 +45,10 @@ elseif(APPLE)
 	endif(IOS)
 endif()
 
+target_include_directories(corto PUBLIC "")
 target_compile_definitions(corto PUBLIC ${DEFINITIONS_CORTO})
 target_compile_options    (corto PUBLIC ${CFLAGS_CORTO})
+set_target_properties     (corto PROPERTIES DEBUG_POSTFIX "d")
 
 INSTALL(TARGETS corto
 	RUNTIME DESTINATION bin

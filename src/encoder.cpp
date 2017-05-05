@@ -19,6 +19,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <assert.h>
 #include <deque>
 #include <algorithm>
+#include <unordered_set>
 
 #include "zpoint.h"
 #include "tunstall.h"
@@ -406,7 +407,6 @@ public:
 	bool inverted;
 	//McEdge(): inverted(false) {}
 	McEdge(uint32_t _face, uint32_t _side, uint32_t _v0, uint32_t _v1): face(_face), side(_side), inverted(false) {
-
 		if(_v0 < _v1) {
 			v0 = _v0; v1 = _v1;
 			inverted = false;
@@ -415,12 +415,16 @@ public:
 			inverted = true;
 		}
 	}
+	bool operator==(const McEdge &e) const {
+		return face == e.face && v0 == e.v0 && v1 == e.v1;
+	}
+
 	bool operator<(const McEdge &edge) const {
 		if(v0 < edge.v0) return true;
 		if(v0 > edge.v0) return false;
 		return v1 < edge.v1;
 	}
-	bool match(const McEdge &edge) {
+	bool match(const McEdge &edge) const {
 		if(inverted && edge.inverted) return false;
 		if(!inverted && !edge.inverted) return false;
 		return v0 == edge.v0 && v1 == edge.v1;
@@ -428,26 +432,20 @@ public:
 };
 
 static void buildTopology(vector<McFace> &faces) {
-	//create topology;
+
 	vector<McEdge> edges;
+	edges.reserve(faces.size()*3);
 	for(unsigned int i = 0; i < faces.size(); i++) {
 		McFace &face = faces[i];
-		for(int k = 0; k < 3; k++) {
-			int kk = k+1;
-			if(kk == 3) kk = 0;
-			int kkk = kk+1;
-			if(kkk == 3) kkk = 0;
-			edges.push_back(McEdge(i, k, face.f[kk], face.f[kkk]));
-		}
+		edges.emplace_back(i, 0, face.f[1], face.f[2]);
+		edges.emplace_back(i, 1, face.f[2], face.f[0]);
+		edges.emplace_back(i, 2, face.f[0], face.f[1]);
 	}
-	for(auto &e: edges)
-		assert(!(e < e));
-
 	sort(edges.begin(), edges.end());
 
 	McEdge previous(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
-	for(unsigned int i = 0; i < edges.size(); i++) {
-		McEdge &edge = edges[i];
+
+	for(const McEdge &edge: edges) {
 		if(edge.match(previous)) {
 			uint32_t &edge_side_face = faces[edge.face].t[edge.side];
 			uint32_t &previous_side_face = faces[previous.face].t[previous.side];

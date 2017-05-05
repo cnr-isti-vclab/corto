@@ -76,7 +76,6 @@ int main(int argc, char *argv[]) {
 	int g_bits = 7;
 	int b_bits = 6;
 	int a_bits = 5;
-
 	int uv_bits = 12;
 
 	string normal_prediction;
@@ -96,7 +95,7 @@ int main(int argc, char *argv[]) {
 		case 'a': a_bits = atoi(optarg); break;
 
 		case 'u': uv_bits     = atoi(optarg); break;
-		case 'q': vertex_q    = atof(optarg); break;
+		case 'q': vertex_q    = (float)atof(optarg); break;
 		case 'A': add_normals = true; break;
 		case 'N': normal_prediction = optarg; break;
 		case 'P': plyfile = optarg; break; //save ply for debugging purpouses

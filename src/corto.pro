@@ -5,9 +5,11 @@ TARGET = corto
 CONFIG += console
 CONFIG -= app_bundle
 
+CONFIG += warn_on
+
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic -Wimplicit -Wconversion
 
 SOURCES += main.cpp \
 	decoder.cpp \

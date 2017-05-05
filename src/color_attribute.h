@@ -46,7 +46,7 @@ public:
 	virtual void encode(uint32_t nvert, Stream &stream) {
 		stream.restart();
 		for(int c = 0; c < 4; c++)
-			stream.write<uchar>(qc[c]);
+			stream.write<uchar>((uchar)qc[c]);
 
 		stream.encodeValues<char>(nvert, (char *)diffs.data(), N);
 		size = stream.elapsed();

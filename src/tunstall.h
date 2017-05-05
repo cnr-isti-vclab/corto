@@ -114,7 +114,7 @@ public:
 
 	//user for encoding structure: returns interval in offset table used by word
 	void wordCode(unsigned char *w, int length, int &low, int &high) {
-		int n_symbols = probabilities.size();
+		int n_symbols = (int)probabilities.size();
 
 		//counting in base n_symbols
 		int c = 0;

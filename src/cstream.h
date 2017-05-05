@@ -37,8 +37,8 @@ protected:
 
 	uchar *buffer;
 	uchar *pos; //for reading.
-	int allocated;
-	int stopwatch; //used to measure stream partial size.
+	size_t allocated;
+	size_t stopwatch; //used to measure stream partial size.
 
 public:
 	enum Entropy { NONE = 0, TUNSTALL = 1, HUFFMAN = 2, ZLIB = 3, LZ4 = 4 };
@@ -55,12 +55,12 @@ public:
 			delete []buffer;
 	}
 
-	int size() { return pos - buffer; }
+	uint32_t size() { return (uint32_t)(pos - buffer); }
 	uchar *data() { return buffer; }
 	void restart() { stopwatch = size(); }
-	int elapsed() {
-		int e = size() - stopwatch; stopwatch = size();
-		return e;
+	uint32_t elapsed() {
+		size_t e = size() - stopwatch; stopwatch = size();
+		return (uint32_t)e;
 	}
 
 	int  compress(uint32_t size, uchar *data);
@@ -101,7 +101,7 @@ public:
 	}
 
 	void writeString(const char *str) {
-		int bytes = strlen(str)+1;
+		uint16_t bytes = (uint16_t)(strlen(str)+1);
 		write<uint16_t>(bytes);
 		push(str, bytes);
 	}
@@ -127,15 +127,14 @@ public:
 		return c;
 	}
 
-	template<class T> T *readArray(int s) {
-		int bytes = s*sizeof(T);
+	template<class T> T *readArray(uint32_t s) {
 		T *buffer = (T *)pos;
-		pos += bytes;
+		pos += s*sizeof(T);
 		return buffer;
 	}
 
 	char *readString() {
-		int bytes = read<uint16_t>();
+		uint16_t bytes = read<uint16_t>();
 		return readArray<char>(bytes);
 	}
 
@@ -150,12 +149,12 @@ public:
 		pos += s*sizeof(uint32_t);
 	}
 
-	void grow(int s) {
+	void grow(size_t s) {
 		if(allocated == 0)
 			reserve(1024);
-		int size = pos - buffer;
+		size_t size = pos - buffer;
 		if(size + s > allocated) { //needs more spac
-			int new_size = allocated*2;
+			size_t new_size = allocated*2;
 			while(new_size < size + s)
 				new_size *= 2;
 			uchar *b = new uchar[new_size];
@@ -167,7 +166,7 @@ public:
 		}
 	}
 
-	void push(const void *b, int s) {
+	void push(const void *b, size_t s) {
 		grow(s);
 		memcpy(pos, b, s);
 		pos += s;
@@ -201,7 +200,7 @@ public:
 					continue;
 				}
 				int ret = ilog2(abs(val)) + 1;  //0 -> 0, [1,-1] -> 1 [-2,-3,2,3] -> 2
-				logs[i] = ret;
+				logs[i] = (uchar)ret;
 				int middle = (1<<ret)>>1;
 				if(val < 0) val = -val -middle;
 				bitstream.write(val, ret);
@@ -210,7 +209,7 @@ public:
 
 		write(bitstream);
 		for(int c = 0; c < N; c++)
-			compress(clogs[c].size(), clogs[c].data());
+			compress((uint32_t)clogs[c].size(), clogs[c].data());
 	}
 
 	template <class T> int decodeValues(T *values, int N) {
@@ -228,11 +227,11 @@ public:
 					continue;
 				}
 
-				int val = bitstream.read(diff);
+				int val = (int)bitstream.read(diff);
 				int middle = 1<<(diff-1);
 				if(val < middle)
 					val = -val -middle;
-				values[i*N + c] = val;
+				values[i*N + c] = (T)val;
 			}
 		}
 		return logs.size();
@@ -262,7 +261,7 @@ public:
 		compress(logs.size(), logs.data());
 	}
 
-	template <class T> int decodeArray(T *values, int N) {
+	template <class T> uint32_t decodeArray(T *values, int N) {
 		BitStream bitstream;
 		read(bitstream);
 
@@ -285,16 +284,16 @@ public:
 				const uint64_t mask = (1<<diff)-1;
 				uint64_t bits = bitstream.read(N*diff);
 				for(uint32_t c = N-1; c > 0; c--) {
-					p[c] = (bits & mask) - max;
+					p[c] = (T)((bits & mask) - max);
 					bits >>= diff;
 				}
-				p[0] = bits - max;
+				p[0] = (T)(bits - max);
 			} else {
 				for(int c = 0; c < N; c++)
-					p[c] = bitstream.read(diff) - max;
+					p[c] = (T)(bitstream.read(diff) - max);
 			}
 		}
-		return logs.size();
+		return (uint32_t)logs.size();
 	}
 };
 

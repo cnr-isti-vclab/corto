@@ -428,8 +428,10 @@ public:
 };
 
 static void buildTopology(vector<McFace> &faces) {
-	//create topology;
+	//create topology
+	//TODO sorting is not efficient in building face-face topology.
 	vector<McEdge> edges;
+	edges.reserve(faces.size()*3);
 	for(unsigned int i = 0; i < faces.size(); i++) {
 		McFace &face = faces[i];
 		for(int k = 0; k < 3; k++) {
@@ -437,7 +439,7 @@ static void buildTopology(vector<McFace> &faces) {
 			if(kk == 3) kk = 0;
 			int kkk = kk+1;
 			if(kkk == 3) kkk = 0;
-			edges.push_back(McEdge(i, k, face.f[kk], face.f[kkk]));
+			edges.emplace_back(McEdge(i, k, face.f[kk], face.f[kkk]));
 		}
 	}
 	for(auto &e: edges)
@@ -482,17 +484,21 @@ void Encoder::encodeFaces(int start, int end) {
 
 	vector<int> delayed;
 	//TODO move to vector + order
-	deque<int> faceorder;
+	vector<int> faceorder;
+	faceorder.reserve(end - start);
+	uint32_t order = 0;
 	vector<CEdge> front;
+	front.reserve(end - start);
 
 	vector<bool> visited(faces.size(), false);
 	unsigned int totfaces = faces.size();
 
 	int splitbits = ilog2(nvert) + 1;
 
+	int new_edge = -1;
 	int counting = 0;
 	while(totfaces > 0) {
-		if(!faceorder.size() && !delayed.size()) {
+		if(new_edge == -1 && order >= faceorder.size() && !delayed.size()) {
 
 			while(current != faces.size()) {   //find first triangle non visited
 				if(!visited[current]) break;
@@ -547,16 +553,24 @@ void Encoder::encodeFaces(int start, int end) {
 			continue;
 		}
 		int c;
-		if(faceorder.size()) {
-			c = faceorder.front();
-			faceorder.pop_front();
-		} else {
+		if(new_edge != -1) {
+			c = new_edge;
+			new_edge = -1;
+
+		} else if(order < faceorder.size()) {
+			c =  faceorder[order++];
+
+		} else if(delayed.size()) {
 			c = delayed.back();
 			delayed.pop_back();
+
+
+		} else {
+			throw "Decoding topology failed";
 		}
 		CEdge &e = front[c];
 		if(e.deleted) continue;
-		e.deleted = true;
+		//e.deleted = true;
 
 		//opposite face is the triangle we are encoding
 		uint32_t opposite_face = faces[e.face].t[e.side];
@@ -582,9 +596,10 @@ void Encoder::encodeFaces(int start, int end) {
 		CEdge &previous_edge = front[eprev];
 		CEdge &next_edge = front[enext];
 
-		int first_edge = front.size();
 		bool close_left = (faces[previous_edge.face].t[previous_edge.side] == opposite_face);
 		bool close_right = (faces[next_edge.face].t[next_edge.side] == opposite_face);
+
+		new_edge = front.size(); //index of the next edge to be added.
 
 		if(close_left && close_right) {
 			index.clers.push_back(END);
@@ -592,21 +607,22 @@ void Encoder::encodeFaces(int start, int end) {
 			next_edge.deleted = true;
 			front[previous_edge.prev].next = next_edge.next;
 			front[next_edge.next].prev = previous_edge.prev;
+			new_edge = -1;
 
 		} else if(close_left) {
 			index.clers.push_back(LEFT);
 			previous_edge.deleted = true;
-			front[previous_edge.prev].next = first_edge;
-			front[enext].prev = first_edge;
-			faceorder.push_front(front.size());
+			front[previous_edge.prev].next = new_edge;
+			front[enext].prev = new_edge;
+
 			front.emplace_back(opposite_face, k1, previous_edge.prev, enext);
 
 		} else if(close_right) {
 			index.clers.push_back(RIGHT);
 			next_edge.deleted = true;
-			front[next_edge.next].prev = first_edge;
-			front[eprev].next = first_edge;
-			faceorder.push_front(front.size());
+			front[next_edge.next].prev = new_edge;
+			front[eprev].next = new_edge;
+
 			front.emplace_back(opposite_face, k0, eprev, next_edge.next);
 
 		} else {
@@ -614,10 +630,11 @@ void Encoder::encodeFaces(int start, int end) {
 			int v1 = face.f[k1];
 			int opposite = face.f[k2];
 
-			if(encoded[opposite] != -1 && faceorder.size()) { //split, but we can still delay it.
+			if(encoded[opposite] != -1 && order < faceorder.size()) { //split, but we can still delay it.
 				e.deleted = false; //undelete it.
 				delayed.push_back(c);
 				index.clers.push_back(DELAY);
+				new_edge = -1;
 				continue;
 			}
 			index.clers.push_back(VERTEX);
@@ -633,12 +650,12 @@ void Encoder::encodeFaces(int start, int end) {
 				last_index = opposite;
 			}
 
-			previous_edge.next = first_edge;
-			next_edge.prev = first_edge + 1;
-			faceorder.push_front(front.size());
-			front.emplace_back(opposite_face, k0, eprev, first_edge+1);
+			previous_edge.next = new_edge;
+			next_edge.prev = new_edge + 1;
+
+			front.emplace_back(opposite_face, k0, eprev, new_edge+1);
 			faceorder.push_back(front.size());
-			front.emplace_back(opposite_face, k1, first_edge, enext);
+			front.emplace_back(opposite_face, k1, new_edge, enext);
 		}
 
 		counting++;

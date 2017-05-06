@@ -30,9 +30,9 @@ onmessage = function(job) {
 }
 
 
-function CortoDecoder(data) {
+function CortoDecoder(data, byteOffset, byteLength) {
 	var t = this;
-	var stream = t.stream = new Stream(data);
+	var stream = t.stream = new Stream(data, byteOffset, byteLength);
 	
 	var magic = stream.readInt();
 	if(magic != 2021286656) return;

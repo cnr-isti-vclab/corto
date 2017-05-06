@@ -30,9 +30,9 @@ onmessage = function(job) {
 }
 
 
-function CortoDecoder(data) {
+function CortoDecoder(data, byteOffset, byteLength) {
 	var t = this;
-	var stream = t.stream = new Stream(data);
+	var stream = t.stream = new Stream(data, byteOffset, byteLength);
 	
 	var magic = stream.readInt();
 	if(magic != 2021286656) return;
@@ -773,12 +773,12 @@ BitStream.prototype = {
 	}
 };
 
-Stream = function(buffer) {
+Stream = function(buffer, byteOffset, byteLength) {
 	var t = this;
 	t.data = buffer;
-	t.buffer = new Uint8Array(buffer);
+	t.buffer = new Uint8Array(buffer, byteOffset, byteLength);
 	t.pos = 0;
-	t.view = new DataView(buffer);
+	t.view = new DataView(buffer, byteOffset, byteLength);
 }
 
 Stream.prototype = {

@@ -46,12 +46,12 @@ BitStream.prototype = {
 	}
 };
 
-Stream = function(buffer) {
+Stream = function(buffer, byteOffset, byteLength) {
 	var t = this;
 	t.data = buffer;
-	t.buffer = new Uint8Array(buffer);
+	t.buffer = new Uint8Array(buffer, byteOffset, byteLength);
 	t.pos = 0;
-	t.view = new DataView(buffer);
+	t.view = new DataView(buffer, byteOffset, byteLength);
 }
 
 Stream.prototype = {

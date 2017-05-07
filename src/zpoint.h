@@ -65,11 +65,11 @@ public:
 	}
 
 	Point3f toPoint(const Point3i &min, float step) {
-		uint32_t x = morton3(bits);
-		uint32_t y = morton3(bits>>1);
-		uint32_t z = morton3(bits>>2);
+		int x = (int)morton3(bits);
+		int y = (int)morton3(bits>>1);
+		int z = (int)morton3(bits>>2);
 
-		Point3f p((int)x + min[0], (int)y + min[1], (int)z + min[2]);
+		Point3f p(x + min[0], y + min[1], z + min[2]);
 		p *= step;
 		return p;
 	}

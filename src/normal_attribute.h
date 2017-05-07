@@ -36,7 +36,7 @@ public:
 
 	NormalAttr(int bits = 10) {
 		N = 3;
-		q = pow(2, bits-1);
+		q = pow(2.0f, (float)(bits-1));
 		prediction = DIFF;
 		strategy |= VertexAttribute::CORRELATED;
 	}

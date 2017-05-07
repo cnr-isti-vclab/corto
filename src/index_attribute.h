@@ -63,16 +63,16 @@ public:
 		stream.write<uint32_t>(max_front);
 
 		stream.restart();
-		stream.compress(clers.size(), clers.data());
+		stream.compress((int)clers.size(), clers.data());
 		stream.write(bitstream);
-		size = stream.elapsed();
+		size = (uint32_t)stream.elapsed();
 	}
 
 	void encodeGroups(Stream &stream) {
-		stream.write<uint32_t>(groups.size());
+		stream.write<uint32_t>((uint32_t)groups.size());
 		for(Group &g: groups) {
 			stream.write<uint32_t>(g.end);
-			stream.write<uchar>(g.properties.size());
+			stream.write<uchar>((uchar)g.properties.size());
 			for(auto it: g.properties) {
 				stream.writeString(it.first.c_str());
 				stream.writeString(it.second.c_str());

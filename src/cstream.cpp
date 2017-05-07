@@ -48,6 +48,8 @@ int Stream::compress(uint32_t size, uchar *data) {
 	case ZLIB:     return zlib_compress(data, size);
 	case LZ4:     return lz4_compress(data, size);
 #endif
+	default:
+		throw "Unknown entropy";
 	}
 	return -1;
 }
@@ -67,6 +69,8 @@ void Stream::decompress(vector<uchar> &data) {
 	case ZLIB:     zlib_decompress(data); break;
 	case LZ4:     lz4_decompress(data); break;
 #endif
+	default:
+		throw "Unknown entropy";
 	}
 }
 

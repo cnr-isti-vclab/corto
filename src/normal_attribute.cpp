@@ -120,7 +120,7 @@ void NormalAttr::preDelta(uint32_t nvert,  uint32_t nface, std::map<std::string,
 
 	Point2i *v= (Point2i *)values.data();
 	for(uint32_t i = 0; i < nvert; i++) {
-		Point2i n = toOcta(estimated[i], q);
+		Point2i n = toOcta(estimated[i], (int)q);
 		v[i] -= n;
 	}
 }
@@ -167,7 +167,7 @@ void NormalAttr::encode(uint32_t /*nvert*/, Stream &stream) {
 void NormalAttr::decode(uint32_t nvert, Stream &stream) {
 	prediction = stream.read<uchar>();
 	diffs.resize(nvert*2);
-	int readed = stream.decodeArray<int32_t>(diffs.data(), 2);
+	uint32_t readed = stream.decodeArray<int32_t>(diffs.data(), 2);
 
 	if(prediction == BORDER)
 		diffs.resize(readed*2);

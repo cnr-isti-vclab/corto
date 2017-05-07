@@ -211,7 +211,7 @@ public:
 	Color4b() {}
 	Color4b(uchar r, uchar g, uchar b, uchar a) { v[0] = r; v[1] = g; v[2] = b; v[3] = a; }
 	Color4b toYCC() { return Color4b(v[1], (uchar)(v[2] - v[1]), (uchar)(v[0] - v[1]), v[3]); }
-	Color4b toRGB() { return Color4b(v[2] + v[0], v[0], v[1] + v[0], v[3]); }
+	Color4b toRGB() { return Color4b((uchar)(v[2] + v[0]), v[0], (uchar)(v[1] + v[0]), v[3]); }
 };
 
 /* convenience methods */

@@ -16,10 +16,23 @@ a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
 
+onmessage = function(job) {
+	if(typeof(job.data) == "string") return;
 
-function CortoDecoder(data) {
+	var buffer = job.data.buffer;
+	if(!buffer) return;
+
+	var decoder = new CortoDecoder(buffer);
+	var model = decoder.decode();
+	
+	//pass back job
+	postMessage({ model: model, buffer: buffer, request: job.data.request});
+}
+
+
+function CortoDecoder(data, byteOffset, byteLength) {
 	var t = this;
-	var stream = t.stream = new Stream(data);
+	var stream = t.stream = new Stream(data, byteOffset, byteLength);
 	
 	var magic = stream.readInt();
 	if(magic != 2021286656) return;
@@ -96,7 +109,7 @@ decodePointCloud: function() {
 
 decodeMesh: function() {
 	var t = this;
-	t.index = new IndexAttr(t.nvert, t.nface, 0);
+	t.index = new IndexAttr(t.nvert, t.nface);
 	t.index.decodeGroups(t.stream);
 	t.index.decode(t.stream);
 

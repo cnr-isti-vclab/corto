@@ -9,21 +9,26 @@
 Corto compression library supports point clouds and meshes with per vertex attributes: normals, colors,
 texture coordinates and custom attributes.
 
-The main focus is on decompression speed, see [performances](#performances), both for C++ lib and javascript.
+The main focus of this work is on decompression speed, see [performances](#performances), both for C++ lib and javascript,
+while still provide acceptable compression rates.
 
 * [corto](#corto) is program to compress **.ply** and **.obj** models
-* [corto.js](#corto_js) a javascript library for WebGL applications
+* [libcorto](#libcorto) is a C++ compression/decompression library
+* [corto.js](#corto_js) a javascript library for .crt decompression
 * [CORTOLoader](#cortoloader), a threejs loader
 
 This work is based on the compression algorithm developed for the 
-[Nexus](https://github.com/cnr-isti-vclab/nexus) project for multiresolution for creation
-and visualization models.
+[Nexus](https://github.com/cnr-isti-vclab/nexus) project for creation
+and visualization of multiresolution models. See [Fast decompression for web-based view-dependent 3D rendering](http://vcg.isti.cnr.it/Publications/2015/PD15/).
 
 Entropy compression is based on [Tunstall](#tunstall) coding, decompression require only table lookup and is very fast while
 similar in compression ratio to Huffman where the number of symbols is small.
 
 
 ## Performances
+
+Decompression timing and size for a few models tested on a somewhat dated pc. (Intel Core i5-3450 @ 3.10GHz).
+Jvascript decompression time drops dramatically for repeadted run of complex algorithms, hence the 10th run result.
 
 Bunny mesh 34K vertices (12 bits precision) courtesy of [Stanford](http://graphics.stanford.edu/data/3Dscanrep/)
 
@@ -56,25 +61,28 @@ Palmyra point clout 500K vertices (18 bits), textures (12 bits) courtesy of [rob
 | JS 10th run     |    65ms | 1600ms |
 
 
-* C++ timing might depend on compilation flags
-
-OpenCTM larger size is due mainly to simpler connectivity compression, Draco Javascript lib size is due to emscripten.
+* C++ timing might be somewhat affected by compilation flags
+* OpenCTM larger size is due mainly to simpler connectivity compression, 
+* Draco Javascript lib size is due to emscripten.
 
 ## Building 
 
+The program and the library have no dependencies, g++ on linux and VisualStudio on Windows have been tested,
+but it should work everywhere with slight modifications.
+
 Using g++
 
-	make -f Makefile
+	make -f Makefile.linux
 
 Using qt:
 
 	qmake corto.pro
 	make
 
-Using cmake (todo)
+Using cmake:
 
-cmake ./
-make
+	cmake ./
+	make
 
 
 ## Tools
@@ -147,18 +155,49 @@ CortoDecoder decodes a .crt as an arraybuffer and returns an objects with attrib
 	request.send();
 	</script>
 
-### cortolib
+### libcorto
 
-Encoder...
-addCoords(....)
-addNormals
-addAttribute
+Interface is not entirely stable, no mayor change is expected.
+See src/main.cpp for an extensive example.
 
-in place decoding provide buffers
 
-Decoder
-(get nvert nface groups)
-setCoords
+	std::vector<float> coords;
+	std::vector<uint32_t> index;
+	std::vector<float> uv;
+	std::vector<float> radius;
+	
+	//fill data arrays...
+	
+	crt::Encoder encoder(nvert, nface);
+	
+	//add attributes to be encoded
+	encoder.addPositions(coords.data(), index.data(), vertex_quantization_step);
+	encoder.addUvs(uvs.data(), pow(2, -uv_bits));
+	
+	//add custom attributes
+	encoder.addAttribute("radius", (char *)radiuses.data(), crt::VertexAttribute::FLOAT, 1, 1.0f);
+	
+	const char *compressed_data = encoder.stream.data();
+	const uint32_t compressed_size = encoder.stream.size();
+
+Decoding
+
+	crt::Decoder decoder(size, data);
+	
+	//allocate memory if needed
+	coords.resize(decoder.nvert*3);
+	index.resize(decoder.nface*3);
+	
+	//tell the decoder where to decompress data
+	decoder.setPositions(coords.data());
+	
+	if(decoder.data.count("uv")) {
+		out.uvs.resize(decoder.nvert*2);
+		decoder.setUvs(out.uvs.data());
+	}
+	//actually decode
+	decoder.decode();
+
 
 ### Tunstall
 

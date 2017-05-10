@@ -405,7 +405,7 @@ public:
 	uint32_t face, side;
 	uint32_t v0, v1;
 	bool inverted;
-	//McEdge(): inverted(false) {}
+	McEdge() {}
 	McEdge(uint32_t _face, uint32_t _side, uint32_t _v0, uint32_t _v1): face(_face), side(_side), inverted(false) {
 		if(_v0 < _v1) {
 			v0 = _v0; v1 = _v1;
@@ -431,21 +431,47 @@ public:
 	}
 };
 
-static void buildTopology(vector<McFace> &faces) {
-	//TODO sorting might be not efficient in building face-face topology.
-	vector<McEdge> edges;
-	edges.reserve(faces.size()*3);
-	for(unsigned int i = 0; i < faces.size(); i++) {
-		McFace &face = faces[i];
-
-		edges.emplace_back(i, 0, face.f[1], face.f[2]);
-		edges.emplace_back(i, 1, face.f[2], face.f[0]);
-		edges.emplace_back(i, 2, face.f[0], face.f[1]);
+static void buildTopology(vector<McFace> &faces, uint32_t nvert) {
+	//compute buckets size for edges with lower vertex in common
+	vector<uint32_t> count(nvert, 0);
+	for(McFace &face: faces) {
+		count[min(face.f[0], face.f[1])]++;
+		count[min(face.f[1], face.f[2])]++;
+		count[min(face.f[2], face.f[0])]++;
 	}
-	sort(edges.begin(), edges.end());
+
+	//find start of every bucket.
+	uint32_t partial = 0;
+	for(uint32_t &c: count) {
+		uint32_t tmp = c;
+		c = partial;
+		partial += tmp;
+	}
+
+	//write edges in the buckets.
+	vector<McEdge> edges(faces.size()*3);
+	for(size_t i = 0; i < faces.size(); i++) {
+		McFace &face = faces[i];
+		uint32_t v0 = min(face.f[1], face.f[2]);
+		edges[count[v0]++] = McEdge(i, 0, face.f[1], face.f[2]);
+
+		uint32_t v1 = min(face.f[2], face.f[0]);
+		edges[count[v1]++] = McEdge(i, 1, face.f[2], face.f[0]);
+
+		uint32_t v2 = min(face.f[0], face.f[1]);
+		edges[count[v2]++] = McEdge(i, 2, face.f[0], face.f[1]);
+	}
+
+	//sort the buckets
+	sort(edges.begin(), edges.begin() + count[0]);
+	for(uint32_t i = 0; i < count.size()-1; i++) {
+		if(count[i] == 0) continue;
+		sort(edges.begin() + count[i], edges.begin() + count[i+1]);
+	}
 
 	McEdge previous(0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
 
+	//identify opposite edges
 	for(const McEdge &edge: edges) {
 		if(edge.match(previous)) {
 			uint32_t &edge_side_face = faces[edge.face].t[edge.side];
@@ -460,6 +486,7 @@ static void buildTopology(vector<McFace> &faces) {
 			previous = edge;
 	}
 }
+
 static int next_(int t) {
 	t++;
 	if(t == 3) t = 0;
@@ -475,7 +502,7 @@ void Encoder::encodeFaces(int start, int end) {
 		assert(f[0] != f[1] && f[1] != f[2] && f[2] != f[0]);
 	}
 
-	buildTopology(faces);
+	buildTopology(faces, nvert);
 
 	unsigned int current = 0;          //keep track of connected component start
 

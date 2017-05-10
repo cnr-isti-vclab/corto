@@ -127,18 +127,14 @@ void NormalAttr::preDelta(uint32_t nvert,  uint32_t nface, std::map<std::string,
 
 void NormalAttr::deltaEncode(std::vector<Quad> &context) {
 
-
 	if(prediction == DIFF) {
 		diffs[0] = values[context[0].t*2];
 		diffs[1] = values[context[0].t*2+1];
 
-		cout << "Normal: " << diffs[0] << endl;
 		for(uint32_t i = 1; i < context.size(); i++) {
 			Quad &quad = context[i];
 			diffs[i*2 + 0] = values[quad.t*2 + 0] - values[quad.a*2 + 0];
 			diffs[i*2 + 1] = values[quad.t*2 + 1] - values[quad.a*2 + 1];
-			if(i < 10)
-				cout << "Normal: " << values[quad.t*2 + 0] << endl;
 		}
 		diffs.resize(context.size()*2); //unreferenced vertices
 

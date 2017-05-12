@@ -41,7 +41,11 @@ THREE.CORTOLoader.prototype = {
 			var now = performance.now();
 			var decoder = new CortoDecoder(blob);
 			var model = decoder.decode();
+
+/*used for debug and profiling */
 			var ms = performance.now() - now;
+			scope.blob = blob;
+			scope.decode_time = ms;
 			console.log((model.nvert/1024.0).toFixed(1) + "KV", ms.toFixed(1) + "ms", ((model.nvert/1000)/ms).toFixed(2) + "MV/s");
 
 			var geometry = scope.geometry(model);

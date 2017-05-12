@@ -157,6 +157,7 @@ void Decoder::decodeMesh() {
 
 	uint32_t start = 0;
 	uint32_t cler = 0; //keeps track of current cler
+	index.clers.push_back(VERTEX); //last cler VERTEX requires a SPLIT peek!
 	for(Group &g: index.groups) {
 		decodeFaces(start*3, g.end*3, cler);
 		start = g.end;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Corto threejs</title>
+<title>Corto Threejs</title>
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
@@ -20,6 +20,7 @@
 
 <body>
 	<div id="container"></div>
+	<p style="position:absolute; top:10px; left:10px; color:white;" id="stats">N vert: <span id="nvert"></span><br/>N triangles: <span id="nface"></span><br/> Decompression timings: <span id="timing"></span></p>
 </body>
 
 <script>
@@ -58,8 +59,6 @@ renderer.setSize( window.innerWidth, window.innerHeight);
 var container = document.getElementById( 'container');
 container.appendChild( renderer.domElement );
 
-var profile = false; //use when profiling javascript
-
 function getURLParameter(name) {
 	return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
 }
@@ -67,11 +66,17 @@ function getURLParameter(name) {
 var model = getURLParameter('model');
 var path = getURLParameter('path');
 if(!path) path = 'models/';
-if(!model) model = 'budda.crt';
+if(!model) model = 'proserpina.crt';
 
 var loader = new THREE.CORTOLoader({ path: path }); //can pass a material or a multimaterial if you know whats' in the model.
 
+var decode_times = [];
+var blob = null;
+
 loader.load(model, function(mesh) {
+	decode_times.push(loader.decode_time);
+	blob = loader.blob;
+
 	mesh.addEventListener("change", render);
 
 	mesh.geometry.computeBoundingBox();
@@ -87,17 +92,19 @@ loader.load(model, function(mesh) {
 	mesh.scale.divideScalar(mesh.geometry.boundingBox.getSize().length());
 	scene.add(mesh); 
 
-	if(!profile)
-		render();
+	render();
+
+	setTimeout(profile, 10);
 } );
+
+
 
 window.addEventListener( 'resize', onWindowResize, false );
 render();
 
 
 function onWindowResize() {
-	if(profile)
-		return;
+
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 
@@ -109,18 +116,49 @@ function onWindowResize() {
 }
 
 function animate() {
-	if(profile)
-		return;
-
 	requestAnimationFrame( animate );
 	controls.update();
 }
 
 function render() {
-	if(profile)
-		return;
-
 	renderer.render( scene, camera );
+}
+
+function profile() {
+
+	var now = performance.now();
+	var decoder = new CortoDecoder(blob);
+	var model = decoder.decode();
+	var ms = performance.now() - now;
+	decode_times.push(ms);
+	console.log((model.nvert/1024.0).toFixed(1) + "KV", ms.toFixed(1) + "ms", ((model.nvert/1000)/ms).toFixed(2) + "MV/s");
+
+
+	var nvert = document.getElementById("nvert");
+	nvert.innerHTML= model.nvert;
+
+	var nface = document.getElementById("nface");
+	nface.innerHTML= model.nface;
+
+	var timing = document.getElementById("timing");
+	if(decode_times.length == 2)
+		timing.innerHTML += " " + decode_times[0].toFixed(0) + "ms";
+	timing.innerHTML += " " + decode_times[decode_times.length-1].toFixed(0) + "ms";
+
+	if(decode_times.length < 10) {
+		setTimeout(profile, 10);
+	} else {
+		var avg = 0;
+		for(var i = 0; i < decode_times.length; i++)
+			avg += decode_times[i];
+		avg /= decode_times.length;
+		timing.innerHTML += "<br/ >Avg: " + avg.toFixed(0) + "ms";
+		if(model.nface > 0)
+			timing.innerHTML += "<br/ >Million Triangles per second: " + ((model.nface/1000)/avg).toFixed(2);
+		else
+			timing.innerHTML += "<br/ >Million Vertices per second: " + ((model.nvert/1000)/avg).toFixed(2);
+
+	}
 }
 
 animate();

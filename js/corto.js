@@ -447,9 +447,9 @@ BitStream.prototype = {
 Stream = function(buffer, byteOffset, byteLength) {
 	var t = this;
 	t.data = buffer;
-	t.buffer = new Uint8Array(buffer, 0, byteLength + byteoffset);
+	t.buffer = new Uint8Array(buffer, 0, byteLength + byteOffset);
 	t.pos = byteOffset;
-	t.view = new DataView(buffer, 0, byteLength + byteoffset);
+	t.view = new DataView(buffer, 0, byteLength + byteOffset);
 }
 
 Stream.prototype = {

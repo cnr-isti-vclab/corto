@@ -9,8 +9,7 @@ CONFIG += warn_on
 
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic -Wimplicit -Wconversion
-
+QMAKE_CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic -Wimplicit
 SOURCES += main.cpp \
 	decoder.cpp \
 	encoder.cpp \

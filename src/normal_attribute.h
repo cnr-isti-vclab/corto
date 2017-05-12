@@ -43,7 +43,7 @@ public:
 
 	virtual int codec() { return NORMAL_CODEC; }
 	//return number of bits
-	virtual void quantize(uint32_t nvert, char *buffer);
+	virtual void quantize(uint32_t nvert, const char *buffer);
 	virtual void preDelta(uint32_t nvert,  uint32_t nface, std::map<std::string, VertexAttribute *> &attrs, IndexAttribute &index);
 	virtual void deltaEncode(std::vector<Quad> &context);
 	virtual void encode(uint32_t nvert, Stream &stream);

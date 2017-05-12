@@ -48,7 +48,7 @@ public:
 	virtual int codec() = 0; //identifies attribute class.
 
 	//quantize and store as values
-	virtual void quantize(uint32_t nvert, char *buffer) = 0;
+	virtual void quantize(uint32_t nvert, const char *buffer) = 0;
 	//used by attributes which leverage other attributes (normals, for example)
 	virtual void preDelta(uint32_t /*nvert*/, uint32_t /*nface*/, std::map<std::string, VertexAttribute *> &/*attrs*/, IndexAttribute &/*index*/) {}
 	//use parallelogram prediction or just diff from v0
@@ -76,7 +76,7 @@ public:
 	virtual ~GenericAttr(){}
 	virtual int codec() { return GENERIC_CODEC; }
 
-	virtual void quantize(uint32_t nvert, char *buffer) {
+	virtual void quantize(uint32_t nvert, const char *buffer) {
 		uint32_t n = N*nvert;
 
 		values.resize(n);
@@ -84,23 +84,23 @@ public:
 		switch(format) {
 		case INT32:
 			for(uint32_t i = 0; i < n; i++)
-				values[i] = ((int32_t *)buffer)[i]/q;
+				values[i] = ((const int32_t *)buffer)[i]/q;
 			break;
 		case INT16:
 			for(uint32_t i = 0; i < n; i++)
-				values[i] = ((int16_t *)buffer)[i]/q;
+				values[i] = ((const int16_t *)buffer)[i]/q;
 			break;
 		case INT8:
 			for(uint32_t i = 0; i < n; i++)
-				values[i] = ((int16_t *)buffer)[i]/q;
+				values[i] = ((const int16_t *)buffer)[i]/q;
 			break;
 		case FLOAT:
 			for(uint32_t i = 0; i < n; i++)
-				values[i] = ((float *)buffer)[i]/q;
+				values[i] = ((const float *)buffer)[i]/q;
 			break;
 		case DOUBLE:
 			for(uint32_t i = 0; i < n; i++)
-				values[i] = ((double *)buffer)[i]/q;
+				values[i] = ((const double *)buffer)[i]/q;
 			break;
 		default: throw "Unsupported format.";
 		}
@@ -153,6 +153,8 @@ public:
 	}
 
 	virtual void deltaDecode(uint32_t nvert, std::vector<Face> &context) {
+		if(!buffer) return;
+
 		T *values = (T *)buffer;
 
 		if(strategy & PARALLEL) { //parallelogram prediction
@@ -175,6 +177,8 @@ public:
 	}
 
 	virtual void dequantize(uint32_t nvert) {
+		if(!buffer) return;
+
 		T *coords = (T *)buffer;
 		uint32_t n = N*nvert;
 		switch(format) {

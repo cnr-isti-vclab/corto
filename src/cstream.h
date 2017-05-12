@@ -81,8 +81,8 @@ public:
 		pos = buffer = new uchar[allocated];
 	}
 
-	void init(int /*_size*/, uchar *_buffer) {
-		buffer = _buffer;
+	void init(int /*_size*/, const uchar *_buffer) {
+		buffer = (uchar *)_buffer; //I'm not lying, I won't touch it.
 		pos = buffer;
 		allocated = 0;
 	}
@@ -220,6 +220,8 @@ public:
 
 		for(int c = 0; c < N; c++) {
 			decompress(logs);
+			if(!values) continue;
+
 			for(uint32_t i = 0; i < logs.size(); i++) {
 				uchar &diff = logs[i];
 				if(diff == 0) {
@@ -267,6 +269,9 @@ public:
 
 		std::vector<uchar> logs;
 		decompress(logs);
+
+		if(!values)
+			return (uint32_t)logs.size();
 
 		for(uint32_t i =0; i < logs.size(); i++) {
 			T *p = values + i*N;

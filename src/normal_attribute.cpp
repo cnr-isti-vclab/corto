@@ -55,7 +55,7 @@ template <class T> void estimateNormals(uint32_t nvert, Point3i *coords, uint32_
 	}
 }
 
-void NormalAttr::quantize(uint32_t nvert, char *buffer) {
+void NormalAttr::quantize(uint32_t nvert, const char *buffer) {
 	uint32_t n = 2*nvert;
 
 	values.resize(n);
@@ -65,12 +65,12 @@ void NormalAttr::quantize(uint32_t nvert, char *buffer) {
 	switch(format) {
 	case FLOAT:
 		for(uint32_t i = 0; i < nvert; i++) {
-			normals[i] = toOcta(((Point3f *)buffer)[i], (int)q);
+			normals[i] = toOcta(((const Point3f *)buffer)[i], (int)q);
 		}
 		break;
 	case INT32:
 		for(uint32_t i = 0; i < nvert; i++)
-			normals[i] =  toOcta(((Point3i *)buffer)[i], (int)q);
+			normals[i] =  toOcta(((const Point3i *)buffer)[i], (int)q);
 		break;
 	case INT16:
 	{
@@ -170,6 +170,8 @@ void NormalAttr::decode(uint32_t nvert, Stream &stream) {
 }
 
 void NormalAttr::deltaDecode(uint32_t nvert, std::vector<Face> &context) {
+	if(!buffer) return;
+
 	if(prediction != DIFF)
 		return;
 
@@ -193,6 +195,8 @@ void NormalAttr::deltaDecode(uint32_t nvert, std::vector<Face> &context) {
 void NormalAttr::postDelta(uint32_t nvert, uint32_t nface,
 						   std::map<std::string, VertexAttribute *> &attrs,
 						   IndexAttribute &index) {
+	if(!buffer) return;
+
 	//for border and estimate we need the position already deltadecoded but before dequantized
 	if(prediction == DIFF)
 		return;
@@ -229,6 +233,8 @@ void NormalAttr::postDelta(uint32_t nvert, uint32_t nface,
 }
 
 void NormalAttr::dequantize(uint32_t nvert) {
+	if(!buffer) return;
+
 	if(prediction != DIFF)
 		return;
 

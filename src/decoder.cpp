@@ -38,7 +38,7 @@ public:
 		v0(a), v1(b), v2(c), prev(p), next(n), deleted(false) {}
 };
 
-Decoder::Decoder(int len, uchar *input): vertex_count(0) {
+Decoder::Decoder(int len, const uchar *input): vertex_count(0) {
 
 	stream.init(len, input);
 	uint32_t magic = stream.read<uint32_t>();
@@ -135,7 +135,7 @@ void Decoder::decodePointCloud() {
 
 	Point3f *coords = (Point3f *)coord.buffer;
 
-	ZPoint p;
+	ZPoint p;git
 	bitstream.read(63, p.bits);
 	coords[0] = p.toPoint(coord.q);
 	for(size_t i = 1; i < nvert; i++) {

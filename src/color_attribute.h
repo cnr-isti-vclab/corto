@@ -40,7 +40,7 @@ public:
 		qc[3] = 1<<(8 - a_bits);
 	}
 
-	virtual void quantize(uint32_t nvert, char *buffer);
+	virtual void quantize(uint32_t nvert, const char *buffer);
 	virtual void dequantize(uint32_t nvert);
 
 	virtual void encode(uint32_t nvert, Stream &stream) {

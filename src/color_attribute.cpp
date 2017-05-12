@@ -21,7 +21,7 @@ If not, see <http://www.gnu.org/licenses/>.
 using namespace crt;
 
 
-void ColorAttr::quantize(uint32_t nvert, char *buffer) {
+void ColorAttr::quantize(uint32_t nvert, const char *buffer) {
 	uint32_t n = N*nvert;
 
 	values.resize(n);
@@ -29,7 +29,7 @@ void ColorAttr::quantize(uint32_t nvert, char *buffer) {
 	switch(format) {
 	case UINT8:
 	{
-		Color4b *colors = (Color4b *)buffer;
+		const Color4b *colors = (const Color4b *)buffer;
 		for(uint32_t i = 0; i < nvert; i++) {
 			Color4b c = colors[i];
 			Color4b &y = *(Color4b *)&(values[i*N]);
@@ -42,7 +42,7 @@ void ColorAttr::quantize(uint32_t nvert, char *buffer) {
 
 	case FLOAT:
 	{
-		float *colors = (float *)buffer;
+		const float *colors = (const float *)buffer;
 		for(uint32_t i = 0; i < nvert; i++) {
 			Color4b &y = *(Color4b *)&(values[i*N]);
 			for(int k = 0; k < 4; k++)
@@ -58,6 +58,8 @@ void ColorAttr::quantize(uint32_t nvert, char *buffer) {
 }
 
 void ColorAttr::dequantize(uint32_t nvert) {
+	if(!buffer) return;
+
 	switch(format) {
 	case UINT8:
 	{

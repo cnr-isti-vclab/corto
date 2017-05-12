@@ -49,9 +49,9 @@ BitStream.prototype = {
 Stream = function(buffer, byteOffset, byteLength) {
 	var t = this;
 	t.data = buffer;
-	t.buffer = new Uint8Array(buffer, 0, byteLength + byteOffset);
-	t.pos = byteOffset;
-	t.view = new DataView(buffer, 0, byteLength + byteOffset);
+	t.buffer = new Uint8Array(buffer);
+	t.pos = byteOffset?byteOffset:0;
+	t.view = new DataView(buffer);
 }
 
 Stream.prototype = {

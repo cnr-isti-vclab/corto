@@ -63,7 +63,7 @@ public:
 	void decode();
 
 private:
-	Stream stream;
+	InStream stream;
 
 	uint32_t vertex_count; //keep tracks of current decoding vertex
 

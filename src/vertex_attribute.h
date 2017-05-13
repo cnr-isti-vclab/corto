@@ -54,10 +54,10 @@ public:
 	//use parallelogram prediction or just diff from v0
 	virtual void deltaEncode(std::vector<Quad> &context) = 0;
 	//compress diffs and write to stream
-	virtual void encode(uint32_t nvert, Stream &stream) = 0;
+	virtual void encode(uint32_t nvert, OutStream &stream) = 0;
 
 	//read quantized data from streams
-	virtual void decode(uint32_t nvert, Stream &stream) = 0;
+	virtual void decode(uint32_t nvert, InStream &stream) = 0;
 	//use parallelogram prediction to recover values
 	virtual void deltaDecode(uint32_t nvert, std::vector<Face> &faces) = 0;
 	//use other attributes to estimate (normals for example)
@@ -135,7 +135,7 @@ public:
 		diffs.resize(context.size()*N); //unreferenced vertices
 	}
 
-	virtual void encode(uint32_t nvert, Stream &stream) {
+	virtual void encode(uint32_t nvert, OutStream &stream) {
 		stream.restart();
 		if(strategy & CORRELATED)
 			stream.encodeArray<T>(nvert, diffs.data(), N);
@@ -145,7 +145,7 @@ public:
 		size = stream.elapsed();
 	}
 
-	virtual void decode(uint32_t /*nvert */, Stream &stream) {
+	virtual void decode(uint32_t /*nvert */, InStream &stream) {
 		if(strategy & CORRELATED)
 			stream.decodeArray<T>((T *)buffer, N);
 		else

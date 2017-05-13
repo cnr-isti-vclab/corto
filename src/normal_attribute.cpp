@@ -153,14 +153,14 @@ void NormalAttr::deltaEncode(std::vector<Quad> &context) {
 	}
 }
 
-void NormalAttr::encode(uint32_t /*nvert*/, Stream &stream) {
+void NormalAttr::encode(uint32_t /*nvert*/, OutStream &stream) {
 	stream.write<uchar>(prediction);
 	stream.restart();
 	stream.encodeArray<int32_t>(diffs.size()/2, diffs.data(), 2);
 	size = stream.elapsed();
 }
 
-void NormalAttr::decode(uint32_t nvert, Stream &stream) {
+void NormalAttr::decode(uint32_t nvert, InStream &stream) {
 	prediction = stream.read<uchar>();
 	diffs.resize(nvert*2);
 	uint32_t readed = stream.decodeArray<int32_t>(diffs.data(), 2);

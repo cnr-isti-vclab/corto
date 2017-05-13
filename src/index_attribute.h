@@ -59,7 +59,7 @@ public:
 	uint32_t size;
 
 	IndexAttribute(): faces32(nullptr), faces16(nullptr), max_front(0) {}
-	void encode(Stream &stream) {
+	void encode(OutStream &stream) {
 		stream.write<uint32_t>(max_front);
 
 		stream.restart();
@@ -68,7 +68,7 @@ public:
 		size = (uint32_t)stream.elapsed();
 	}
 
-	void encodeGroups(Stream &stream) {
+	void encodeGroups(OutStream &stream) {
 		stream.write<uint32_t>((uint32_t)groups.size());
 		for(Group &g: groups) {
 			stream.write<uint32_t>(g.end);
@@ -80,13 +80,13 @@ public:
 		}
 	}
 
-	void decode(Stream &stream) {
+	void decode(InStream &stream) {
 		max_front = stream.read<uint32_t>();
 		stream.decompress(clers);
 		stream.read(bitstream);
 	}
 
-	void decodeGroups(Stream &stream) {
+	void decodeGroups(InStream &stream) {
 		groups.resize(stream.read<uint32_t>());
 		for(Group &g: groups) {
 			g.end = stream.read<uint32_t>();

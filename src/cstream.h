@@ -33,71 +33,41 @@ namespace crt {
 int ilog2(uint64_t p);
 
 class Stream {
-protected:
-
-	uchar *buffer;
-	uchar *pos; //for reading.
-	size_t allocated;
-	size_t stopwatch; //used to measure stream partial size.
-
 public:
 	enum Entropy { NONE = 0, TUNSTALL = 1, HUFFMAN = 2, ZLIB = 3, LZ4 = 4 };
 	Entropy entropy;
+	Stream(): entropy(TUNSTALL) {}
+};
 
-	Stream(): buffer(NULL), pos(NULL), allocated(0), stopwatch(0), entropy(TUNSTALL) {}
+class OutStream: public Stream {
+protected:
+	std::vector<uchar> buffer;
+	size_t stopwatch; //used to measure stream partial size.
 
-	Stream(int _size, uchar *_buffer) {
-		init(_size, _buffer);
-	}
-
-	~Stream() {
-		if(allocated)
-			delete []buffer;
-	}
-
-	uint32_t size() { return (uint32_t)(pos - buffer); }
-	uchar *data() { return buffer; }
-	void restart() { stopwatch = size(); }
+public:
+	OutStream(size_t r = 0): stopwatch(0) { buffer.reserve(r); }
+	uint32_t size() { return buffer.size(); }
+	uchar *data() { return buffer.data(); }
+	void reserve(size_t r) { buffer.reserve(r); }
+	void restart() { stopwatch = buffer.size(); }
 	uint32_t elapsed() {
 		size_t e = size() - stopwatch; stopwatch = size();
 		return (uint32_t)e;
 	}
-
 	int  compress(uint32_t size, uchar *data);
-	void decompress(std::vector<uchar> &data);
 	int  tunstall_compress(unsigned char *data, int size);
-	void tunstall_decompress(std::vector<uchar> &data);
 
 #ifdef ENTROPY_TESTS
 	int  zlib_compress(uchar *data, int size);
-	void zlib_decompress(std::vector<uchar> &data);
 	int  lz4_compress(uchar *data, int size);
-	void lz4_decompress(std::vector<uchar> &data);
 #endif
 
-	void reserve(int reserved) {
-		allocated = reserved;
-		stopwatch = 0;
-		pos = buffer = new uchar[allocated];
-	}
-
-	void init(int /*_size*/, const uchar *_buffer) {
-		buffer = (uchar *)_buffer; //I'm not lying, I won't touch it.
-		pos = buffer;
-		allocated = 0;
-	}
-
-	void rewind() { pos = buffer; }
-
 	template<class T> void write(T c) {
-		grow(sizeof(T));
+		uchar *pos = grow(sizeof(T));
 		*(T *)pos = c;
-		pos += sizeof(T);
 	}
-
-	template<class T> void writeArray(int s, T *c) {
-		int bytes = s*sizeof(T);
-		push(c, bytes);
+	template<class T> void writeArray(int count, T *c) {
+		push(c, count*sizeof(T));
 	}
 
 	void writeString(const char *str) {
@@ -111,14 +81,113 @@ public:
 		//padding to 32 bit is needed for javascript reading (which uses int words.), mem needs to be aligned.
 		write<int>((int)stream.size);
 
-		int pad = (pos - buffer) & 0x3;
+
+		int pad = size() & 0x3;
 		if(pad != 0)
 			pad = 4 - pad;
 		grow(pad);
-		pos += pad;
 		push(stream.buffer, stream.size*sizeof(uint32_t));
 	}
 
+	uchar *grow(size_t s) {
+		size_t len = buffer.size();
+		buffer.resize(len + s);
+		return buffer.data() + len;
+	}
+
+	void push(const void *b, size_t s) {
+		uchar *pos = grow(s);
+		memcpy(pos, b, s);
+	}
+
+
+	static int needed(int a) {
+		if(a == 0) return 0;
+		if(a == -1) return 1;
+		if(a < 0) a = -a - 1;
+		int n = 2;
+		while(a >>= 1) n++;
+		return n;
+	}
+
+	template <class T> void encodeValues(uint32_t size, T *values, int N) {
+		BitStream bitstream(size);
+		//Storing bitstream before logs, allows in decompression to allocate only 1 logs array and reuse it.
+		std::vector<std::vector<uchar> > clogs((size_t)N);
+
+		for(int c = 0; c < N; c++) {
+			auto &logs = clogs[c];
+			logs.resize(size);
+			for(uint32_t i = 0; i < size; i++) {
+				int val = values[i*N + c];
+
+				if(val == 0) {
+					logs[i] = 0;
+					continue;
+				}
+				int ret = ilog2(abs(val)) + 1;  //0 -> 0, [1,-1] -> 1 [-2,-3,2,3] -> 2
+				logs[i] = (uchar)ret;
+				int middle = (1<<ret)>>1;
+				if(val < 0) val = -val -middle;
+				bitstream.write(val, ret);
+			}
+		}
+
+		write(bitstream);
+		for(int c = 0; c < N; c++)
+			compress((uint32_t)clogs[c].size(), clogs[c].data());
+	}
+
+	template <class T> void encodeArray(uint32_t size, T *values, int N) {
+		BitStream bitstream(size);
+		std::vector<uchar> logs(size);
+
+		for(uint32_t i = 0; i < size; i++) {
+			T *p = values + i*N;
+			int diff = needed(p[0]);
+			for(int c = 1; c < N; c++) {
+				int d = needed(p[c]);
+				if(diff < d) diff = d;
+			}
+			logs[i] = diff;
+			if(diff == 0) continue;
+
+			int max = 1<<(diff-1);
+			for(int c = 0; c < N; c++)
+				bitstream.write(p[c] + max, diff);
+		}
+
+		write(bitstream);
+		compress(logs.size(), logs.data());
+	}
+};
+
+class InStream: public Stream {
+protected:
+	const uchar *buffer;
+	const uchar *pos; //for reading.
+
+public:
+
+	InStream(): buffer(NULL), pos(NULL) {}
+	InStream(int _size, uchar *_buffer) {
+		init(_size, _buffer);
+	}
+
+	void decompress(std::vector<uchar> &data);
+	void tunstall_decompress(std::vector<uchar> &data);
+
+#ifdef ENTROPY_TESTS
+	int  zlib_compress(uchar *data, int size);
+	int  lz4_compress(uchar *data, int size);
+#endif
+
+	void init(int /*_size*/, const uchar *_buffer) {
+		buffer = _buffer; //I'm not lying, I won't touch it.
+		pos = buffer;
+	}
+
+	void rewind() { pos = buffer; }
 
 	template<class T> T read() {
 		T c;
@@ -149,68 +218,6 @@ public:
 		pos += s*sizeof(uint32_t);
 	}
 
-	void grow(size_t s) {
-		if(allocated == 0)
-			reserve(1024);
-		size_t size = pos - buffer;
-		if(size + s > allocated) { //needs more spac
-			size_t new_size = allocated*2;
-			while(new_size < size + s)
-				new_size *= 2;
-			uchar *b = new uchar[new_size];
-			memcpy(b, buffer, allocated);
-			delete []buffer;
-			buffer = b;
-			pos = buffer + size;
-			allocated = new_size;
-		}
-	}
-
-	void push(const void *b, size_t s) {
-		grow(s);
-		memcpy(pos, b, s);
-		pos += s;
-	}
-
-
-	static int needed(int a) {
-		if(a == 0) return 0;
-		if(a == -1) return 1;
-		if(a < 0) a = -a - 1;
-		int n = 2;
-		while(a >>= 1) n++;
-		return n;
-	}
-
-
-
-	template <class T> void encodeValues(uint32_t size, T *values, int N) {
-		BitStream bitstream(size);
-		//Storing bitstream before logs, allows in decompression to allocate only 1 logs array and reuse it.
-		std::vector<std::vector<uchar> > clogs((size_t)N);
-
-		for(int c = 0; c < N; c++) {
-			auto &logs = clogs[c];
-			logs.resize(size);
-			for(uint32_t i = 0; i < size; i++) {
-				int val = values[i*N + c];
-
-				if(val == 0) {
-					logs[i] = 0;
-					continue;
-				}
-				int ret = ilog2(abs(val)) + 1;  //0 -> 0, [1,-1] -> 1 [-2,-3,2,3] -> 2
-				logs[i] = (uchar)ret;
-				int middle = (1<<ret)>>1;
-				if(val < 0) val = -val -middle;
-				bitstream.write(val, ret);
-			}
-		}
-
-		write(bitstream);
-		for(int c = 0; c < N; c++)
-			compress((uint32_t)clogs[c].size(), clogs[c].data());
-	}
 
 	template <class T> int decodeValues(T *values, int N) {
 		BitStream bitstream;
@@ -240,28 +247,7 @@ public:
 	}
 
 
-	template <class T> void encodeArray(uint32_t size, T *values, int N) {
-		BitStream bitstream(size);
-		std::vector<uchar> logs(size);
 
-		for(uint32_t i = 0; i < size; i++) {
-			T *p = values + i*N;
-			int diff = needed(p[0]);
-			for(int c = 1; c < N; c++) {
-				int d = needed(p[c]);
-				if(diff < d) diff = d;
-			}
-			logs[i] = diff;
-			if(diff == 0) continue;
-
-			int max = 1<<(diff-1);
-			for(int c = 0; c < N; c++)
-				bitstream.write(p[c] + max, diff);
-		}
-
-		write(bitstream);
-		compress(logs.size(), logs.data());
-	}
 
 	template <class T> uint32_t decodeArray(T *values, int N) {
 		BitStream bitstream;

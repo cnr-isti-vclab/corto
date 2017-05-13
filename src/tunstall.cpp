@@ -105,6 +105,7 @@ void Tunstall::getProbabilities(unsigned char *data, int size) {
 			probabilities.push_back(Symbol(i, probs[i]*255/size));
 		}
 	}
+
 	std::sort(probabilities.begin(), probabilities.end(),
 			  [](const Symbol &a, const Symbol &b)->bool { return a.probability > b.probability; });
 #ifdef DEBUG_ENTROPY
@@ -152,6 +153,7 @@ void Tunstall::createDecodingTables2() {
 	if(count >= 16) { //Very low entropy results in large tables > 8K.
 		//  AAAA...A first word
 		//  AAAA...B all shorter A...B can be compacted on the last one.
+		//  AAAA...C and all shorter A .. C
 
 		buffer[pos++] = probabilities[0].symbol;
 		for(uint32_t k = 1; k < n_symbols; k++) {
@@ -201,7 +203,7 @@ void Tunstall::createDecodingTables2() {
 		}
 	}
 
-	while(n_words < dictionary_size - 1) {
+	while(n_words < dictionary_size) {
 		//find highest probability word
 		uint32_t best = 0;
 		uint32_t max_prob = 0;

@@ -259,7 +259,7 @@ Tunstall.prototype = {
 		}
 
 		//at each step we grow all queues using the most probable sequence
-		while(n_words < t.dictionary_size -1) {
+		while(n_words < t.dictionary_size) {
 			//find highest probability word
 			var best = 0;
 			var max_prob = 0;

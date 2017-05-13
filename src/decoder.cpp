@@ -213,10 +213,11 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 			int vindex[3];
 
 			int split =  0; //bitmask for vertex already decoded/
-			if(index.clers[cler] == SPLIT) { //lookahead
-				cler++;
+			int c = index.clers[cler++];
+			if(c == SPLIT) { //lookahead
 				split = index.bitstream.read(3);
-			}
+			} else
+				assert(c == VERTEX);
 
 			for(int k = 0; k < 3; k++) {
 				int v; //TODO just use last_index.
@@ -274,9 +275,8 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 		new_edge = front.size(); //index of the next edge to be added.
 		int opposite = -1;
 
-		if(c == VERTEX) {
-			if(index.clers[cler] == SPLIT) { //lookahead
-				cler++;
+		if(c == VERTEX || c == SPLIT) {
+			if(c == SPLIT) {
 				opposite = index.bitstream.read(splitbits);
 			} else {
 				//Edge is inverted respect to encoding hence v1-v0 inverted.

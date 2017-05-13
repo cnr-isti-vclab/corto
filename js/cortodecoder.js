@@ -186,8 +186,7 @@ decodeFaces: function(start, end) {
 			var vindex = [];
 
 			var split = 0;
-			if(clers[t.cler] == 6) { //split look ahead
-				t.cler++;
+			if(clers[t.cler++] == 6) { //split look ahead
 				split = bitstream.read(3);
 			}
 
@@ -237,9 +236,8 @@ decodeFaces: function(start, end) {
 
 		new_edge = front_count; //points to new edge to be inserted
 		var opposite = -1;
-		if(c == 0) { //VERTEX
-			if(clers[t.cler] == 6) { //split
-				t.cler++;
+		if(c == 0 || c == 6) { //VERTEX
+			if(c == 6) { //split
 				opposite = bitstream.read(splitbits);
 			} else {
 				prediction[t.vertex_count*3] = v1;

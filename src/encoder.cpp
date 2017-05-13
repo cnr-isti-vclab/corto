@@ -544,7 +544,8 @@ void Encoder::encodeFaces(int start, int end) {
 			if(split) {
 				index.clers.push_back(SPLIT);
 				index.bitstream.write(split, 3);
-			}
+			} else
+				index.clers.push_back(VERTEX);
 
 			for(int k = 0; k < 3; k++) {
 				uint32_t vindex = face.f[k];
@@ -661,12 +662,12 @@ void Encoder::encodeFaces(int start, int end) {
 				new_edge = -1;
 				continue;
 			}
-			index.clers.push_back(VERTEX);
 			if(encoded[opposite] != -1) {
 				index.clers.push_back(SPLIT);
 				index.bitstream.write(encoded[opposite], splitbits);
 
 			} else {
+				index.clers.push_back(VERTEX);
 				//vertex needed for parallelogram prediction
 				int v2 = faces[e.face].f[e.side];
 				prediction[current_vertex] = Quad(opposite, v0, v1, v2);

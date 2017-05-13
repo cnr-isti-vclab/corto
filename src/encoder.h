@@ -45,10 +45,10 @@ public:
 	std::map<std::string, VertexAttribute *> data;
 	int header_size;
 
-	Stream stream;
+	OutStream stream;
 
 	Encoder(uint32_t _nvert, uint32_t _nface = 0, Stream::Entropy entropy = Stream::TUNSTALL);
-
+	~Encoder();
 
 
 	bool addPositions(const float *buffer, float q = 0.0f, Point3f o = Point3f(0.0f));

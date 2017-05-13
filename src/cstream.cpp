@@ -36,7 +36,7 @@ int crt::ilog2(uint64_t p) {
 
 
 //TODO uniform notation length first, pointer after everywhere
-int Stream::compress(uint32_t size, uchar *data) {
+int OutStream::compress(uint32_t size, uchar *data) {
 	switch(entropy) {
 	case NONE:
 		write<uint32_t>(size);
@@ -55,7 +55,7 @@ int Stream::compress(uint32_t size, uchar *data) {
 }
 
 //TODO uniform notation length first, pointer after
-void Stream::decompress(vector<uchar> &data) {
+void InStream::decompress(vector<uchar> &data) {
 	switch(entropy) {
 	case NONE: {
 		uint32_t size = read<uint32_t>();
@@ -74,7 +74,7 @@ void Stream::decompress(vector<uchar> &data) {
 	}
 }
 
-int Stream::tunstall_compress(uchar *data, int size) {
+int OutStream::tunstall_compress(uchar *data, int size) {
 	Tunstall t;
 	t.getProbabilities(data, size);
 
@@ -96,7 +96,7 @@ int Stream::tunstall_compress(uchar *data, int size) {
 	return 1 + t.probabilities.size()*2 + 4 + 4 + compressed_size;
 }
 
-void Stream::tunstall_decompress(vector<uchar> &data) {
+void InStream::tunstall_decompress(vector<uchar> &data) {
 	Tunstall t;
 	int nsymbols = read<uchar>();
 	uchar *probs = readArray<uchar>(nsymbols*2);
@@ -117,7 +117,7 @@ void Stream::tunstall_decompress(vector<uchar> &data) {
 
 #ifdef ENTROPY_TESTS
 
-int Stream::zlib_compress(uchar *data, int size) {
+int OutStream::zlib_compress(uchar *data, int size) {
 
 	Bytef *compressed_data = new Bytef[compressBound(size)];
 	uLongf compressed_size;
@@ -131,7 +131,7 @@ int Stream::zlib_compress(uchar *data, int size) {
 	return 4 + 4 + compressed_size;
 }
 
-void Stream::zlib_decompress(vector<uchar> &data) {
+void InStream::zlib_decompress(vector<uchar> &data) {
 	uLongf size = read<int>();
 	data.resize(size);
 	uLong compressed_size = read<int>();
@@ -141,7 +141,7 @@ void Stream::zlib_decompress(vector<uchar> &data) {
 	uncompress((Bytef *)data.data(), &size, (Bytef *)compressed_data, compressed_size);
 }
 
-int Stream::lz4_compress(uchar *data, int size) {
+int OutStream::lz4_compress(uchar *data, int size) {
 
 	int compressed_size = LZ4_compressBound(size);
 	uchar *compressed_data = new uchar[compressed_size];
@@ -155,7 +155,7 @@ int Stream::lz4_compress(uchar *data, int size) {
 	return 4 + 4 + compressed_size;
 }
 
-void Stream::lz4_decompress(vector<uchar> &data) {
+void InStream::lz4_decompress(vector<uchar> &data) {
 	int size = read<int>();
 	data.resize(size);
 	int compressed_size = read<int>();

@@ -35,6 +35,10 @@ Encoder::Encoder(uint32_t _nvert, uint32_t _nface, Stream::Entropy entropy):
 	stream.entropy = entropy;
 	index.faces.resize(nface*3);
 }
+Encoder::~Encoder() {
+	for(auto d: data)
+		delete d.second;
+}
 
 //TODO optional checking for invalid (nan, infinity) values.
 

@@ -43,7 +43,7 @@ public:
 	virtual void quantize(uint32_t nvert, const char *buffer);
 	virtual void dequantize(uint32_t nvert);
 
-	virtual void encode(uint32_t nvert, Stream &stream) {
+	virtual void encode(uint32_t nvert, OutStream &stream) {
 		stream.restart();
 		for(int c = 0; c < 4; c++)
 			stream.write<uchar>((uchar)qc[c]);
@@ -51,7 +51,7 @@ public:
 		stream.encodeValues<char>(nvert, (char *)diffs.data(), N);
 		size = stream.elapsed();
 	}
-	virtual void decode(uint32_t /*nvert*/, Stream &stream) {
+	virtual void decode(uint32_t /*nvert*/, InStream &stream) {
 		for(int c = 0; c < 4; c++)
 			qc[c] = stream.read<uchar>();
 		stream.decodeValues<uchar>((uchar *)buffer, N);

@@ -46,9 +46,9 @@ public:
 	virtual void quantize(uint32_t nvert, const char *buffer);
 	virtual void preDelta(uint32_t nvert,  uint32_t nface, std::map<std::string, VertexAttribute *> &attrs, IndexAttribute &index);
 	virtual void deltaEncode(std::vector<Quad> &context);
-	virtual void encode(uint32_t nvert, Stream &stream);
+	virtual void encode(uint32_t nvert, OutStream &stream);
 
-	virtual void decode(uint32_t nvert, Stream &stream);
+	virtual void decode(uint32_t nvert, InStream &stream);
 	virtual void deltaDecode(uint32_t nvert, std::vector<Face> &context);
 	virtual void postDelta(uint32_t nvert,  uint32_t nface, std::map<std::string, VertexAttribute *> &attrs, IndexAttribute &index);
 	virtual void dequantize(uint32_t nvert);

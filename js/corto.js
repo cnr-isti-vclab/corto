@@ -256,9 +256,9 @@ NormalAttr.prototype.computeNormals = function(nvert) {
 
 NormalAttr.prototype.markBoundary = function( nvert,  nface, index, boundary) {	
 	for(var f = 0; f < nface*3; f += 3) {
-		boundary[index[f+0]] += index[f+1] ^ index[f+2];
-		boundary[index[f+1]] += index[f+2] ^ index[f+0];
-		boundary[index[f+2]] += index[f+0] ^ index[f+1];
+		boundary[index[f+0]] ^= index[f+1] ^ index[f+2];
+		boundary[index[f+1]] ^= index[f+2] ^ index[f+0];
+		boundary[index[f+2]] ^= index[f+0] ^ index[f+1];
 	}
 }
 

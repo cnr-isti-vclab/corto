@@ -3,7 +3,7 @@ project(corto)
 
 SET(CORTO_SOURCE_PATH src)
 
-SET(HEADERS
+SET(LIB_HEADERS
 	${CORTO_SOURCE_PATH}/bitstream.h
 	${CORTO_SOURCE_PATH}/color_attribute.h
 	${CORTO_SOURCE_PATH}/corto.h
@@ -17,7 +17,7 @@ SET(HEADERS
 	${CORTO_SOURCE_PATH}/vertex_attribute.h
 	${CORTO_SOURCE_PATH}/zpoint.h)
 
-SET(SOURCES
+SET(LIB_SOURCES
 	${CORTO_SOURCE_PATH}/bitstream.cpp
 	${CORTO_SOURCE_PATH}/color_attribute.cpp
 	${CORTO_SOURCE_PATH}/cstream.cpp
@@ -26,7 +26,18 @@ SET(SOURCES
 	${CORTO_SOURCE_PATH}/normal_attribute.cpp
 	${CORTO_SOURCE_PATH}/tunstall.cpp)
 
-ADD_LIBRARY(corto STATIC ${SOURCES} ${HEADERS})
+SET(EXE_SOURCE
+	${CORTO_SOURCE_PATH}/main.cpp
+	${CORTO_SOURCE_PATH}/meshloader.cpp
+	${CORTO_SOURCE_PATH}/tinyply.cpp)
+
+SET(EXE_HEADERS
+	${CORTO_SOURCE_PATH}/meshloader.h
+	${CORTO_SOURCE_PATH}/tinyply.h
+	${CORTO_SOURCE_PATH}/objload.h)
+
+ADD_LIBRARY(cortolib STATIC ${LIB_SOURCES} ${LIB_HEADERS})
+ADD_EXECUTABLE(cortoexe ${EXE_SOURCE} ${EXE_HEADERS})
 
 SET(CORTO_DEFINITIONS "") 
 
@@ -37,22 +48,33 @@ else()
 	SET(CORTO_CFLAGS -O2 -W -Wall -c -std=c++11 -pedantic)
 endif()
 
+SET(CORTOEXE_CFLAGS ${CORTO_CFLAGS})
+SET(CORTOLIB_CFLAGS ${CORTO_CFLAGS})
+
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
-	LIST(APPEND CORTO_CFLAGS -fPIC)
+	LIST(APPEND CORTOLIB_CFLAGS -fPIC)
 elseif(APPLE)
-	LIST(APPEND CORTO_CFLAGS -fvisibility=hidden)
+	LIST(APPEND CORTOLIB_CFLAGS -fvisibility=hidden)
 	if(IOS)
-		LIST(APPEND CORTO_CFLAGS -fembed-bitcode)
+		LIST(APPEND CORTOLIB_CFLAGS -fembed-bitcode)
 		set_xcode_property(corto IPHONEOS_DEPLOYMENT_TARGET "9.2")
+		set_xcode_property(cortoexe IPHONEOS_DEPLOYMENT_TARGET "9.2")
 	endif(IOS)
 endif()
 
-target_include_directories(corto PUBLIC ${CORTO_SOURCE_PATH})
-target_compile_definitions(corto PUBLIC ${CORTO_DEFINITIONS})
-target_compile_options    (corto PUBLIC ${CORTO_CFLAGS})
-set_target_properties     (corto PROPERTIES DEBUG_POSTFIX "d")
+target_include_directories(cortolib PUBLIC ${CORTO_SOURCE_PATH})
+target_include_directories(cortoexe PUBLIC ${CORTO_SOURCE_PATH})
 
-INSTALL(TARGETS corto
+target_link_libraries(cortoexe PUBLIC cortolib)
+
+target_compile_definitions(cortolib PUBLIC ${CORTO_DEFINITIONS})
+target_compile_options    (cortolib PUBLIC ${CORTOLIB_CFLAGS})
+target_compile_options    (cortoexe PUBLIC ${CORTOEXE_CFLAGS})
+set_target_properties     (cortolib PROPERTIES DEBUG_POSTFIX "d")
+set_target_properties     (cortoexe PROPERTIES OUTPUT_NAME "corto")
+set_target_properties     (cortolib PROPERTIES OUTPUT_NAME "corto")
+
+INSTALL(TARGETS cortolib cortoexe
 	RUNTIME DESTINATION bin
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib)

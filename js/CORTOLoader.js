@@ -108,7 +108,7 @@ THREE.CORTOLoader.prototype = {
 					var textureLoader = new THREE.TextureLoader();
 					promise.waiting++;
 					opt.map = textureLoader.load(this.path + group.properties.texture, 
-						function() { mesh.dispatchEvent("change"); });
+						function() { mesh.dispatchEvent({ type: "change" }); });
 					materials.push(new THREE.MeshBasicMaterial(opt));
 				} else
 					materials.push(new THREE.MeshLambertMaterial(opt));

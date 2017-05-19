@@ -16,6 +16,22 @@ a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
 
+// unistd.h for getopt not available on win32
+#ifdef _WIN32
+
+#include <iostream>
+
+int main(int argc, char * argv[])
+{
+	(void)argc;
+	(void)argv;
+
+	std::cout << "corto: error - WIN32 platform not yet supported." << std::endl;
+
+	return -1;
+}
+
+#else  // not _WIN32
 
 #include <unistd.h>
 #include <assert.h>
@@ -313,3 +329,4 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+#endif  // _WIN32

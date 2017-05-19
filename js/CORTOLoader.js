@@ -42,7 +42,7 @@ THREE.CORTOLoader.prototype = {
 			var decoder = new CortoDecoder(blob);
 			var model = decoder.decode();
 
-/*used for debug and profiling */
+			/*used for debug and profiling */
 			var ms = performance.now() - now;
 			scope.blob = blob;
 			scope.decode_time = ms;
@@ -109,8 +109,11 @@ THREE.CORTOLoader.prototype = {
 					promise.waiting++;
 					opt.map = textureLoader.load(this.path + group.properties.texture, 
 						function() { mesh.dispatchEvent({ type: "change" }); });
+				}
+				//use diffuse only when normals present and no texture.
+				if(group.properties.texture && !model.normal)
 					materials.push(new THREE.MeshBasicMaterial(opt));
-				} else
+				else
 					materials.push(new THREE.MeshLambertMaterial(opt));
 			}
 			mesh.material = new THREE.MultiMaterial(materials);

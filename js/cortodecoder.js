@@ -31,6 +31,9 @@ onmessage = function(job) {
 
 
 function CortoDecoder(data, byteOffset, byteLength) {
+	if(byteOffset & 0x3)
+		throw "Memory aligned on 4 bytes is mandatory";
+
 	var t = this;
 	var stream = t.stream = new Stream(data, byteOffset, byteLength);
 	

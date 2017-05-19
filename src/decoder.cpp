@@ -39,6 +39,8 @@ public:
 };
 
 Decoder::Decoder(int len, const uchar *input): vertex_count(0) {
+	if((uintptr_t)input & 0x3)
+		throw "Memory must be alignegned on 4 bytes.";
 
 	stream.init(len, input);
 	uint32_t magic = stream.read<uint32_t>();

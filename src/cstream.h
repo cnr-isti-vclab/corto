@@ -19,6 +19,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #ifndef CRT_CSTREAM_H
 #define CRT_CSTREAM_H
 
+#include <assert.h>
 #include <string.h>
 #include <iostream>
 
@@ -78,10 +79,9 @@ public:
 
 	void write(BitStream &stream) {
 		stream.flush();
-		//padding to 32 bit is needed for javascript reading (which uses int words.), mem needs to be aligned.
 		write<int>((int)stream.size);
 
-
+		//padding to 32 bit is needed for javascript reading (which uses int words.), mem needs to be aligned.
 		int pad = size() & 0x3;
 		if(pad != 0)
 			pad = 4 - pad;
@@ -92,6 +92,8 @@ public:
 	uchar *grow(size_t s) {
 		size_t len = buffer.size();
 		buffer.resize(len + s);
+		//padding to 32 bit is needed for javascript reading (which uses int words.), mem needs to be aligned.
+		assert((((uintptr_t)buffer.data()) & 0x3) == 0);
 		return buffer.data() + len;
 	}
 

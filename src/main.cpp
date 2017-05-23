@@ -16,8 +16,6 @@ a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-
 #include <assert.h>
 #include <sstream>
 #include <fstream>
@@ -35,7 +33,8 @@ using namespace crt;
 using namespace std;
 using namespace tinyply;
 
-#ifndef WIN32
+
+#ifndef _WIN32
 #include <unistd.h>
 #else
 #include <stdio.h>
@@ -135,7 +134,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if(optind != argc-1) {
-#ifdef WIN32
+#ifdef _WIN32
 		cerr << "Too many arguments or argument before other options\n";
 #else
 		cerr << "Too many arguments\n";
@@ -326,9 +325,7 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-#ifdef WIN32
-
-//
+#ifdef _WIN32
 
 int getopt(int nargc, char * const nargv[], const char *ostr) {
 	static const char *place = "";        // option letter processing

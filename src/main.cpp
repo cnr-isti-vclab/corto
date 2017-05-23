@@ -154,10 +154,11 @@ int main(int argc, char *argv[]) {
 			prediction = crt::NormalAttr::BORDER;
 		else if(normal_prediction == "estimated")
 			prediction = crt::NormalAttr::ESTIMATED;
+		else if(normal_prediction == "parallel")
+			prediction = crt::NormalAttr::PARALLEL;
 		else {
-			cerr << "Unknown normal prediction: " << prediction << " expecting: delta, border or estimated" << endl;
+			cerr << "Unknown normal prediction!: " << normal_prediction << " expecting: delta, border or estimated" << endl;
 			return 1;
-
 		}
 	}
 

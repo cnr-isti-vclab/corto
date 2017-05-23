@@ -61,10 +61,12 @@ void NormalAttr::quantize(uint32_t nvert, const char *buffer) {
 	values.resize(n);
 	diffs.resize(n);
 
+	cout << "Quantize" << endl;
 	Point2i *normals = (Point2i *)values.data();
 	switch(format) {
 	case FLOAT:
 		for(uint32_t i = 0; i < nvert; i++) {
+			Point3f n = ((const Point3f *)buffer)[0];
 			normals[i] = toOcta(((const Point3f *)buffer)[i], (int)q);
 		}
 		break;
@@ -95,12 +97,14 @@ void NormalAttr::quantize(uint32_t nvert, const char *buffer) {
 		max.setMax(normals[i]);
 	}
 	max -= min;
+	cout << "max: " << max[0] << " " << max[1] << " min: " << min[0] << " " << min[1] << endl;
 	bits = std::max(ilog2(max[0]-1), ilog2(max[1]-1)) + 1;
+	cout << bits << endl;
 }
 
 
 void NormalAttr::preDelta(uint32_t nvert,  uint32_t nface, std::map<std::string, VertexAttribute *> &attrs, IndexAttribute &index) {
-	if(prediction == DIFF)
+	if(prediction == DIFF || prediction == PARALLEL)
 		return;
 
 	if(attrs.find("position") == attrs.end())
@@ -138,6 +142,20 @@ void NormalAttr::deltaEncode(std::vector<Quad> &context) {
 		}
 		diffs.resize(context.size()*2); //unreferenced vertices
 
+	} else if(prediction == PARALLEL) {
+		diffs[0] = values[context[0].t*2];
+		diffs[1] = values[context[0].t*2+1];
+
+		for(uint32_t i = 1; i < context.size(); i++) {
+			Quad &quad = context[i];
+			diffs[i*2 + 0] = values[quad.t*2 + 0] - (values[quad.a*2 + 0] + values[quad.b*2 + 0] - values[quad.c*2 + 0]);
+			diffs[i*2 + 1] = values[quad.t*2 + 1] - (values[quad.a*2 + 1] + values[quad.b*2 + 1] - values[quad.c*2 + 1]);
+			if(i < 100) {
+				cout << diffs[quad.t*2 + 0] << ", " << diffs[quad.t*2 + 1] << "\t";
+			}
+		}
+		diffs.resize(context.size()*2); //unreferenced vertices
+
 	} else  {//just reorder diffs, for border story only boundary diffs
 		uint32_t count = 0;
 
@@ -172,17 +190,26 @@ void NormalAttr::decode(uint32_t nvert, InStream &stream) {
 void NormalAttr::deltaDecode(uint32_t nvert, std::vector<Face> &context) {
 	if(!buffer) return;
 
-	if(prediction != DIFF)
+	if(prediction != DIFF && prediction != PARALLEL)
 		return;
 
 	if(context.size()) {
-		for(uint32_t i = 1; i < context.size(); i++) {
-			Face &f = context[i];
-			for(int c = 0; c < 2; c++) {
-				int &d = diffs[i*2 + c];
-				d += diffs[f.a*2 + c];
+		if(prediction == DIFF) {
+			for(uint32_t i = 1; i < context.size(); i++) {
+				Face &f = context[i];
+				for(int c = 0; c < 2; c++) {
+					int &d = diffs[i*2 + c];
+					d += diffs[f.a*2 + c];
+				}
 			}
-
+		} else { //PARALLEL
+			for(uint32_t i = 1; i < context.size(); i++) {
+				Face &f = context[i];
+				for(int c = 0; c < 2; c++) {
+					int &d = diffs[i*2 + c];
+					d += diffs[f.a*2 + c] + diffs[f.c*2 + c] - diffs[f.c*2 + c];
+				}
+			}
 		}
 	} else { //point clouds assuming values are already sorted by proximity.
 		for(uint32_t i = 2; i < nvert*2; i++) {
@@ -198,7 +225,7 @@ void NormalAttr::postDelta(uint32_t nvert, uint32_t nface,
 	if(!buffer) return;
 
 	//for border and estimate we need the position already deltadecoded but before dequantized
-	if(prediction == DIFF)
+	if(prediction == DIFF || prediction == PARALLEL)
 		return;
 
 	if(attrs.find("position") == attrs.end())
@@ -235,7 +262,7 @@ void NormalAttr::postDelta(uint32_t nvert, uint32_t nface,
 void NormalAttr::dequantize(uint32_t nvert) {
 	if(!buffer) return;
 
-	if(prediction != DIFF)
+	if(prediction != DIFF && prediction != PARALLEL)
 		return;
 
 	switch(format) {

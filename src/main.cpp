@@ -17,9 +17,8 @@ If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#include <unistd.h>
-#include <assert.h>
 
+#include <assert.h>
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -35,6 +34,16 @@ If not, see <http://www.gnu.org/licenses/>.
 using namespace crt;
 using namespace std;
 using namespace tinyply;
+
+#ifndef WIN32
+#include <unistd.h>
+#else
+#include <stdio.h>
+#include <string.h>
+int opterr = 1, optind = 1, optopt, optreset;
+const char *optarg;
+int getopt(int nargc, char * const nargv[], const char *ostr);
+#endif
 
 void usage() {
 	cerr <<
@@ -126,7 +135,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	if(optind != argc-1) {
+#ifdef WIN32
+		cerr << "Too many arguments or argument before other options\n";
+#else
 		cerr << "Too many arguments\n";
+#endif
 		usage();
 		return 1;
 	}
@@ -313,3 +326,60 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
+#ifdef WIN32
+
+//
+
+int getopt(int nargc, char * const nargv[], const char *ostr) {
+	static const char *place = "";        // option letter processing
+	const char *oli;                      // option letter list index
+
+	if(optreset || !*place) {             // update scanning pointer
+		optreset = 0;
+		if (optind >= nargc || *(place = nargv[optind]) != '-') {
+			place = "";
+			return -1;
+		}
+
+		if (place[1] && *++place == '-') { // found "--"
+			++optind;
+			place = "";
+			return -1;
+		}
+	}                                       // option letter okay?
+
+	if ((optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, optopt))) {
+		// if the user didn't specify '-' as an option,  assume it means -1.
+		if (optopt == (int)'-')
+		return (-1);
+		if (!*place)
+			++optind;
+		if (opterr && *ostr != ':')
+			cout << "illegal option -- " << optopt << "\n";
+		return ('?');
+	}
+
+	if (*++oli != ':') {                    // don't need argument
+		optarg = NULL;
+		if (!*place)
+			++optind;
+
+	} else {                                // need an argument
+		if (*place)                         // no white space
+			optarg = place;
+		else if (nargc <= ++optind) {       // no arg
+			place = "";
+			if (*ostr == ':')
+				return (':');
+			if (opterr)
+				cout << "option requires an argument -- " <<  optopt << "\n";
+			return (':');
+		} else                              // white space
+			optarg = nargv[optind];
+		place = "";
+		++optind;
+	}
+	return optopt;                          // dump back option letter
+}
+
+#endif

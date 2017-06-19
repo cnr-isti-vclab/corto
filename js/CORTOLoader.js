@@ -22,7 +22,7 @@ THREE.CORTOLoader = function(options, manager) {
 
 	if(!options)
 		options = {};
-	this.path = options.path? options.path : '';
+	this.path = options.path;
 	this.loadMaterial = options.loadMaterial ? options.loadMaterial : true;
 };
 
@@ -34,6 +34,10 @@ THREE.CORTOLoader.prototype = {
 	load: function(url, onLoad, onProgress, onError) {
 		const scope = this;
 		const loader = new THREE.FileLoader(scope.manager);
+		if(!this.path) {
+			this.path = url.substr(0, url.lastIndexOf('/')+1);
+			url = url.substr(url.lastIndexOf('/')+1);
+		}
 		loader.setPath(this.path);
 		loader.setResponseType('arraybuffer');
 		loader.load(url, function(blob) {
@@ -112,9 +116,9 @@ THREE.CORTOLoader.prototype = {
 				}
 				//use diffuse only when normals present and no texture.
 				if(group.properties.texture && !model.normal)
-					materials.push(new THREE.MeshBasicMaterial(opt));
+					materials.push(new THREE.MeshStandardMaterial(opt));
 				else
-					materials.push(new THREE.MeshLambertMaterial(opt));
+					materials.push(new THREE.MeshStandardMaterial(opt));
 			}
 			mesh.material = new THREE.MultiMaterial(materials);
 

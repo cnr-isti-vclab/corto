@@ -8,12 +8,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/edsilv/corto.git"
+    "url": "git+https://github.com/cnr-isti-vclab/corto.git"
   },
   "author": "",
   "license": "LGPL-3.0",
   "bugs": {
-    "url": "https://github.com/edsilv/corto/issues"
+    "url": "https://github.com/cnr-isti-vclab/corto/issues"
   },
-  "homepage": "https://github.com/edsilv/corto#readme"
+  "homepage": "https://github.com/cnr-isti-vclab/corto#readme"
 }

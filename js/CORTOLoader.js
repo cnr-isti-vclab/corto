@@ -153,6 +153,7 @@ THREE.CORTOLoader.prototype = {
 							checkTex();
 					}
 				}
+				mesh.dispatchEvent({type: "change"});
 			});
 		}
 	}

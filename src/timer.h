@@ -39,7 +39,7 @@ public:
 	void start() {
 		QueryPerformanceCounter(&t_start);
 	}
-	int stop() {
+	void stop() {
 		QueryPerformanceCounter(&t_end);
 	}
 	int64_t elapsed() {

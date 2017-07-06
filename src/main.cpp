@@ -33,7 +33,6 @@ using namespace crt;
 using namespace std;
 using namespace tinyply;
 
-
 #ifndef _WIN32
 #include <unistd.h>
 #else
@@ -63,6 +62,7 @@ FILE is the path to a .ply or a .obj 3D model.
 	  estimated: use difference from compute normals (smaller)
 	  border: store difference only for boundary vertices (smaller, inaccurate)
   -P <file.ply>: decompress and save as .ply for debugging purpouses
+  -G <group>: extract only a group in obj
 )use";
 }
 
@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
 	string input;
 	string output;
 	string plyfile;
+	string group;
 	bool pointcloud = false;
 	bool add_normals = false;
 	float vertex_q = 0.0f;
@@ -90,7 +91,7 @@ int main(int argc, char *argv[]) {
 	std::map<std::string, std::string> exif;
 
 	int c;
-	while((c = getopt(argc, argv, "pAo:v:n:c:u:q:N:e:P:")) != -1) {
+	while((c = getopt(argc, argv, "pAo:v:n:c:u:q:N:e:P:G:")) != -1) {
 		switch(c) {
 		case 'o': output = optarg;  break;  //output filename
 		case 'p': pointcloud = true; break; //force pointcloud
@@ -107,6 +108,7 @@ int main(int argc, char *argv[]) {
 		case 'A': add_normals = true; break;
 		case 'N': normal_prediction = optarg; break;
 		case 'P': plyfile = optarg; break; //save ply for debugging purpouses
+		case 'G': group = optarg; break;
 		case 'e': {
 			std::string opt(optarg);
 			size_t pos = opt.find('=');
@@ -149,7 +151,7 @@ int main(int argc, char *argv[]) {
 
 	crt::MeshLoader loader;
 	loader.add_normals = add_normals;
-	bool ok = loader.load(input);
+	bool ok = loader.load(input, group);
 	if(!ok) {
 		cerr << "Failed loading model: " << input << endl;
 		return 1;

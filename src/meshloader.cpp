@@ -36,11 +36,11 @@ static bool startsWith(const std::string& str, const std::string& prefix) {
 	return str.size() >= prefix.size() && !str.compare(0, prefix.size(), prefix);
 }
 
-bool MeshLoader::load(const std::string &filename) {
+bool MeshLoader::load(const std::string &filename, const string &group) {
 	if(endsWith(filename, ".ply") || endsWith(filename, ".PLY"))
 		return loadPly(filename);
 	if(endsWith(filename, ".obj") || endsWith(filename, ".OBJ"))
-		return loadObj(filename);
+		return loadObj(filename, group);
 	return false;
 }
 
@@ -119,7 +119,7 @@ bool MeshLoader::loadPly(const std::string &filename) {
 	return true;
 }
 
-bool MeshLoader::loadObj(const std::string &filename) {
+bool MeshLoader::loadObj(const std::string &filename, const std::string &groupname) {
 
 	obj::IndexedModel m = obj::loadModelFromFile(filename);
 
@@ -130,9 +130,8 @@ bool MeshLoader::loadObj(const std::string &filename) {
 	swap(m.normal, norms);
 	swap(m.faces, index);
 
-	nvert = coords.size()/3;
-	nface = index.size()/3;
 
+	int keepgroup = -1;
 	for(auto &block: m.blocks) {
 		Group g(block.end);
 		if(block.material.size())
@@ -140,6 +139,8 @@ bool MeshLoader::loadObj(const std::string &filename) {
 		if(block.groups.size()) {
 			std::string str;
 			for(auto &group: block.groups) {
+				if(groupname.size() && group == groupname)
+					keepgroup = groups.size();
 				str.append(group);
 				str.append(" ");
 			}
@@ -148,6 +149,41 @@ bool MeshLoader::loadObj(const std::string &filename) {
 		}
 		groups.push_back(g);
 	}
+
+
+	if(keepgroup != -1) { //remove all other groups
+		int start = 0;
+		if(keepgroup > 0)
+			start = groups[keepgroup-1].end;
+		Group g = groups[keepgroup];
+		vector<int> reorder(coords.size(), -1);
+		int facecount = 0;
+		int vertcount = 0;
+		vector<float> newcoords(coords.size());
+		for(int i = start; i < g.end; i++) {
+			for(int k = 0; k < 3; k++) {
+				int v = index[i*3+k];
+				if(reorder[v] == -1) {
+					newcoords[vertcount*3] = coords[v*3];
+					newcoords[vertcount*3+1] = coords[v*3+1];
+					newcoords[vertcount*3+2] = coords[v*3+2];
+					reorder[v] = vertcount++;
+				}
+				index[facecount*3 + k] = reorder[v];
+			}
+			facecount++;
+		}
+		newcoords.resize(vertcount*3);
+		index.resize(facecount*3);
+		swap(coords, newcoords);
+		g.end = facecount;
+		groups[0] = g;
+		groups.resize(1);
+
+	}
+
+	nvert = coords.size()/3;
+	nface = index.size()/3;
 
 	for(uint32_t i = 0; i < index.size(); i++)
 		assert(index[i] < nvert);

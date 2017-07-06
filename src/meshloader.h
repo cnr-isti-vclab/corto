@@ -35,9 +35,9 @@ public:
 	};
 
 	MeshLoader(): add_normals(false) {}
-	bool load(const std::string &filename);
+	bool load(const std::string &filename, const std::string &group = "");
 	bool loadPly(const std::string &filename);
-	bool loadObj(const std::string &filename);
+	bool loadObj(const std::string &filename, const std::string &group);
 	void splitWedges();
 	bool savePly(const std::string &filename, std::vector<std::string> &comments);
 

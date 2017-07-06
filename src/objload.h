@@ -76,7 +76,7 @@ struct ObjModel {
 inline ObjModel parseObjModel( std::istream & in);
 inline void tesselateObjModel( ObjModel & obj);
 inline ObjModel tesselateObjModel( const ObjModel & obj );
-inline IndexedModel convertToModel( const ObjModel & obj );
+inline IndexedModel convertToModel(const ObjModel &obj );
 
 inline IndexedModel loadModel( std::istream & in );
 inline IndexedModel loadModelFromString( const std::string & in );
@@ -111,34 +111,44 @@ inline std::istream & operator>>(std::istream & in, std::set<T> & vec ){
 	return in;
 }
 
-inline std::istream & operator>>( std::istream & in, ObjModel::FaceVertex & f){
-	if(in >> f.v){
-		if(in.peek() == '/'){
-			in.get();
-
-			if(in.peek() == ' ' || in.peek() == '/') //  12//  unusual Obj format added.
-				in.get();
-			else {
-
-				in >> f.t;
-				in.clear();
-				if(in.peek() == '/'){
-					in.get();
-
-					if(in.peek() == ' ') //  12/13/  unusual Obj format added.
-						in.get();
-					else {
-						in >> f.n;
-						in.clear();
-					}
-				}
-			}
-		}
-		in.clear();
-		--f.v;
-		--f.t;
-		--f.n;
+inline std::istream & operator>>( std::istream & in, ObjModel::FaceVertex & f) {
+	in >> f.v;
+//	cout << "V: " << f.v << endl;
+	if(in.peek() == ' ' || !in.good()) { // v
+		in.get();
+		goto finish;
 	}
+	in.get(); //reading texture now
+
+	if(in.peek() == ' ' || !in.good()) { // v
+		in.get();
+		goto finish;
+	}
+
+	if(in.peek() != '/')
+		in >> f.t; //if nothing after / just f.n remains -1
+//	cout << "T: " << f.t << endl;
+
+	if(in.peek() == ' ') { // v/n or v/
+		in.get();
+		goto finish;
+	}
+	in.get(); //reading normal now
+
+	if(in.peek() == ' ' || !in.good()) { // v
+		in.get();
+		goto finish;
+	}
+
+	if(in.peek() != '/')
+		in >> f.n;
+//	cout << "N: " << f.n << endl;
+
+	finish:
+	--f.v;
+	--f.t;
+	--f.n;
+
 	return in;
 }
 
@@ -233,17 +243,20 @@ void tesselateObjModel( ObjModel & obj){
 	}
 }
 
-IndexedModel convertToModel( const ObjModel & obj ) {
+IndexedModel convertToModel(const ObjModel & obj ) {
 	IndexedModel model;
 	model.mtllibs = obj.mtllibs;
 
+	//sort facevertices according to coord index, then texture then normal index.
 	std::vector<std::pair<ObjModel::FaceVertex, uint32_t>> vertices;
 	vertices.reserve(obj.index.size());
 	for(uint32_t i = 0; i < obj.index.size(); i++)
 		vertices.emplace_back(std::make_pair(obj.index[i], i));
 
 	std::sort(vertices.begin(), vertices.end());
-	//build vertex remap
+
+	//collapse facevertices with same v, t, e n indices
+	//build vertex remap for faces
 	std::vector<uint32_t> remap;
 	remap.resize(vertices.size());
 	ObjModel::FaceVertex last;
@@ -255,6 +268,7 @@ IndexedModel convertToModel( const ObjModel & obj ) {
 			continue;
 		}
 		last = vertices[i].first;
+
 		remap[id] = count++;
 		model.vertex.push_back(obj.vertex[last.v*3+0]);
 		model.vertex.push_back(obj.vertex[last.v*3+1]);

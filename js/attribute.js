@@ -359,7 +359,7 @@ function IndexAttr(nvert, nface, type) {
 	var t = this;
 	if((!type && nface < (1<<16)) || type == 0) //uint16
 		t.faces = new Uint16Array(nface*3);
-	if(!type || type == 2) //uint32 
+	else if(!type || type == 2) //uint32 
 		t.faces = new Uint32Array(nface*3);
 	else
 		throw "Unsupported type";

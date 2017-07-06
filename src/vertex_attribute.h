@@ -72,7 +72,7 @@ template <class T> class GenericAttr: public VertexAttribute {
 public:
 	std::vector<T> values, diffs;
 
-	GenericAttr(int _N) { N = _N; }
+	GenericAttr(int dim) { N = dim; }
 	virtual ~GenericAttr(){}
 	virtual int codec() { return GENERIC_CODEC; }
 

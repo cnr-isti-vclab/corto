@@ -1,0 +1,19 @@
+{
+  "name": "corto",
+  "version": "1.0.0",
+  "description": "<p><img width=\"128\" src=\"http://pc-ponchio.isti.cnr.it/corto/img/logo1.svg\"></p>",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cnr-isti-vclab/corto.git"
+  },
+  "author": "",
+  "license": "LGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/cnr-isti-vclab/corto/issues"
+  },
+  "homepage": "https://github.com/cnr-isti-vclab/corto#readme"
+}

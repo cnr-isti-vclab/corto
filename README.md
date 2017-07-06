@@ -2,7 +2,7 @@
 
 **Corto** is a library for compression and decompression meshes and point clouds (C++ and Javascript).
 
-## [Demo](http://pc-ponchio.isti.cnr.it/corto/index.html)
+## [Demo](http://vcg.isti.cnr.it/corto/index.html)
 
 ## Features
 

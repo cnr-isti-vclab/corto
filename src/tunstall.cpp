@@ -82,6 +82,7 @@ void Tunstall::decompress(Stream &stream, std::vector<unsigned char> &data) {
 
 void Tunstall::getProbabilities(unsigned char *data, int size) {
 
+//#define DEBUG_ENTROPY
 #ifdef DEBUG_ENTROPY
 	double e = 0;
 #endif
@@ -420,6 +421,9 @@ unsigned char *Tunstall::compress(unsigned char *data, int input_size, int &outp
 		output[output_size++] = offset;
 	}
 	assert(output_size <= input_size*2);
+#ifdef DEBUG_ENTROPY
+	cout << "Compressed to: E: " << ((float)output_size*8.0f)/input_size << " tot: " << output_size << endl;
+#endif
 	return output;
 }
 

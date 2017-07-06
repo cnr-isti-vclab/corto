@@ -20,6 +20,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #define CRT_CSTREAM_H
 
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 #include <iostream>
 

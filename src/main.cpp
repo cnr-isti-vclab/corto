@@ -309,7 +309,7 @@ int main(int argc, char *argv[]) {
 	if(!endsWith(output, ".crt"))
 		output += ".crt";
 
-	FILE *file = fopen(output.c_str(), "w");
+	FILE *file = fopen(output.c_str(), "wb");
 	if(!file) {
 		cerr << "Couldl not open file: " << output << endl;
 		return 1;

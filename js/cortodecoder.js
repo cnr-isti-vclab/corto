@@ -23,6 +23,10 @@ onmessage = function(job) {
 	if(!buffer) return;
 
 	var decoder = new CortoDecoder(buffer);
+	if(job.data.short_normals)
+		decoder.attributes.normal.type = 3;
+	if(job.data.rgba_colors)
+		decoder.attributes.color.outcomponents = 4;
 	var model = decoder.decode();
 	
 	//pass back job

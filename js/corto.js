@@ -451,6 +451,7 @@ dequantize: function(nvert) {
 function ColorAttr(name, q, components, type, strategy) {
 	Attribute.call(this, name, q, components, type, strategy);
 	this.qc = [];
+	this.outcomponents = 3;
 }
 
 ColorAttr.prototype = Object.create(Attribute.prototype);
@@ -464,7 +465,7 @@ ColorAttr.prototype.dequantize = function(nvert) {
 	var t = this;
 	for(var i = 0; i < nvert; i++) {
 		var offset = i*4;
-		var rgboff = i*3;
+		var rgboff = i*t.outcomponents;
 
 		var e0 = t.values[offset + 0];
 		var e1 = t.values[offset + 1];
@@ -473,6 +474,7 @@ ColorAttr.prototype.dequantize = function(nvert) {
 		t.buffer[rgboff + 0] = ((e2 + e0)* t.qc[0])&0xff;
 		t.buffer[rgboff + 1] = e0* t.qc[1];
 		t.buffer[rgboff + 2] = ((e1 + e0)* t.qc[2])&0xff;
+//		t.buffer[rgboff + 3] = 255;
 //		t.buffer[offset + 3] = t.values[offset + 3] * t.qc[3];
 	}
 }
@@ -757,6 +759,12 @@ onmessage = function(job) {
 	if(!buffer) return;
 
 	var decoder = new CortoDecoder(buffer);
+	if(job.data.short_normals)
+		decoder.attributes.normal.type = 3;
+	if(job.data.rgba_colors)
+		decoder.attributes.color.outcomponents = 4;
+
+	decoder.attributes.normal.type = 3;
 	var model = decoder.decode();
 	
 	//pass back job

@@ -115,6 +115,7 @@ dequantize: function(nvert) {
 function ColorAttr(name, q, components, type, strategy) {
 	Attribute.call(this, name, q, components, type, strategy);
 	this.qc = [];
+	this.outcomponents = 3;
 }
 
 ColorAttr.prototype = Object.create(Attribute.prototype);
@@ -128,7 +129,7 @@ ColorAttr.prototype.dequantize = function(nvert) {
 	var t = this;
 	for(var i = 0; i < nvert; i++) {
 		var offset = i*4;
-		var rgboff = i*3;
+		var rgboff = i*t.outcomponents;
 
 		var e0 = t.values[offset + 0];
 		var e1 = t.values[offset + 1];

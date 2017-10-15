@@ -53,7 +53,7 @@ public:
 	}
 	virtual void decode(uint32_t /*nvert*/, InStream &stream) {
 		for(int c = 0; c < 4; c++)
-			qc[c] = stream.read<uchar>();
+			qc[c] = stream.readUint8();
 		stream.decodeValues<uchar>((uchar *)buffer, N);
 	}
 };

@@ -43,27 +43,27 @@ Decoder::Decoder(int len, const uchar *input): vertex_count(0) {
 		throw "Memory must be alignegned on 4 bytes.";
 
 	stream.init(len, input);
-	uint32_t magic = stream.read<uint32_t>();
+	uint32_t magic = stream.readUint32();
 	if(magic != 0x787A6300)
 		throw "Not a crt file.";
-	uint32_t version = stream.read<uint32_t>();
-	stream.entropy = (Stream::Entropy)stream.read<uchar>();
+	uint32_t version = stream.readUint32();
+	stream.entropy = (Stream::Entropy)stream.readUint8();
 
-	uint32_t size = stream.read<uint32_t>();
+	uint32_t size = stream.readUint32();
 	for(uint32_t i = 0; i < size; i++) {
 		const char *key = stream.readString();
 		exif[key] = stream.readString();
 	}
 
-	int nattr = stream.read<int>();
+	int nattr = stream.readUint32();
 
 	for(int i = 0; i < nattr; i++) {
 		std::string name =  stream.readString();
-		int codec = stream.read<int>();
-		float q = stream.read<float>();
-		uint32_t components = stream.read<uchar>();
-		uint32_t format = stream.read<uchar>();
-		uint32_t strategy = stream.read<uchar>();
+		int codec = stream.readUint32();
+		float q = stream.readFloat();
+		uint32_t components = stream.readUint8();
+		uint32_t format = stream.readUint8();
+		uint32_t strategy = stream.readUint8();
 
 		VertexAttribute *attr = nullptr;
 		switch(codec) {
@@ -80,8 +80,8 @@ Decoder::Decoder(int len, const uchar *input): vertex_count(0) {
 		attr->strategy = strategy;
 		data[name] = attr;
 	}
-	nvert = stream.read<uint32_t>();
-	nface = stream.read<uint32_t>();
+	nvert = stream.readUint32();
+	nface = stream.readUint32();
 }
 
 Decoder::~Decoder() {

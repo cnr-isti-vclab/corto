@@ -161,7 +161,7 @@ void NormalAttr::encode(uint32_t /*nvert*/, OutStream &stream) {
 }
 
 void NormalAttr::decode(uint32_t nvert, InStream &stream) {
-	prediction = stream.read<uchar>();
+	prediction = stream.readUint8();
 	diffs.resize(nvert*2);
 	uint32_t readed = stream.decodeArray<int32_t>(diffs.data(), 2);
 

@@ -34,6 +34,10 @@ int crt::ilog2(uint64_t p) {
 	return k;
 }
 
+namespace crt {
+
+
+}
 
 //TODO uniform notation length first, pointer after everywhere
 int OutStream::compress(uint32_t size, uchar *data) {
@@ -58,7 +62,7 @@ int OutStream::compress(uint32_t size, uchar *data) {
 void InStream::decompress(vector<uchar> &data) {
 	switch(entropy) {
 	case NONE: {
-		uint32_t size = read<uint32_t>();
+		uint32_t size = readUint32();
 		data.resize(size);
 		uchar *c = readArray<uchar>(size);
 		memcpy(data.data(), c, size);
@@ -98,7 +102,7 @@ int OutStream::tunstall_compress(uchar *data, int size) {
 
 void InStream::tunstall_decompress(vector<uchar> &data) {
 	Tunstall t;
-	int nsymbols = read<uchar>();
+	int nsymbols = readUint8();
 	uchar *probs = readArray<uchar>(nsymbols*2);
 	t.probabilities.resize(nsymbols);
 	memcpy(t.probabilities.data(), probs, nsymbols*2);
@@ -106,9 +110,9 @@ void InStream::tunstall_decompress(vector<uchar> &data) {
 	t.createDecodingTables2();
 
 
-	int size = read<int>();
+	int size = readUint32();
 	data.resize(size);
-	int compressed_size = read<int>();
+	int compressed_size = readUint32();
 	unsigned char *compressed_data = readArray<unsigned char>(compressed_size);
 
 	if(size)

@@ -81,16 +81,16 @@ public:
 	}
 
 	void decode(InStream &stream) {
-		max_front = stream.read<uint32_t>();
+		max_front = stream.readUint32();
 		stream.decompress(clers);
 		stream.read(bitstream);
 	}
 
 	void decodeGroups(InStream &stream) {
-		groups.resize(stream.read<uint32_t>());
+		groups.resize(stream.readUint32());
 		for(Group &g: groups) {
-			g.end = stream.read<uint32_t>();
-			uchar size = stream.read<uchar>();
+			g.end = stream.readUint32();
+			uchar size = stream.readUint8();
 			for(uint32_t i = 0; i < size; i++) {
 				const char *key = stream.readString();
 				g.properties[key] = stream.readString();

@@ -620,10 +620,11 @@ void Encoder::encodeFaces(int start, int end) {
 		//check for closure on previous or next edge
 		int eprev = e.prev;
 		int enext = e.next;
+		assert(eprev >= 0);
 		assert(enext < (int)front.size());
 		assert(eprev < (int)front.size());
-		CEdge &previous_edge = front[eprev];
-		CEdge &next_edge = front[enext];
+		const CEdge previous_edge = front[eprev];
+		const CEdge next_edge = front[enext];
 
 		bool close_left = (faces[previous_edge.face].t[previous_edge.side] == opposite_face);
 		bool close_right = (faces[next_edge.face].t[next_edge.side] == opposite_face);
@@ -632,15 +633,15 @@ void Encoder::encodeFaces(int start, int end) {
 
 		if(close_left && close_right) {
 			index.clers.push_back(END);
-			previous_edge.deleted = true;
-			next_edge.deleted = true;
+			front[eprev].deleted = true;
+			front[enext].deleted = true;
 			front[previous_edge.prev].next = next_edge.next;
 			front[next_edge.next].prev = previous_edge.prev;
 			new_edge = -1;
 
 		} else if(close_left) {
 			index.clers.push_back(LEFT);
-			previous_edge.deleted = true;
+			front[eprev].deleted = true;
 			front[previous_edge.prev].next = new_edge;
 			front[enext].prev = new_edge;
 
@@ -648,7 +649,7 @@ void Encoder::encodeFaces(int start, int end) {
 
 		} else if(close_right) {
 			index.clers.push_back(RIGHT);
-			next_edge.deleted = true;
+			front[enext].deleted = true;
 			front[next_edge.next].prev = new_edge;
 			front[eprev].next = new_edge;
 
@@ -679,8 +680,8 @@ void Encoder::encodeFaces(int start, int end) {
 				last_index = opposite;
 			}
 
-			previous_edge.next = new_edge;
-			next_edge.prev = new_edge + 1;
+			front[eprev].next = new_edge;
+			front[enext].prev = new_edge + 1;
 
 			front.emplace_back(opposite_face, k0, eprev, new_edge+1);
 			faceorder.push_back(front.size());

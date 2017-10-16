@@ -63,7 +63,7 @@ int Tunstall::compress(Stream &stream, unsigned char *data, int size) {
 void Tunstall::decompress(Stream &stream, std::vector<unsigned char> &data) {
 
 	Tunstall t;
-	int nsymbols = stream.read<uchar>();
+	int nsymbols = stream.readUint8();
 	uchar *probs = stream.readArray<uchar>(nsymbols*2);
 	t.probabilities.resize(nsymbols);
 	memcpy(t.probabilities.data(), probs, nsymbols*2);

@@ -192,12 +192,12 @@ public:
 
 	void rewind() { pos = buffer; }
 
-	template<class T> T read() {
+/*	template<class T> T read() {
 		T c;
 		c = *(T *)pos;
 		pos += sizeof(T);
 		return c;
-	}
+	} */
 
 	template<class T> T *readArray(uint32_t s) {
 		T *buffer = (T *)pos;
@@ -205,14 +205,45 @@ public:
 		return buffer;
 	}
 
+	uint8_t readUint8() {
+		return *pos++;
+	}
+
+	uint16_t readUint16() {
+		uint16_t c;
+		c = pos[1];
+		c<<=8;
+		c += pos[0];
+		pos += 2;
+		return c;
+	}
+
+	uint32_t readUint32() {
+		uint32_t c;
+		c = pos[3];
+		c<<=8;
+		c += pos[2];
+		c<<=8;
+		c += pos[1];
+		c<<=8;
+		c += pos[0];
+		pos += 4;
+		return c;
+	}
+
+	float readFloat() {
+		uint32_t c = readUint32();
+		return *(float *)&c;
+	}
+
 	char *readString() {
-		uint16_t bytes = read<uint16_t>();
+		uint16_t bytes = readUint16();
 		return readArray<char>(bytes);
 	}
 
 
 	void read(BitStream &stream) {
-		int s = read<int>();
+		int s = readUint32();
 		//padding to 32 bit is needed for javascript reading (which uses int words.), mem needs to be aligned.
 		int pad = (pos - buffer) & 0x3;
 		if(pad != 0)

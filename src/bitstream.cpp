@@ -71,7 +71,7 @@ void BitStream::init(int _size, uint32_t *_buffer) { //in uint32_t units for rea
 
 void BitStream::reserve(int reserved) { //in uint32_t units for reading
 	allocated = reserved;
-        pos = buffer = new uint32_t[allocated];
+	pos = buffer = new uint32_t[allocated];
 	size = 0;
 	buff = 0;
 	bits = BITS_PER_WORD;
@@ -131,8 +131,8 @@ void BitStream::flush() {
 
 void BitStream::push_back(uint32_t w) {
 	if(size >= allocated) {
-                uint32_t *b = new uint32_t[allocated*2];
-                memcpy(b, buffer, allocated*sizeof(uint32_t));
+				uint32_t *b = new uint32_t[allocated*2];
+				memcpy(b, buffer, allocated*sizeof(uint32_t));
 		delete []buffer;
 		buffer = b;
 		allocated *= 2;

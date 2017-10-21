@@ -645,15 +645,16 @@ void Encoder::encodeFaces(int start, int end) {
 			front[previous_edge.prev].next = new_edge;
 			front[enext].prev = new_edge;
 
-			front.emplace_back(opposite_face, k1, previous_edge.prev, enext);
-
+			uint32_t previous_edge_prev = previous_edge.prev;
+      			front.emplace_back( opposite_face, k1, previous_edge_prev, enext);
 		} else if(close_right) {
 			index.clers.push_back(RIGHT);
 			front[enext].deleted = true;
 			front[next_edge.next].prev = new_edge;
 			front[eprev].next = new_edge;
 
-			front.emplace_back(opposite_face, k0, eprev, next_edge.next);
+      			uint32_t next_edge_next = next_edge.next;
+      			front.emplace_back(opposite_face, k0, eprev,next_edge_next);
 
 		} else {
 			int v0 = face.f[k0];

@@ -1,4 +1,5 @@
-QT     += core gui
+QT     += core
+QT     -= gui
 
 TARGET   = corto
 CONFIG   += console
@@ -6,7 +7,8 @@ CONFIG   -= app_bundle
 CONFIG   += warn_on
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -std=c++11 -Wall -pedantic
+win32:QMAKE_CXXFLAGS += -std=c++11 -Wall -pedantic
+unix:QMAKE_CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic -Wimplicit
 
 SOURCES += main.cpp \
     decoder.cpp \

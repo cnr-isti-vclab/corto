@@ -1,18 +1,16 @@
-QT += core
-QT -= gui
+QT     += core gui
 
-TARGET = corto
-CONFIG += console
-CONFIG -= app_bundle
-
-CONFIG += warn_on
-
+TARGET   = corto
+CONFIG   += console
+CONFIG   -= app_bundle
+CONFIG   += warn_on
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic -Wimplicit
+QMAKE_CXXFLAGS += -std=c++11 -Wall -pedantic
+
 SOURCES += main.cpp \
-	decoder.cpp \
-	encoder.cpp \
+    decoder.cpp \
+    encoder.cpp \
     tunstall.cpp \
     bitstream.cpp \
     cstream.cpp \
@@ -20,9 +18,10 @@ SOURCES += main.cpp \
     normal_attribute.cpp \
     tinyply.cpp \
     meshloader.cpp
+
 HEADERS += \
-	decoder.h \
-	encoder.h \
+    decoder.h \
+    encoder.h \
     point.h \
     zpoint.h \
     cstream.h \
@@ -42,6 +41,6 @@ HEADERS += \
 DISTFILES += \
     plan.md
 
-#uncomment this for tests with other entropy coders.
+#uncomment this for tests with other entropy coders
 #DEFINES += ENTROPY_TESTS
 #LIBS += -lz $$PWD/lz4/liblz4.a

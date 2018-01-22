@@ -71,7 +71,6 @@ static bool endsWith(const std::string& str, const std::string& suffix) {
 }
 
 int main(int argc, char *argv[]) {
-
 	string input;
 	string output;
 	string plyfile;

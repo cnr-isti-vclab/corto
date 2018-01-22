@@ -402,11 +402,17 @@ public:
 				continue;
 			}
 
+/*
+ *  Is this faster (and correct)?
+			int max = (1<<diff)>>1;
+			values[i] = (int)bitstream.read(diff) - ((1<<(diff)>>1);
+*/
+					
 			int val = (int)bitstream.read(diff);
 			int middle = 1<<(diff-1);
 			if(val < middle)
 				val = -val -middle;
-			values[i] = (T)val;
+			values[i] = (T)val; 
 		}
 		return (uint32_t)logs.size();
 	}

@@ -121,6 +121,7 @@ Stream.prototype = {
 		return t.logs.readed;
 	},
 
+	//assumes values alread allocated
 	decodeValues: function(N, values) {
 		var t = this;
 		var bitstream = t.readBitStream();
@@ -145,6 +146,53 @@ Stream.prototype = {
 					val = -val -middle;
 				values[i*N + c] = val;
 			}
+		}
+		return t.logs.readed;
+	},
+
+	//assumes values alread allocated
+	decodeIndices: function(values) {
+		var t = this;
+		var bitstream = t.readBitStream();
+		var tunstall = new Tunstall;
+		var size = values.length;
+		while(t.logs.length < size)
+			t.logs = new Uint8Array(size);
+
+		tunstall.decompress(this, t.logs);
+
+		for(var i = 0; i < t.logs.readed; i++) {
+			var diff = t.logs[i];
+			if(diff == 0) {
+				values[i] = 0;
+				continue;
+			}
+			var max = (1<<diff)>>>1;
+			for(var c = 0; c < N; c++)
+				values[i] = bitstream.read(diff) - max;
+		}
+		return t.logs.readed;
+	},
+
+	//assumes values alread allocated
+	decodeDiffs: function(values) {
+		var t = this;
+		var bitstream = t.readBitStream();
+
+		var tunstall = new Tunstall;
+		var size = values.length;
+		while(t.logs.length < size)
+			t.logs = new Uint8Array(size);
+
+		tunstall.decompress(this, t.logs);
+
+		for(var i = 0; i < t.logs.readed; i++) {
+			var ret = t.logs[i];
+			if(ret == 0) {
+				values[i] = 0;
+				continue;
+			}
+			values[i] = (1<<ret) + bitstream.read(ret) -1;
 		}
 		return t.logs.readed;
 	}

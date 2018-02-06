@@ -121,6 +121,7 @@ Stream.prototype = {
 		return t.logs.readed;
 	},
 
+	//assumes values alread allocated
 	decodeValues: function(N, values) {
 		var t = this;
 		var bitstream = t.readBitStream();
@@ -145,6 +146,53 @@ Stream.prototype = {
 					val = -val -middle;
 				values[i*N + c] = val;
 			}
+		}
+		return t.logs.readed;
+	},
+
+	//assumes values alread allocated
+	decodeIndices: function(values) {
+		var t = this;
+		var bitstream = t.readBitStream();
+		var tunstall = new Tunstall;
+		var size = values.length;
+		while(t.logs.length < size)
+			t.logs = new Uint8Array(size);
+
+		tunstall.decompress(this, t.logs);
+
+		for(var i = 0; i < t.logs.readed; i++) {
+			var diff = t.logs[i];
+			if(diff == 0) {
+				values[i] = 0;
+				continue;
+			}
+			var max = (1<<diff)>>>1;
+			for(var c = 0; c < N; c++)
+				values[i] = bitstream.read(diff) - max;
+		}
+		return t.logs.readed;
+	},
+
+	//assumes values alread allocated
+	decodeDiffs: function(values) {
+		var t = this;
+		var bitstream = t.readBitStream();
+
+		var tunstall = new Tunstall;
+		var size = values.length;
+		while(t.logs.length < size)
+			t.logs = new Uint8Array(size);
+
+		tunstall.decompress(this, t.logs);
+
+		for(var i = 0; i < t.logs.readed; i++) {
+			var ret = t.logs[i];
+			if(ret == 0) {
+				values[i] = 0;
+				continue;
+			}
+			values[i] = (1<<ret) + bitstream.read(ret) -1;
 		}
 		return t.logs.readed;
 	}
@@ -201,7 +249,7 @@ Tunstall.prototype = {
 		for(var i = 0; i < n_symbols; i++)
 			queue[i] = t.probs[2*i+1] << 8;
 
-		var max_repeat = (t.dictionary_size - 1)/(n_symbols - 1);
+		var max_repeat = Math.floor((t.dictionary_size - 1)/(n_symbols - 1));
 		var repeat = 2;
 		var p0 = queue[0];
 		var p1 = queue[1];
@@ -474,7 +522,6 @@ ColorAttr.prototype.dequantize = function(nvert) {
 		t.buffer[rgboff + 0] = ((e2 + e0)* t.qc[0])&0xff;
 		t.buffer[rgboff + 1] = e0* t.qc[1];
 		t.buffer[rgboff + 2] = ((e1 + e0)* t.qc[2])&0xff;
-//		t.buffer[rgboff + 3] = 255;
 //		t.buffer[offset + 3] = t.values[offset + 3] * t.qc[3];
 	}
 }
@@ -763,8 +810,6 @@ onmessage = function(job) {
 		decoder.attributes.normal.type = 3;
 	if(job.data.rgba_colors)
 		decoder.attributes.color.outcomponents = 4;
-
-	decoder.attributes.normal.type = 3;
 	var model = decoder.decode();
 	
 	//pass back job

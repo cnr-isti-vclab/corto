@@ -249,7 +249,7 @@ Tunstall.prototype = {
 		for(var i = 0; i < n_symbols; i++)
 			queue[i] = t.probs[2*i+1] << 8;
 
-		var max_repeat = (t.dictionary_size - 1)/(n_symbols - 1);
+		var max_repeat = Math.floor((t.dictionary_size - 1)/(n_symbols - 1));
 		var repeat = 2;
 		var p0 = queue[0];
 		var p1 = queue[1];

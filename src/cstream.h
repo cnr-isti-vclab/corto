@@ -165,23 +165,6 @@ public:
 		compress(logs.size(), logs.data());
 	}
 	
-	//encode POSITIVE values
-	template <class T> void encodeIndices(uint32_t size, T *values) {
-		BitStream bitstream(size);
-		std::vector<uchar> logs(size);
-		for(uint32_t i = 0; i < size; i++) {
-			T val = values[i] + 1;
-			if(val == 1) {
-				logs[i] = 0;
-				continue;
-			}
-			
-			int ret = logs[i] = ilog2(val);
-			bitstream.write(val -(1<<ret), ret);
-		}
-		write(bitstream);
-		compress(logs.size(), logs.data());
-	}
 	//encode DIFFS
 	template <class T> void encodeDiffs(uint32_t size, T *values) {
 		BitStream bitstream(size);
@@ -198,6 +181,24 @@ public:
 			int middle = (1<<ret)>>1;
 			if(val < 0) val = -val -middle;
 			bitstream.write(val, ret);
+		}
+		write(bitstream);
+		compress(logs.size(), logs.data());
+	}
+	
+	//encode POSITIVE values
+	template <class T> void encodeIndices(uint32_t size, T *values) {
+		BitStream bitstream(size);
+		std::vector<uchar> logs(size);
+		for(uint32_t i = 0; i < size; i++) {
+			T val = values[i] + 1;
+			if(val == 1) {
+				logs[i] = 0;
+				continue;
+			}
+			
+			int ret = logs[i] = ilog2(val);
+			bitstream.write(val -(1<<ret), ret);
 		}
 		write(bitstream);
 		compress(logs.size(), logs.data());

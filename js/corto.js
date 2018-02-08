@@ -151,7 +151,7 @@ Stream.prototype = {
 	},
 
 	//assumes values alread allocated
-	decodeIndices: function(values) {
+	decodeDiffs: function(values) {
 		var t = this;
 		var bitstream = t.readBitStream();
 		var tunstall = new Tunstall;
@@ -168,14 +168,13 @@ Stream.prototype = {
 				continue;
 			}
 			var max = (1<<diff)>>>1;
-			for(var c = 0; c < N; c++)
-				values[i] = bitstream.read(diff) - max;
+			values[i] = bitstream.read(diff) - max;
 		}
 		return t.logs.readed;
 	},
 
 	//assumes values alread allocated
-	decodeDiffs: function(values) {
+	decodeIndices: function(values) {
 		var t = this;
 		var bitstream = t.readBitStream();
 

@@ -24,7 +24,7 @@ BitStream = function(array) {
 	t.position = 0; //position in the buffer
 	t.pending = 32;  //bits still to read
 };
- 
+
 BitStream.prototype = { 
 	read: function(bits) {
 		var t = this;
@@ -38,7 +38,6 @@ BitStream.prototype = {
 			t.current = (t.current & ((1<<t.pending)-1))>>>0; //slighting faster than mask.
 			return result;
 		} else { //splitting result in branch seems faster.
-
 			t.pending -= bits;
 			var result = (t.current >>> t.pending);
 			t.current = (t.current & ((1<<t.pending)-1))>>>0; //slighting faster than mask, 
@@ -53,41 +52,49 @@ Stream = function(buffer, byteOffset, byteLength) {
 	t.buffer = new Uint8Array(buffer);
 	t.pos = byteOffset?byteOffset:0;
 	t.view = new DataView(buffer);
-}
+};
 
 Stream.prototype = {
-	logs: new Uint8Array(16768), 
+	logs: new Uint8Array(16768),
+
 	readChar: function() {
 		var c = this.buffer[this.pos++];
 		if(c > 127) c -= 256;
 		return c;
 	},
+
 	readUChar: function() {
 		return this.buffer[this.pos++];
-	},	
+	},
+
 	readShort: function() {
 		this.pos += 2;
 		return this.view.getInt16(this.pos-2, true);
 	},
+
 	readFloat: function() {
 		this.pos += 4;
 		return this.view.getFloat32(this.pos-4, true);
 	},
+
 	readInt: function() {
 		this.pos += 4;
 		return this.view.getInt32(this.pos-4, true);
 	},
+
 	readArray: function(n) {
 		var a = this.buffer.subarray(this.pos, this.pos+n);
 		this.pos += n;
 		return a;
 	},
+
 	readString: function() {
 		var n = this.readShort();
 		var s = String.fromCharCode.apply(null, this.readArray(n-1));
 		this.pos++; //null terminator of string.
 		return s;
 	},
+
 	readBitStream:function() {
 		var n = this.readInt();
 		var pad = this.pos & 0x3;
@@ -97,6 +104,7 @@ Stream.prototype = {
 		this.pos += n*4;
 		return b;
 	},
+
 	//make decodearray2,3 later //TODO faster to create values here or passing them?
 	decodeArray: function(N, values) {
 		var t = this;
@@ -198,10 +206,8 @@ Stream.prototype = {
 	}
 };
 
-
 function Tunstall() {
 }
-
 
 Tunstall.prototype = {
 	wordsize: 8,
@@ -230,11 +236,9 @@ Tunstall.prototype = {
 		if(size)
 			this._decompress(compressed_data, compressed_size, data, size);
 		return data;
-	}, 
-
+	},
 
 	createDecodingTables: function() {
-
 		var t = this;
 		var n_symbols = t.probs.length/2;
 		if(n_symbols <= 1) return;
@@ -290,7 +294,6 @@ Tunstall.prototype = {
 
 			n_words = 1 + repeat*(n_symbols - 1);
 			end = repeat*n_symbols;
-
 		} else {
 			//initialize adding all symbols to queues
 			for(var i = 0; i < n_symbols; i++) {
@@ -340,7 +343,6 @@ Tunstall.prototype = {
 			n_words += n_symbols -1;
 		}
 
-
 		var word = 0;
 		for(i = 0, row = 0; i < end; i ++, row++) {
 			if(row >= n_symbols)
@@ -352,6 +354,7 @@ Tunstall.prototype = {
 			word++;
 		}
 	},
+
 	_decompress: function(input, input_size, output, output_size) {
 		//TODO optimize using buffer arrays
 		var input_pos = 0;
@@ -381,27 +384,7 @@ Tunstall.prototype = {
 
 		return output;
 	}
-}
-/*
-Corto
-
-Copyright(C) 2017 - Federico Ponchio
-ISTI - Italian National Research Council - Visual Computing Lab
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
-a copy of the GNU General Public License along with Corto.
-If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
-
+};
 
 function Attribute(name, q, components, type, strategy) {
 	var t = this;
@@ -410,89 +393,86 @@ function Attribute(name, q, components, type, strategy) {
 	t.components = components; //integer
 	t.type = type;
 	t.strategy = strategy;
-}
-
-Attribute.prototype = {
-
-Type: { UINT32:0, INT32:1, UINT16:2, INT16:3, UINT8:4, INT8:5, FLOAT:6, DOUBLE:7 }, 
-
-Strategy: { PARALLEL:1, CORRELATED:2 },
-
-init: function(nvert, nface) {
-	var t = this;
-	var n = nvert*t.components;
-	t.values = new Int32Array(n);  //local workspace 
-
-	//init output buffers
-	switch(t.type) {
-	case t.Type.UINT32:
-	case t.Type.INT32: t.values = t.buffer = new Int32Array(n); break; //no point replicating.
-	case t.Type.UINT16:
-	case t.Type.INT16: t.buffer = new Int16Array(n); break;
-	case t.Type.UINT8: t.buffer = new Uint8Array(n); break;
-	case t.Type.INT8: t.buffer  = new Int8Array(n); break;
-	case t.Type.FLOAT:
-	case t.Type.DOUBLE: t.buffer = new Float32Array(n); break;
-	default: throw "Error if reading";
-	}
-},
-
-decode: function(nvert, stream) {
-	var t = this;
-	if(t.strategy & t.Strategy.CORRELATED) //correlated
-		stream.decodeArray(t.components, t.values);
-	else
-		stream.decodeValues(t.components, t.values);
-},
-
-deltaDecode: function(nvert, context) {
-	var t = this;
-	var values = t.values;
-	var N = t.components;
-
-	if(t.strategy & t.Strategy.PARALLEL) { //parallel
-		var n = context.length/3;
-		for(var i = 1; i < n; i++) {
-			for(var c = 0; c < N; c++) {
-				values[i*N + c] += values[context[i*3]*N + c] + values[context[i*3+1]*N + c] - values[context[i*3+2]*N + c];
-			}
-		}
-	} else if(context) {
-		var n = context.length/3;
-		for(var i = 1; i < n; i++)
-			for(var c = 0; c < N; c++)
-				values[i*N + c] += values[context[i*3]*N + c];
-	} else {
-		for(var i = N; i < nvert*N; i++)
-			values[i] += values[i - N];
-	}
-},
-
-postDelta: function() {},
-
-dequantize: function(nvert) {
-	var t= this;
-	var n = t.components*nvert;
-	switch(t.type) {
-	case t.Type.UINT32:
-	case t.Type.INT32: break;
-	case t.Type.UINT16:
-	case t.Type.INT16: 
-	case t.Type.UINT8: 
-	case t.Type.INT8: 
-		for(var i = 0; i < n; i++)
-			t.buffer[i] = t.values[i]*t.q;
-		break;
-	case t.Type.FLOAT:
-	case t.Type.DOUBLE: 
-		for(var i = 0; i < n; i++)
-			t.buffer[i] = t.values[i]*t.q;
-		break;
-	}
-}
-
 };
 
+Attribute.prototype = {
+	Type: { UINT32:0, INT32:1, UINT16:2, INT16:3, UINT8:4, INT8:5, FLOAT:6, DOUBLE:7 },
+
+	Strategy: { PARALLEL:1, CORRELATED:2 },
+
+	init: function(nvert, nface) {
+		var t = this;
+		var n = nvert*t.components;
+		t.values = new Int32Array(n);  //local workspace 
+
+		//init output buffers
+		switch(t.type) {
+		case t.Type.UINT32:
+		case t.Type.INT32: t.values = t.buffer = new Int32Array(n); break; //no point replicating.
+		case t.Type.UINT16:
+		case t.Type.INT16: t.buffer = new Int16Array(n); break;
+		case t.Type.UINT8: t.buffer = new Uint8Array(n); break;
+		case t.Type.INT8: t.buffer  = new Int8Array(n); break;
+		case t.Type.FLOAT:
+		case t.Type.DOUBLE: t.buffer = new Float32Array(n); break;
+		default: throw "Error if reading";
+		}
+	},
+
+	decode: function(nvert, stream) {
+		var t = this;
+		if(t.strategy & t.Strategy.CORRELATED) //correlated
+			stream.decodeArray(t.components, t.values);
+		else
+			stream.decodeValues(t.components, t.values);
+	},
+
+	deltaDecode: function(nvert, context) {
+		var t = this;
+		var values = t.values;
+		var N = t.components;
+
+		if(t.strategy & t.Strategy.PARALLEL) { //parallel
+			var n = context.length/3;
+			for(var i = 1; i < n; i++) {
+				for(var c = 0; c < N; c++) {
+					values[i*N + c] += values[context[i*3]*N + c] + values[context[i*3+1]*N + c] - values[context[i*3+2]*N + c];
+				}
+			}
+		} else if(context) {
+			var n = context.length/3;
+			for(var i = 1; i < n; i++)
+				for(var c = 0; c < N; c++)
+					values[i*N + c] += values[context[i*3]*N + c];
+		} else {
+			for(var i = N; i < nvert*N; i++)
+				values[i] += values[i - N];
+		}
+	},
+
+	postDelta: function() {},
+
+	dequantize: function(nvert) {
+		var t= this;
+		var n = t.components*nvert;
+		switch(t.type) {
+		case t.Type.UINT32:
+		case t.Type.INT32: break;
+		case t.Type.UINT16:
+		case t.Type.INT16: 
+		case t.Type.UINT8: 
+		case t.Type.INT8: 
+			for(var i = 0; i < n; i++)
+				t.buffer[i] = t.values[i]*t.q;
+			break;
+		case t.Type.FLOAT:
+		case t.Type.DOUBLE: 
+			for(var i = 0; i < n; i++)
+				t.buffer[i] = t.values[i]*t.q;
+			break;
+		}
+	}
+};
 
 /* COLOR ATTRIBUTE */
 
@@ -500,14 +480,15 @@ function ColorAttr(name, q, components, type, strategy) {
 	Attribute.call(this, name, q, components, type, strategy);
 	this.qc = [];
 	this.outcomponents = 3;
-}
+};
 
 ColorAttr.prototype = Object.create(Attribute.prototype);
+
 ColorAttr.prototype.decode = function(nvert, stream) {
 	for(var c = 0; c < 4; c++)
 		this.qc[c] = stream.readUChar();
 	Attribute.prototype.decode.call(this, nvert, stream);
-}
+};
 
 ColorAttr.prototype.dequantize = function(nvert) {
 	var t = this;
@@ -524,13 +505,13 @@ ColorAttr.prototype.dequantize = function(nvert) {
 		t.buffer[rgboff + 2] = ((e1 + e0)* t.qc[2])&0xff;
 //		t.buffer[offset + 3] = t.values[offset + 3] * t.qc[3];
 	}
-}
+};
 
 /* NORMAL ATTRIBUTE */
 
 function NormalAttr(name, q, components, type, strategy) {
 	Attribute.call(this, name, q, components, type, strategy);
-}
+};
 
 NormalAttr.prototype = Object.create(Attribute.prototype);
 
@@ -597,7 +578,7 @@ NormalAttr.prototype.postDelta = function(nvert, nface, attrs, index) {
 	}
 
 	t.computeNormals(nvert);
-} 
+};
 
 NormalAttr.prototype.dequantize = function(nvert) {
 	var t = this;
@@ -606,7 +587,7 @@ NormalAttr.prototype.dequantize = function(nvert) {
 
 	for(var i = 0; i < nvert; i++)
 		t.toSphere(i, t.values, i, t.buffer, t.q)
-}
+};
 
 NormalAttr.prototype.computeNormals = function(nvert) {
 	var t = this;
@@ -637,15 +618,15 @@ NormalAttr.prototype.computeNormals = function(nvert) {
 			}
 		}
 	}
-}
+};
 
-NormalAttr.prototype.markBoundary = function( nvert,  nface, index, boundary) {	
+NormalAttr.prototype.markBoundary = function( nvert,  nface, index, boundary) {
 	for(var f = 0; f < nface*3; f += 3) {
 		boundary[index[f+0]] ^= index[f+1] ^ index[f+2];
 		boundary[index[f+1]] ^= index[f+2] ^ index[f+0];
 		boundary[index[f+2]] ^= index[f+0] ^ index[f+1];
 	}
-}
+};
 
 
 NormalAttr.prototype.estimateNormals = function(nvert, coords, nface, index) {
@@ -677,8 +658,7 @@ NormalAttr.prototype.estimateNormals = function(nvert, coords, nface, index) {
 		t.estimated[c + 1] += n1;
 		t.estimated[c + 2] += n2;
 	}
-}
-
+};
 
 //taks input in ingress at i offset, adds out at c offset
 NormalAttr.prototype.toSphere = function(i, input, o, out, unit) {
@@ -702,7 +682,7 @@ NormalAttr.prototype.toSphere = function(i, input, o, out, unit) {
 	out[k] *= len;
 	out[k+1] *= len;
 	out[k+2] *= len;
-}
+};
 
 NormalAttr.prototype.toOcta = function(i, input, o, output, unit) {
 	var k = o*2;
@@ -724,7 +704,6 @@ NormalAttr.prototype.toOcta = function(i, input, o, output, unit) {
 	}
 	output[k] += p0*unit;
 	output[k+1] += p1*unit;
-
 /*
 		Point2f p(v[0], v[1]);
 		p /= (fabs(v[0]) + fabs(v[1]) + fabs(v[2]));
@@ -734,9 +713,9 @@ NormalAttr.prototype.toOcta = function(i, input, o, output, unit) {
 			if(v[0] < 0) p[0] = -p[0];
 			if(v[1] < 0) p[1] = -p[1];
 		}
-		return Point2i(p[0]*unit, p[1]*unit); */
-}
-
+		return Point2i(p[0]*unit, p[1]*unit);
+*/
+};
 
 /* INDEX ATTRIBUTE */
 
@@ -750,54 +729,36 @@ function IndexAttr(nvert, nface, type) {
 		throw "Unsupported type";
 
 	t.prediction = new Uint32Array(nvert*3);
-}
-
-IndexAttr.prototype = {
-decode: function(stream) {
-	var t = this;
-
-	var max_front = stream.readInt();
-	t.front = new Int32Array(max_front*5);
-
-	var tunstall = new Tunstall;
-	t.clers = tunstall.decompress(stream);
-	t.bitstream = stream.readBitStream();
-},
-
-decodeGroups: function(stream) {
-	var t = this;
-	var n = stream.readInt();
-	t.groups = new Array(n);
-	for(var i = 0; i < n; i++) {
-		var end = stream.readInt();
-		var np = stream.readUChar();
-		var g = { end: end, properties: {} };
-		for(var k = 0; k < np; k++) {
-			var key = stream.readString();
-			g.properties[key] = stream.readString();
-		}
-		t.groups[i] = g;
-	}
-}
 };
 
-/*
-Corto
+IndexAttr.prototype = {
+	decode: function(stream) {
+		var t = this;
 
-Copyright(C) 2017 - Federico Ponchio
-ISTI - Italian National Research Council - Visual Computing Lab
+		var max_front = stream.readInt();
+		t.front = new Int32Array(max_front*5);
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or
-(at your option) any later version.
+		var tunstall = new Tunstall;
+		t.clers = tunstall.decompress(stream);
+		t.bitstream = stream.readBitStream();
+	},
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
-a copy of the GNU General Public License along with Corto.
-If not, see <http://www.gnu.org/licenses/>.
-*/
+	decodeGroups: function(stream) {
+		var t = this;
+		var n = stream.readInt();
+		t.groups = new Array(n);
+		for(var i = 0; i < n; i++) {
+			var end = stream.readInt();
+			var np = stream.readUChar();
+			var g = { end: end, properties: {} };
+			for(var k = 0; k < np; k++) {
+				var key = stream.readString();
+				g.properties[key] = stream.readString();
+			}
+			t.groups[i] = g;
+		}
+	}
+};
 
 onmessage = function(job) {
 	if(typeof(job.data) == "string") return;
@@ -806,15 +767,17 @@ onmessage = function(job) {
 	if(!buffer) return;
 
 	var decoder = new CortoDecoder(buffer);
-	if(job.data.short_normals)
+
+	if(decoder.attributes.normal && job.data.short_normals)
 		decoder.attributes.normal.type = 3;
-	if(job.data.rgba_colors)
+	if(decoder.attributes.color && job.data.rgba_colors)
 		decoder.attributes.color.outcomponents = 4;
+
 	var model = decoder.decode();
-	
+
 	//pass back job
 	postMessage({ model: model, buffer: buffer, request: job.data.request});
-}
+};
 
 
 function CortoDecoder(data, byteOffset, byteLength) {
@@ -823,7 +786,7 @@ function CortoDecoder(data, byteOffset, byteLength) {
 
 	var t = this;
 	var stream = t.stream = new Stream(data, byteOffset, byteLength);
-	
+
 	var magic = stream.readInt();
 	if(magic != 2021286656) return;
 
@@ -862,256 +825,254 @@ function CortoDecoder(data, byteOffset, byteLength) {
 //TODO move this vars into an array.
 	t.geometry.nvert = t.nvert = t.stream.readInt();
 	t.geometry.nface = t.nface = t.stream.readInt();
-}
+};
 
 CortoDecoder.prototype = {
+	decode: function() {
+		var t = this;
 
-decode: function() {
-	var t = this;
+		t.last = new Uint32Array(t.nvert*3); //for parallelogram prediction
+		t.last_count = 0;
 
-	t.last = new Uint32Array(t.nvert*3); //for parallelogram prediction
-	t.last_count = 0;
+		for(var i in t.attributes)
+			t.attributes[i].init(t.nvert, t.nface);
 
-	for(var i in t.attributes)
-		t.attributes[i].init(t.nvert, t.nface);
+		if(t.nface == 0)
+			t.decodePointCloud();
+		else
+			t.decodeMesh();
 
-	if(t.nface == 0)
-		t.decodePointCloud();
-	else
-		t.decodeMesh();
+		return t.geometry;
+	},
 
-	return t.geometry;
-},
+	decodePointCloud: function() {
+		var t = this;
+		t.index = new IndexAttr(t.nvert, t.nface, 0);
+		t.index.decodeGroups(t.stream);
+		t.geometry.groups = t.index.groups;
+		for(var i in t.attributes) {
+			var a = t.attributes[i];
+			a.decode(t.nvert, t.stream);
+			a.deltaDecode(t.nvert);
+			a.dequantize(t.nvert);
+			t.geometry[a.name] = a.buffer;
+		}
+	},
 
-decodePointCloud: function() {
-	var t = this;
-	t.index = new IndexAttr(t.nvert, t.nface, 0);
-	t.index.decodeGroups(t.stream);
-	t.geometry.groups = t.index.groups;
-	for(var i in t.attributes) {
-		var a = t.attributes[i];
-		a.decode(t.nvert, t.stream);
-		a.deltaDecode(t.nvert);
-		a.dequantize(t.nvert);
-		t.geometry[a.name] = a.buffer;
-	}
-},
+	decodeMesh: function() {
+		var t = this;
+		t.index = new IndexAttr(t.nvert, t.nface);
+		t.index.decodeGroups(t.stream);
+		t.index.decode(t.stream);
 
-decodeMesh: function() {
-	var t = this;
-	t.index = new IndexAttr(t.nvert, t.nface);
-	t.index.decodeGroups(t.stream);
-	t.index.decode(t.stream);
+		t.vertex_count = 0;
+		var start = 0;
+		t.cler = 0;
+		for(var p = 0; p < t.index.groups.length; p++) {
+			var end = t.index.groups[p].end;
+			this.decodeFaces(start *3, end *3);
+			start = end;
+		}
+		t.geometry['index'] = t.index.faces;
+		t.geometry.groups = t.index.groups;
+		for(var i in t.attributes) 
+			t.attributes[i].decode(t.nvert, t.stream);
+		for(var i in t.attributes) 
+			t.attributes[i].deltaDecode(t.nvert, t.index.prediction);
+		for(var i in t.attributes) 
+			t.attributes[i].postDelta(t.nvert, t.nface, t.attributes, t.index);
+		for(var i in t.attributes) { 
+			var a = t.attributes[i];
+			a.dequantize(t.nvert);
+			t.geometry[a.name] = a.buffer;
+		}
+	},
 
-	t.vertex_count = 0;
-	var start = 0;
-	t.cler = 0;
-	for(var p = 0; p < t.index.groups.length; p++) {
-		var end = t.index.groups[p].end;
-		this.decodeFaces(start *3, end *3);
-		start = end;
-	}
-	t.geometry['index'] = t.index.faces;
-	t.geometry.groups = t.index.groups;
-	for(var i in t.attributes) 
-		t.attributes[i].decode(t.nvert, t.stream);
-	for(var i in t.attributes) 
-		t.attributes[i].deltaDecode(t.nvert, t.index.prediction);
-	for(var i in t.attributes) 
-		t.attributes[i].postDelta(t.nvert, t.nface, t.attributes, t.index);
-	for(var i in t.attributes) { 
-		var a = t.attributes[i];
-		a.dequantize(t.nvert);
-		t.geometry[a.name] = a.buffer;
-	}
-},
+	/*
+	An edge is: uint16_t face, uint16_t side, uint32_t prev, next, bool deleted
+	I do not want to create millions of small objects, I will use aUint32Array.
+	Problem is how long, sqrt(nface) we will over blow using nface.
+	*/
 
-/* an edge is:   uint16_t face, uint16_t side, uint32_t prev, next, bool deleted
-I do not want to create millions of small objects, I will use aUint32Array.
-Problem is how long, sqrt(nface) we will over blow using nface.
-*/
+	ilog2: function(p) {
+		var k = 0;
+		while ( p>>=1 ) { ++k; }
+		return k;
+	},
 
-ilog2: function(p) {
-	var k = 0;
-	while ( p>>=1 ) { ++k; }
-	return k;
-},
+	decodeFaces: function(start, end) {
 
+		var t = this;
+		var clers = t.index.clers;
+		var bitstream = t.index.bitstream;
 
-decodeFaces: function(start, end) {
+		var front = t.index.front;
+		var front_count = 0; //count each integer so it's front_back*5
 
-	var t = this;
-	var clers = t.index.clers;
-	var bitstream = t.index.bitstream;
+		function addFront(_v0, _v1, _v2, _prev, _next) {
+			front[front_count] = _v0;
+			front[front_count+1] = _v1;
+			front[front_count+2] = _v2;
+			front[front_count+3] = _prev;
+			front[front_count+4] = _next;
+			front_count += 5;
+		}
 
-	var front = t.index.front;
-	var front_count = 0; //count each integer so it's front_back*5
+		var faceorder = new Uint32Array((end - start));
+		var order_front = 0;
+		var order_back = 0;
 
-	function addFront(_v0, _v1, _v2, _prev, _next) {
-		front[front_count] = _v0;
-		front[front_count+1] = _v1;
-		front[front_count+2] = _v2;
-		front[front_count+3] = _prev;
-		front[front_count+4] = _next;
-		front_count += 5;
-	}
+		var delayed = [];
 
-	var faceorder = new Uint32Array((end - start));
-	var order_front = 0;
-	var order_back = 0;
+		var splitbits = t.ilog2(t.nvert) + 1;
 
-	var delayed = [];
+		var new_edge = -1;
 
-	var splitbits = t.ilog2(t.nvert) + 1;
+		var prediction = t.index.prediction;
 
-	var new_edge = -1;
+		while(start < end) {
 
-	var prediction = t.index.prediction;
+			if(new_edge == -1 && order_front >= order_back && !delayed.length) {
 
-	while(start < end) {
+				var last_index = t.vertex_count-1;
+				var vindex = [];
 
-		if(new_edge == -1 && order_front >= order_back && !delayed.length) {
-
-			var last_index = t.vertex_count-1;
-			var vindex = [];
-
-			var split = 0;
-			if(clers[t.cler++] == 6) { //split look ahead
-				split = bitstream.read(3);
-			}
-
-			for(var k = 0; k < 3; k++) {
-				var v;
-				if(split & (1<<k))
-					v = bitstream.read(splitbits);
-				else {
-					prediction[t.vertex_count*3] = prediction[t.vertex_count*3+1] = prediction[t.vertex_count*3+2] = last_index;
-					last_index = v = t.vertex_count++;
+				var split = 0;
+				if(clers[t.cler++] == 6) { //split look ahead
+					split = bitstream.read(3);
 				}
-				vindex[k] = v;
-				t.index.faces[start++] = v;
+
+				for(var k = 0; k < 3; k++) {
+					var v;
+					if(split & (1<<k))
+						v = bitstream.read(splitbits);
+					else {
+						prediction[t.vertex_count*3] = prediction[t.vertex_count*3+1] = prediction[t.vertex_count*3+2] = last_index;
+						last_index = v = t.vertex_count++;
+					}
+					vindex[k] = v;
+					t.index.faces[start++] = v;
+				}
+
+				var current_edge = front_count;
+				faceorder[order_back++] = front_count;
+				addFront(vindex[1], vindex[2], vindex[0], current_edge + 2*5, current_edge + 1*5);
+				faceorder[order_back++] = front_count;
+				addFront(vindex[2], vindex[0], vindex[1], current_edge + 0*5, current_edge + 2*5);
+				faceorder[order_back++] = front_count;
+				addFront(vindex[0], vindex[1], vindex[2], current_edge + 1*5, current_edge + 0*5);
+				continue;
 			}
-
-			var current_edge = front_count;
-			faceorder[order_back++] = front_count;
-			addFront(vindex[1], vindex[2], vindex[0], current_edge + 2*5, current_edge + 1*5);
-			faceorder[order_back++] = front_count;
-			addFront(vindex[2], vindex[0], vindex[1], current_edge + 0*5, current_edge + 2*5);
-			faceorder[order_back++] = front_count;
-			addFront(vindex[0], vindex[1], vindex[2], current_edge + 1*5, current_edge + 0*5);
-			continue;
-		}
-		var edge;
-		if(new_edge != -1) {
-			edge = new_edge;
-			new_edge = -1;
-		} else if(order_front < order_back) {
-			edge = faceorder[order_front++];
-		} else {
-			edge = delayed.pop();
-		}
-		if(typeof(edge) == "undefined")
-			throw "aarrhhj";
-
-		if(front[edge] < 0) continue; //deleted
-
-		var c = clers[t.cler++];
-		if(c == 4) continue; //BOUNDARY
-
-		var v0   = front[edge + 0];
-		var v1   = front[edge + 1];
-		var v2   = front[edge + 2];
-		var prev = front[edge + 3];
-		var next = front[edge + 4];
-
-		new_edge = front_count; //points to new edge to be inserted
-		var opposite = -1;
-		if(c == 0 || c == 6) { //VERTEX
-			if(c == 6) { //split
-				opposite = bitstream.read(splitbits);
+			var edge;
+			if(new_edge != -1) {
+				edge = new_edge;
+				new_edge = -1;
+			} else if(order_front < order_back) {
+				edge = faceorder[order_front++];
 			} else {
-				prediction[t.vertex_count*3] = v1;
-				prediction[t.vertex_count*3+1] = v0;
-				prediction[t.vertex_count*3+2] = v2;
-				opposite = t.vertex_count++;
+				edge = delayed.pop();
 			}
+			if(typeof(edge) == "undefined")
+				throw "aarrhhj";
 
-			front[prev + 4] = new_edge;
-			front[next + 3] = new_edge + 5;
+			if(front[edge] < 0) continue; //deleted
 
-			front[front_count] = v0;
-			front[front_count + 1] = opposite;
-			front[front_count + 2] = v1;
-			front[front_count + 3] = prev;
-			front[front_count + 4] = new_edge+5;
-			front_count += 5; 
+			var c = clers[t.cler++];
+			if(c == 4) continue; //BOUNDARY
 
-			faceorder[order_back++] = front_count;
+			var v0   = front[edge + 0];
+			var v1   = front[edge + 1];
+			var v2   = front[edge + 2];
+			var prev = front[edge + 3];
+			var next = front[edge + 4];
 
-			front[front_count] = opposite;
-			front[front_count + 1] = v1;
-			front[front_count + 2] = v0;
-			front[front_count + 3] = new_edge; 
-			front[front_count + 4] = next;
-			front_count += 5; 
+			new_edge = front_count; //points to new edge to be inserted
+			var opposite = -1;
+			if(c == 0 || c == 6) { //VERTEX
+				if(c == 6) { //split
+					opposite = bitstream.read(splitbits);
+				} else {
+					prediction[t.vertex_count*3] = v1;
+					prediction[t.vertex_count*3+1] = v0;
+					prediction[t.vertex_count*3+2] = v2;
+					opposite = t.vertex_count++;
+				}
 
-		} else if(c == 1) { //LEFT
+				front[prev + 4] = new_edge;
+				front[next + 3] = new_edge + 5;
 
-			front[front[prev + 3] + 4] = new_edge;
-			front[next + 3] = new_edge;
-			opposite = front[prev];
+				front[front_count] = v0;
+				front[front_count + 1] = opposite;
+				front[front_count + 2] = v1;
+				front[front_count + 3] = prev;
+				front[front_count + 4] = new_edge+5;
+				front_count += 5; 
 
-			front[front_count] = opposite;
-			front[front_count + 1] = v1;
-			front[front_count + 2] = v0;
-			front[front_count + 3] = front[prev + 3];
-			front[front_count + 4] = next;
-			front_count += 5; 
+				faceorder[order_back++] = front_count;
 
-			front[prev] = -1; //deleted
+				front[front_count] = opposite;
+				front[front_count + 1] = v1;
+				front[front_count + 2] = v0;
+				front[front_count + 3] = new_edge; 
+				front[front_count + 4] = next;
+				front_count += 5; 
 
-		} else if(c == 2) { //RIGHT
-			front[front[next + 4] + 3] = new_edge;
-			front[prev + 4] = new_edge;
-			opposite = front[next + 1];
+			} else if(c == 1) { //LEFT
 
-			front[front_count] = v0;
-			front[front_count + 1] = opposite;
-			front[front_count + 2] = v1;
-			front[front_count + 3] = prev;
-			front[front_count + 4] = front[next+4];
-			front_count += 5; 
+				front[front[prev + 3] + 4] = new_edge;
+				front[next + 3] = new_edge;
+				opposite = front[prev];
 
-			front[next] = -1;
+				front[front_count] = opposite;
+				front[front_count + 1] = v1;
+				front[front_count + 2] = v0;
+				front[front_count + 3] = front[prev + 3];
+				front[front_count + 4] = next;
+				front_count += 5; 
 
-		} else if(c == 5) { //DELAY
-			delayed.push(edge);
-			new_edge = -1;
+				front[prev] = -1; //deleted
 
-			continue;
+			} else if(c == 2) { //RIGHT
+				front[front[next + 4] + 3] = new_edge;
+				front[prev + 4] = new_edge;
+				opposite = front[next + 1];
 
-		} else if(c == 3) { //END
-			front[front[prev + 3] + 4] = front[next + 4];
-			front[front[next + 4] + 3] = front[prev + 3];
-			
-			opposite = front[prev];
+				front[front_count] = v0;
+				front[front_count + 1] = opposite;
+				front[front_count + 2] = v1;
+				front[front_count + 3] = prev;
+				front[front_count + 4] = front[next+4];
+				front_count += 5; 
 
-			front[prev] = -1;
-			front[next] = -1;
-			new_edge = -1;
+				front[next] = -1;
 
-		} else {
-			throw "INVALID CLER!";
+			} else if(c == 5) { //DELAY
+				delayed.push(edge);
+				new_edge = -1;
+
+				continue;
+
+			} else if(c == 3) { //END
+				front[front[prev + 3] + 4] = front[next + 4];
+				front[front[next + 4] + 3] = front[prev + 3];
+				
+				opposite = front[prev];
+
+				front[prev] = -1;
+				front[next] = -1;
+				new_edge = -1;
+
+			} else {
+				throw "INVALID CLER!";
+			}
+			if(v1 >= t.nvert || v0 >= t.nvert || opposite >= t.nvert)
+				throw "Topological error";
+			t.index.faces[start] = v1;
+			t.index.faces[start+1] = v0;
+			t.index.faces[start+2] = opposite;
+			start += 3;
 		}
-		if(v1 >= t.nvert || v0 >= t.nvert || opposite >= t.nvert)
-			throw "Topological error";
-		t.index.faces[start] = v1;
-		t.index.faces[start+1] = v0;
-		t.index.faces[start+2] = opposite;
-		start += 3;
 	}
-}
-
 };
 
 

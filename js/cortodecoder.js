@@ -24,12 +24,14 @@ onmessage = function(job) {
 	if(!buffer) return;
 
 	var decoder = new CortoDecoder(buffer);
-	if(job.data.short_normals)
+
+	if(decoder.attributes.normal && job.data.short_normals)
 		decoder.attributes.normal.type = 3;
-	if(job.data.rgba_colors)
+	if(decoder.attributes.color && job.data.rgba_colors)
 		decoder.attributes.color.outcomponents = 4;
+
 	var model = decoder.decode();
-	
+
 	//pass back job
 	postMessage({ model: model, buffer: buffer, request: job.data.request});
 }

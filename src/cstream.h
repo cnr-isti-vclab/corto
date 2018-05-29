@@ -273,7 +273,10 @@ public:
 
 	float readFloat() {
 		uint32_t c = readUint32();
-		return *(float *)&c;
+        assert(sizeof(int) == sizeof(float));
+        float float_value = 0;
+        memcpy(&float_value, &c, sizeof(c));
+		return float_value;
 	}
 
 	char *readString() {

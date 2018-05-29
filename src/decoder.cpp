@@ -47,6 +47,9 @@ Decoder::Decoder(int len, const uchar *input): vertex_count(0) {
 	if(magic != 0x787A6300)
 		throw "Not a crt file.";
 	uint32_t version = stream.readUint32();
+    if(version != 1) {
+        throw "wrong version";
+    }
 	stream.entropy = (Stream::Entropy)stream.readUint8();
 
 	uint32_t size = stream.readUint32();

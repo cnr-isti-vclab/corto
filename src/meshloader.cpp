@@ -152,24 +152,24 @@ bool MeshLoader::loadObj(const std::string &filename, const std::string &groupna
 
 
 	if(keepgroup != -1) { //remove all other groups
-		int start = 0;
+        uint32_t start = 0;
 		if(keepgroup > 0)
 			start = groups[keepgroup-1].end;
 		Group g = groups[keepgroup];
 		vector<int> reorder(coords.size(), -1);
-		int facecount = 0;
-		int vertcount = 0;
+        uint32_t facecount = 0;
+        uint32_t vertcount = 0;
 		vector<float> newcoords(coords.size());
-		for(int i = start; i < g.end; i++) {
-			for(int k = 0; k < 3; k++) {
-				int v = index[i*3+k];
+		for(uint32_t i = start; i < g.end; i++) {
+			for(uint32_t k = 0; k < 3; k++) {
+                uint32_t v = index[i*3+k];
 				if(reorder[v] == -1) {
 					newcoords[vertcount*3] = coords[v*3];
 					newcoords[vertcount*3+1] = coords[v*3+1];
 					newcoords[vertcount*3+2] = coords[v*3+2];
 					reorder[v] = vertcount++;
 				}
-				index[facecount*3 + k] = reorder[v];
+				index[facecount*3 + k] = (uint32_t)reorder[v];
 			}
 			facecount++;
 		}

@@ -38,7 +38,7 @@ public:
 		v0(a), v1(b), v2(c), prev(p), next(n), deleted(false) {}
 };
 
-Decoder::Decoder(int len, const uchar *input): vertex_count(0) {
+Decoder::Decoder(size_t len, const uchar *input): vertex_count(0) {
 	if((uintptr_t)input & 0x3)
 		throw "Memory must be alignegned on 4 bytes.";
 

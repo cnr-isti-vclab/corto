@@ -43,7 +43,7 @@ public:
 	std::map<std::string, VertexAttribute *> data;
 	IndexAttribute index;
 
-	Decoder(int len, const uchar *input);
+	Decoder(size_t len, const uchar *input);
 	~Decoder();
 
 	bool hasAttr(const char *name) { return data.count(name); }

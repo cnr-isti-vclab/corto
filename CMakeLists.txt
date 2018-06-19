@@ -67,9 +67,9 @@ target_include_directories(cortoexe PUBLIC ${CORTO_SOURCE_PATH})
 
 target_link_libraries(cortoexe PUBLIC cortolib)
 
-target_compile_definitions(cortolib PUBLIC ${CORTO_DEFINITIONS})
-target_compile_options    (cortolib PUBLIC ${CORTOLIB_CFLAGS})
-target_compile_options    (cortoexe PUBLIC ${CORTOEXE_CFLAGS})
+target_compile_definitions(cortolib PRIVATE ${CORTO_DEFINITIONS})
+target_compile_options    (cortolib PRIVATE ${CORTOLIB_CFLAGS})
+target_compile_options    (cortoexe PRIVATE ${CORTOEXE_CFLAGS})
 set_target_properties     (cortolib PROPERTIES DEBUG_POSTFIX "d")
 set_target_properties     (cortoexe PROPERTIES OUTPUT_NAME "corto")
 set_target_properties     (cortolib PROPERTIES OUTPUT_NAME "corto")

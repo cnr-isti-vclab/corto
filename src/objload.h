@@ -113,35 +113,50 @@ inline std::istream & operator>>(std::istream & in, std::set<T> & vec ){
 
 inline std::istream & operator>>( std::istream & in, ObjModel::FaceVertex & f) {
 	in >> f.v;
+    //possibilities:
+    // v
+    // v/t
+    // v//n
+    // v/t/n
+
+    if(in.eof()) { //v was last element
+        goto finish;
+    }
 //	cout << "V: " << f.v << endl;
 	if(in.peek() == ' ' || !in.good()) { // v
 		in.get();
 		goto finish;
 	}
-	in.get(); //reading texture now
 
-	if(in.peek() == ' ' || !in.good()) { // v
+    if(in.peek() == '/') {
+        in.get(); //reading texture now
+    }
+
+	if(in.peek() == ' ' || !in.good()) { // whoopsy v/_ ?!
 		in.get();
 		goto finish;
 	}
 
-	if(in.peek() != '/')
+	if(in.peek() != '/') // v/t...
 		in >> f.t; //if nothing after / just f.n remains -1
 //	cout << "T: " << f.t << endl;
 
-	if(in.peek() == ' ') { // v/n or v/
-		in.get();
-		goto finish;
-	}
-	in.get(); //reading normal now
-
-	if(in.peek() == ' ' || !in.good()) { // v
+    if(in.eof()) { //v/t was last element
+        goto finish;
+    }
+	if(in.peek() == ' ') { // v/t_
 		in.get();
 		goto finish;
 	}
 
-	if(in.peek() != '/')
-		in >> f.n;
+    if(in.peek() == '/') { // v/t/n
+        in.get(); //reading normal now
+        if (in.peek() == ' ' || !in.good()) { // whoopsy v/t/ ?!
+            in.get();
+            goto finish;
+        }
+        in >> f.n;
+    }
 //	cout << "N: " << f.n << endl;
 
 	finish:

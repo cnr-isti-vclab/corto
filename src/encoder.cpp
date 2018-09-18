@@ -497,6 +497,16 @@ static int next_(int t) {
 	return t;
 }
 
+static uint32_t countReferenced(vector<uint32_t> &faces, uint32_t nvert) {
+	vector<bool> referenced(nvert, false);
+	for(auto &i: faces)
+		referenced[i] = true;
+	uint32_t count = 0;
+	for(bool b: referenced)
+		if(b) count++;
+	return count;
+}
+
 void Encoder::encodeFaces(int start, int end) {
 
 	vector<McFace> faces(end - start);
@@ -521,7 +531,9 @@ void Encoder::encodeFaces(int start, int end) {
 	vector<bool> visited(faces.size(), false);
 	unsigned int totfaces = faces.size();
 
-	int splitbits = ilog2(nvert) + 1;
+	//unreferenced vertices will not be saved, we need to know the number of referenced vertices before computing splitbits
+	uint32_t nreferenced = countReferenced(index.faces, nvert);
+	int splitbits = ilog2(nreferenced) + 1;
 
 	int new_edge = -1;
 	int counting = 0;

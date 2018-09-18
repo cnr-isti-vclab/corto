@@ -222,9 +222,9 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 
 			for(int k = 0; k < 3; k++) {
 				int v; //TODO just use last_index.
-				if(split & (1<<k))
+				if(split & (1<<k)) {
 					v = index.bitstream.read(splitbits);
-				else {
+				} else {
 					assert(vertex_count < index.prediction.size());
 					index.prediction[vertex_count] = Face(last_index, last_index, last_index);
 					last_index = v = vertex_count++;
@@ -284,7 +284,8 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 				index.prediction[vertex_count] = Face(v1, v0, e.v2);
 				opposite = vertex_count++;
 			}
-
+			assert(opposite < nvert);
+			
 			front[e.prev].next = new_edge;
 			front[e.next].prev = new_edge + 1;
 

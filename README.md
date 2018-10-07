@@ -28,7 +28,7 @@ similar in compression ratio to Huffman where the number of symbols is small.
 ## Performances
 
 Decompression timing and size for a few models tested on a somewhat dated pc. (Intel Core i5-3450 @ 3.10GHz).
-Jvascript decompression time drops dramatically for repeadted run of complex algorithms, hence the 10th run result.
+Javascript decompression time drops dramatically for repeated run of complex algorithms, hence the 10th run result.
 
 Bunny mesh 34K vertices (12 bits precision) courtesy of [Stanford](http://graphics.stanford.edu/data/3Dscanrep/)
 
@@ -158,7 +158,7 @@ CortoDecoder decodes a .crt as an arraybuffer and returns an objects with attrib
 ### libcorto
 
 Interface is not entirely stable, no mayor change is expected.
-See src/main.cpp for an extensive example.
+See `src/main.cpp` for an extensive example.
 
 
 	std::vector<float> coords;

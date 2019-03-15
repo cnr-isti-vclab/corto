@@ -1,6 +1,6 @@
 /*
 Corto
-Copyright (c) 2017-2018, Visual Computing Lab, ISTI - CNR
+Copyright (c) 2017-2019, Visual Computing Lab, ISTI - CNR
 All rights reserved.
 
 This program is free software: you can redistribute it and/or modify
@@ -492,6 +492,7 @@ ColorAttr.prototype.decode = function(nvert, stream) {
 
 ColorAttr.prototype.dequantize = function(nvert) {
 	var t = this;
+
 	for(var i = 0; i < nvert; i++) {
 		var offset = i*4;
 		var rgboff = i*t.outcomponents;
@@ -503,7 +504,7 @@ ColorAttr.prototype.dequantize = function(nvert) {
 		t.buffer[rgboff + 0] = ((e2 + e0)* t.qc[0])&0xff;
 		t.buffer[rgboff + 1] = e0* t.qc[1];
 		t.buffer[rgboff + 2] = ((e1 + e0)* t.qc[2])&0xff;
-//		t.buffer[offset + 3] = t.values[offset + 3] * t.qc[3];
+		t.buffer[offset + 3] = t.values[offset + 3] * t.qc[3];
 	}
 };
 

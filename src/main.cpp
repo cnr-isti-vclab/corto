@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
 	string output;
 	string plyfile;
 	string group;
+	string entropy;
 	bool pointcloud = false;
 	bool add_normals = false;
 	float vertex_q = 0.0f;
@@ -90,7 +91,7 @@ int main(int argc, char *argv[]) {
 	std::map<std::string, std::string> exif;
 
 	int c;
-	while((c = getopt(argc, argv, "pAo:v:n:c:u:q:N:e:P:G:")) != -1) {
+	while((c = getopt(argc, argv, "pAo:v:n:c:u:q:N:E:e:P:G:")) != -1) {
 		switch(c) {
 		case 'o': output = optarg;  break;  //output filename
 		case 'p': pointcloud = true; break; //force pointcloud
@@ -106,6 +107,7 @@ int main(int argc, char *argv[]) {
 		case 'q': vertex_q    = (float)atof(optarg); break;
 		case 'A': add_normals = true; break;
 		case 'N': normal_prediction = optarg; break;
+		case 'E': entropy = optarg; break;
 		case 'P': plyfile = optarg; break; //save ply for debugging purpouses
 		case 'G': group = optarg; break;
 		case 'e': {
@@ -173,10 +175,22 @@ int main(int argc, char *argv[]) {
 
 		}
 	}
+	
+	crt::Stream::Entropy entropy_coder = crt::Stream::TUNSTALL;
+	if(!entropy.empty()) {
+		if(entropy == "rans")
+			entropy_coder = crt::Stream::RANS;
+		else if(entropy == "tunstall")
+			entropy_coder = crt::Stream::TUNSTALL;
+		else {
+			cerr << "Unknown entropy encoder: " << entropy << " expecting: rans or tunstall" << endl;
+			return 1;
+		}
+	}
 
 	crt::Timer timer;
 
-	crt::Encoder encoder(loader.nvert, loader.nface, crt::Stream::TUNSTALL);
+	crt::Encoder encoder(loader.nvert, loader.nface, entropy_coder);
 
 	encoder.exif = loader.exif;
 	//add and override exif properties

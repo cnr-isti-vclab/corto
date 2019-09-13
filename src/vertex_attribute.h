@@ -137,6 +137,7 @@ public:
 
 	virtual void encode(uint32_t nvert, OutStream &stream) {
 		stream.restart();
+
 		if(strategy & CORRELATED)
 			stream.encodeArray<T>(nvert, diffs.data(), N);
 		else
@@ -149,7 +150,7 @@ public:
 		if(strategy & CORRELATED)
 			stream.decodeArray<T>((T *)buffer, N);
 		else
-			stream.decodeValues<T>((T *)buffer, N);
+			stream.decodeValues<T>((T *)buffer, N); 
 	}
 
 	virtual void deltaDecode(uint32_t nvert, std::vector<Face> &context) {

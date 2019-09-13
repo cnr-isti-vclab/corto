@@ -535,16 +535,43 @@ void Encoder::encodeFaces(int start, int end) {
 	uint32_t nreferenced = countReferenced(index.faces, nvert);
 	int splitbits = ilog2(nreferenced) + 1;
 
+	int totnew = 0;
 	int new_edge = -1;
 	int counting = 0;
 	while(totfaces > 0) {
 		if(new_edge == -1 && order >= faceorder.size() && !delayed.size()) {
 
+#define FIRST_NONVISITED 1
+#ifdef FIRST_NONVISITED
 			while(current != faces.size()) {   //find first triangle non visited
 				if(!visited[current]) break;
 				current++;
+			} 
+			if(current == faces.size()) break; //no more faces to encode exiting*/ 
+#else
+			
+			//find closest triangle! improves when many connected components.
+			GenericAttr<float> *vertex = (GenericAttr<float> *)data["position"];
+			float dist = 1e20f;
+			int best = -1;
+			current = 0;
+			Point3i &last =  *(Point3i *)&(vertex->values[last_index*3]);
+			while(current != faces.size()) {
+				if(!visited[current]) {
+					int v = faces[current].f[0];
+					Point3i &vert = *(Point3i *)&(vertex->values[v*3]);
+					float d = (last - vert).norm();
+					if(best < 0 || d < dist) {
+						best = current;
+						dist = d;
+					} 
+				}
+				current++;
 			}
-			if(current == faces.size()) break; //no more faces to encode exiting
+			if(best == -1) break;
+			current = best; 
+#endif
+
 
 			//encode first face: 3 vertices indexes, and add edges
 			unsigned int current_edge = front.size();
@@ -570,12 +597,15 @@ void Encoder::encodeFaces(int start, int end) {
 
 				if(enc != -1) {
 					index.bitstream.write(enc, splitbits);
+					//TODO see decoder
+					//last_index = vindex;
 				} else {
 					//quad uses presorting indexing. (diff in attribute are sorted, values are not).
 					assert(last_index < nvert);
 					prediction[current_vertex] = Quad(vindex, last_index, last_index, last_index);
 					enc = current_vertex++;
 					last_index = vindex;
+					totnew++;
 				}
 			}
 
@@ -706,4 +736,5 @@ void Encoder::encodeFaces(int start, int end) {
 		totfaces--;
 	}
 	index.max_front = std::max(index.max_front, (uint32_t)front.size());
+	cout << "Tot new vertices: " << totnew << endl;
 }

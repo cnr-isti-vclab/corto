@@ -13,6 +13,7 @@ unix:QMAKE_CXXFLAGS += -std=c++11 -Wall -Wextra -pedantic -Wimplicit
 SOURCES += main.cpp \
     decoder.cpp \
     encoder.cpp \
+    rans.cpp \
     tunstall.cpp \
     bitstream.cpp \
     cstream.cpp \
@@ -25,6 +26,7 @@ HEADERS += \
     decoder.h \
     encoder.h \
     point.h \
+    rans.h \
     zpoint.h \
     cstream.h \
     tunstall.h \

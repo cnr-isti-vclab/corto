@@ -224,6 +224,8 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 				int v; //TODO just use last_index.
 				if(split & (1<<k)) {
 					v = index.bitstream.read(splitbits);
+					//TODO this would improve prediction! but don't know why it doesn't work.
+					//last_index = v;
 				} else {
 					assert(vertex_count < index.prediction.size());
 					index.prediction[vertex_count] = Face(last_index, last_index, last_index);

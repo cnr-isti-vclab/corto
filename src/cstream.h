@@ -36,7 +36,7 @@ int ilog2(uint64_t p);
 
 class Stream {
 public:
-	enum Entropy { NONE = 0, TUNSTALL = 1, HUFFMAN = 2, ZLIB = 3, LZ4 = 4 };
+	enum Entropy { NONE = 0, TUNSTALL = 1, HUFFMAN = 2, ZLIB = 3, LZ4 = 4, RANS = 5 };
 	Entropy entropy;
 	Stream(): entropy(TUNSTALL) {}
 };
@@ -56,8 +56,10 @@ public:
 		size_t e = size() - stopwatch; stopwatch = size();
 		return (uint32_t)e;
 	}
-	int  compress(uint32_t size, uchar *data);
-	int  tunstall_compress(unsigned char *data, int size);
+	int compress(uint32_t size, uchar *data);
+	int tunstall_compress(uchar *data, int size);
+	int rans_compress(uchar *data, int size);
+	
 
 #ifdef ENTROPY_TESTS
 	int  zlib_compress(uchar *data, int size);
@@ -115,6 +117,25 @@ public:
 
 	//encode differences of vectors (assuming no correlation between components)
 	template <class T> void encodeValues(uint32_t size, T *values, int N) {
+		//experimental flat compression
+		if(1 && this->entropy == Entropy::RANS) {
+			std::vector<uchar> low(size);
+			std::vector<uchar> high(size);
+			for(int c = 0; c < N; c++) {
+				for(uint32_t i = 0; i < size; i++) {
+					int val = values[i*N + c];
+					
+					if(val <= 0) val = -val*2;
+					else val = val*2 -1;
+					if(val > 0xffff) throw "Overflow!";
+					low[i] = val & 0xff;
+					high[i] = (val >> 7) & 0xff;
+				}
+				cout << compress((uint32_t)low.size(), low.data()) << endl;
+				cout << compress((uint32_t)high.size(), high.data()) << endl;
+			}
+
+		} else {
 		BitStream bitstream(size);
 		//Storing bitstream before logs, allows in decompression to allocate only 1 logs array and reuse it.
 		std::vector<std::vector<uchar> > clogs((size_t)N);
@@ -140,6 +161,7 @@ public:
 		write(bitstream);
 		for(int c = 0; c < N; c++)
 			compress((uint32_t)clogs[c].size(), clogs[c].data());
+		}
 	}
 	//encode differences of vectors (assuming correlation between components)
 	template <class T> void encodeArray(uint32_t size, T *values, int N) {
@@ -219,6 +241,8 @@ public:
 
 	void decompress(std::vector<uchar> &data);
 	void tunstall_decompress(std::vector<uchar> &data);
+	int rans_decompress(vector<uchar> &data);
+	
 
 #ifdef ENTROPY_TESTS
 	int  zlib_compress(uchar *data, int size);
@@ -294,6 +318,30 @@ public:
 
 
 	template <class T> int decodeValues(T *values, int N) {
+		if(1 && this->entropy == Entropy::RANS) {
+
+			std::vector<uchar> low;
+			std::vector<uchar> high;
+					
+			for(int c = 0; c < N; c++) {
+				decompress(low);
+				decompress(high);
+
+				if(!values) continue;
+				
+				for(uint32_t i = 0; i < low.size(); i++) {
+					int val = low[i] + (high[i]<<8);
+					if(val & 0x1) {
+						val = (val + 1)/2;
+					} else {
+						val = -val/2;
+					}
+					values[i*N + c] = (T)val;
+				}
+			}
+			return low.size();
+			
+		} else {
 		BitStream bitstream;
 		read(bitstream);
 
@@ -318,6 +366,7 @@ public:
 			}
 		}
 		return logs.size();
+		}
 	}
 
 

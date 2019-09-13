@@ -19,6 +19,8 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "cstream.h"
 
 #include "tunstall.h"
+#include "rans.h"
+
 #ifdef ENTROPY_TESTS
 #include "lz4/lz4.h"
 #include "lz4/lz4hc.h"
@@ -52,6 +54,19 @@ int OutStream::compress(uint32_t size, uchar *data) {
 	case ZLIB:     return zlib_compress(data, size);
 	case LZ4:     return lz4_compress(data, size);
 #endif
+	case RANS:  {
+		int batch = 100000;
+		int tot_size = 0;
+		for(int start = 0; start < size; start += batch) {
+			int batch_size = std::min(batch, (int)size - start);
+			tot_size += rans_compress(data + start, batch_size);
+			cout << batch_size <<  " ";
+		}
+		cout << endl;
+		return tot_size;
+		
+		return rans_compress(data, size);
+	}
 	default:
 		throw "Unknown entropy";
 	}
@@ -69,6 +84,17 @@ void InStream::decompress(vector<uchar> &data) {
 		break;
 	}
 	case TUNSTALL: tunstall_decompress(data); break;
+	case RANS: {
+		vector<uchar> d;
+		int tot_size = 0;
+		while(tot_size < data.size()) {
+			tot_size += rans_decompress(d);
+			data.insert(data.begin(), d.begin(), d.end());
+		}
+		break;
+		
+		rans_decompress(data); break;
+	}
 #ifdef ENTROPY_TESTS
 	case ZLIB:     zlib_decompress(data); break;
 	case LZ4:     lz4_decompress(data); break;
@@ -77,6 +103,7 @@ void InStream::decompress(vector<uchar> &data) {
 		throw "Unknown entropy";
 	}
 }
+
 
 int OutStream::tunstall_compress(uchar *data, int size) {
 	Tunstall t;
@@ -118,6 +145,51 @@ void InStream::tunstall_decompress(vector<uchar> &data) {
 	if(size)
 		t.decompress(compressed_data, compressed_size, data.data(), size);
 }
+
+
+
+int OutStream::rans_compress(uchar *data, int size) {
+	Rans rans(256);
+	rans.getProbabilities(data, size);
+
+
+	int compressed_size;
+	unsigned char *compressed_data = rans.compress(data, size, compressed_size);
+
+	write<uchar>(rans.n_symbols);
+	for(int i = 0; i < rans.n_symbols; i++)
+		write<uint16_t>((uint16_t)rans.freqs[i]);
+	
+	write<int>(size);
+	write<int>(compressed_size);
+	writeArray<unsigned char>(compressed_size, compressed_data);
+	delete []compressed_data;
+	//return compressed_size;
+	return 1 + rans.n_symbols*2 + 4 + 4 + compressed_size;
+}
+
+int InStream::rans_decompress(vector<uchar> &data) {
+	int nsymbols = readUint8();
+	if(!nsymbols) nsymbols = 256;
+	uint16_t *probs = readArray<uint16_t>(nsymbols);
+	
+	Rans rans(nsymbols);
+	//TODO optimize this useless step.
+	for(int i = 0; i < nsymbols; i++)
+		rans.freqs[i] = probs[i];
+	rans.calc_cum_freqs();
+	
+	int size = readUint32();
+	data.resize(size);
+	int compressed_size = readUint32();
+	unsigned char *compressed_data = readArray<unsigned char>(compressed_size);
+
+	if(size)
+		rans.decompress(compressed_data, compressed_size, data.data(), size);
+	return size;
+}
+
+
 
 #ifdef ENTROPY_TESTS
 

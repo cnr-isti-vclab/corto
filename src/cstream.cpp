@@ -54,19 +54,8 @@ int OutStream::compress(uint32_t size, uchar *data) {
 	case ZLIB:     return zlib_compress(data, size);
 	case LZ4:     return lz4_compress(data, size);
 #endif
-	case RANS:  {
-		int batch = 100000;
-		int tot_size = 0;
-		for(int start = 0; start < size; start += batch) {
-			int batch_size = std::min(batch, (int)size - start);
-			tot_size += rans_compress(data + start, batch_size);
-			cout << batch_size <<  " ";
-		}
-		cout << endl;
-		return tot_size;
+	case RANS: return rans_compress(data, size);
 		
-		return rans_compress(data, size);
-	}
 	default:
 		throw "Unknown entropy";
 	}
@@ -84,17 +73,8 @@ void InStream::decompress(vector<uchar> &data) {
 		break;
 	}
 	case TUNSTALL: tunstall_decompress(data); break;
-	case RANS: {
-		vector<uchar> d;
-		int tot_size = 0;
-		while(tot_size < data.size()) {
-			tot_size += rans_decompress(d);
-			data.insert(data.begin(), d.begin(), d.end());
-		}
-		break;
-		
-		rans_decompress(data); break;
-	}
+	case RANS:     rans_decompress(data); break;
+	
 #ifdef ENTROPY_TESTS
 	case ZLIB:     zlib_decompress(data); break;
 	case LZ4:     lz4_decompress(data); break;

@@ -57,7 +57,7 @@ elseif(APPLE)
 	LIST(APPEND CORTOLIB_CFLAGS -fvisibility=hidden)
 	if(IOS)
 		LIST(APPEND CORTOLIB_CFLAGS -fembed-bitcode)
-		set_xcode_property(corto IPHONEOS_DEPLOYMENT_TARGET "9.2")
+		set_xcode_property(cortolib IPHONEOS_DEPLOYMENT_TARGET "9.2")
 		set_xcode_property(cortoexe IPHONEOS_DEPLOYMENT_TARGET "9.2")
 	endif(IOS)
 endif()
@@ -76,6 +76,7 @@ set_target_properties     (cortolib PROPERTIES OUTPUT_NAME "corto")
 
 INSTALL(TARGETS cortolib cortoexe
 	RUNTIME DESTINATION bin
+    BUNDLE DESTINATION bin
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib)
 

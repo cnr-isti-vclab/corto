@@ -24,6 +24,7 @@ and visualization of multiresolution models. See [Fast decompression for web-bas
 Entropy compression is based on [Tunstall](#tunstall) coding, decompression require only table lookup and is very fast while
 similar in compression ratio to Huffman where the number of symbols is small.
 
+The C++ code is released under GPL licence, the Javascript code under MIT licence.
 
 ## Performances
 

@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<!-- load standard js decoder for testing -->
+	<script src="../corto.js"></script>
+
+	<script>
+
+var Corto = {
+	onRuntimeInitialized: function() {
+
+var oReq = new XMLHttpRequest();
+oReq.open("GET", "gargo.crt", true);
+oReq.responseType = "arraybuffer";
+
+oReq.onload = function (oEvent) {
+	var arrayBuffer = oReq.response; // Note: not oReq.responseText
+	if (!arrayBuffer) 
+		return;
+
+	var iter = 10;
+	var d = new Uint8Array(arrayBuffer);
+
+	var now = performance.now();
+	var geo1;
+	for(var i = 0; i < iter; i++) {
+		geo1 = Corto.decode(d.length, d);
+	}
+	console.log("em decoder", performance.now() - now);
+
+	now = performance.now();
+
+	var geo2;
+	for(var i = 0; i < iter; i++) {
+		var test = new CortoDecoder(arrayBuffer);
+		test.decode();
+		geo2 = test.geometry;
+	}
+	console.log("js decoder", performance.now() - now);
+};
+
+oReq.send(null);
+
+	}
+};
+
+  </script>
+  <script src="emcorto.js"></script>
+</html>

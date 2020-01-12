@@ -13,17 +13,28 @@
 <!-- <script src="js/corto.js"></script> -->
 <script src="js/attribute.js"></script>
 <script src="js/tunstall.js"></script>
+<script src="js/emscripten/corto.em.js"></script>
+<script>
+var CortoDecoderEm = CortoDecoder;
+</script>
 <script src="js/cortodecoder.js"></script>
 <script src="js/CORTOLoader.js"></script>
+
+
+
+
 
 </head>
 
 <body>
 	<div id="container"></div>
-	<p style="position:absolute; top:10px; left:10px; color:white;" id="stats">N vert: <span id="nvert"></span><br/>N triangles: <span id="nface"></span><br/> Decompression timings: <span id="timing"></span></p>
+	<p style="position:absolute; top:10px; left:10px; color:white;" id="stats">N vert: <span id="nvert"></span><br/>N triangles: <span id="nface"></span><br/>Emscripten timings: <span id="emtiming"></span><br/> Decompression timings: <span id="timing"></span></p>
 </body>
 
 <script>
+
+
+
 var camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.1, 100 );
 camera.position.z = 4;
 
@@ -66,12 +77,15 @@ function getURLParameter(name) {
 var model = getURLParameter('model');
 var path = getURLParameter('path');
 if(!path) path = 'models/';
-if(!model) model = 'bunny.crt';
+if(!model) model = 'oste250kWV.crt';
 
 var loader = new THREE.CORTOLoader({ path: path }); //can pass a material or a multimaterial if you know whats' in the model.
 
 var decode_times = [];
+var em_times = [];
+
 var blob = null;
+var em_ready = false;
 
 loader.load(model, function(mesh) {
 	decode_times.push(loader.decode_time);
@@ -94,9 +108,9 @@ loader.load(model, function(mesh) {
 
 	render();
 
-	setTimeout(profile, 10);
-} );
+	setTimeout(profile, 1000)
 
+} );
 
 
 window.addEventListener( 'resize', onWindowResize, false );
@@ -126,12 +140,24 @@ function render() {
 
 function profile() {
 
+	if(!blob || !em_ready)
+		return;
+
 	var now = performance.now();
 	var decoder = new CortoDecoder(blob);
 	var model = decoder.decode();
 	var ms = performance.now() - now;
 	decode_times.push(ms);
 	console.log((model.nvert/1024.0).toFixed(1) + "KV", ms.toFixed(1) + "ms", ((model.nvert/1000)/ms).toFixed(2) + "MV/s");
+	console.log("js:", ms);
+
+
+
+	now = performance.now();
+	var geometry = CortoDecoderEm.decode(blob);
+	ms = performance.now() - now;
+	em_times.push(ms);
+	console.log("em:", ms);
 
 
 	var nvert = document.getElementById("nvert");
@@ -144,6 +170,12 @@ function profile() {
 	if(decode_times.length == 2)
 		timing.innerHTML += " " + decode_times[0].toFixed(0) + "ms";
 	timing.innerHTML += " " + decode_times[decode_times.length-1].toFixed(0) + "ms";
+
+	var emtiming = document.getElementById("emtiming");
+	if(em_times.length == 2)
+		emtiming.innerHTML += " " + em_times[0].toFixed(0) + "ms";
+	emtiming.innerHTML += " " + em_times[em_times.length-1].toFixed(0) + "ms";
+
 
 	if(decode_times.length < 10) {
 		setTimeout(profile, 10);
@@ -163,7 +195,16 @@ function profile() {
 
 animate();
 
+async function sync() {
+	await CortoDecoderEm.ready;
+	em_ready = true;
+	profile();
+}
+sync();
+
 </script>
+
+<script src="js/emscripten/emcorto.js"></script>
 
 
 </html>

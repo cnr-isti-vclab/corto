@@ -13,7 +13,7 @@ emcc -std=c++11 emcorto.cpp \
 --memory-init-file 0 \
 -s DISABLE_EXCEPTION_CATCHING=1 \
 -s ALLOW_MEMORY_GROWTH=1 \
--s EXPORT_NAME="'Corto'" 
+-s EXPORT_NAME="'Corto'"
 
 
 #closure has a bug with ccall function not being hashed correctly. saves only 10KB

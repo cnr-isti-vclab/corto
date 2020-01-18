@@ -83,12 +83,12 @@ Module["decode"] = function(len, ptr) {
 		geometry.color = new Uint8Array(new Uint8Array(Module.HEAPU8.buffer, cptr, nvert*4));
 	}
 	if(hasNormal) {
-		geometry.normal = new Float32Array(new Uint8Array(Module.HEAPU8.buffer, nptr, nvert*4));
+		geometry.normal = new Float32Array(new Float32Array(Module.HEAPU8.buffer, nptr, nvert*3));
 		if(nptr) Module._free(nptr);
 	}
 	if(hasUv) {
 		if(uptr) Module._free(uptr);
-		geometry.uv = new Float32Array(new Uint8Array(Module.HEAPU8.buffer, uptr, nvert*8));
+		geometry.uv = new Float32Array(new Float32Array(Module.HEAPU8.buffer, uptr, nvert*2));
 	}
 
 	Module.ccall('deleteDecoder', null, ['number'], [decoder]);

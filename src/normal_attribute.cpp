@@ -53,6 +53,9 @@ template <class T> void estimateNormals(uint32_t nvert, Point3i *coords, uint32_
 		estimated[f[1]] += n;
 		estimated[f[2]] += n;
 	}
+//since using toOcta this is not needed.
+//	for(Point3f &n: estimated)
+//		n /= n.norm();
 }
 
 void NormalAttr::quantize(uint32_t nvert, const char *buffer) {
@@ -64,9 +67,8 @@ void NormalAttr::quantize(uint32_t nvert, const char *buffer) {
 	Point2i *normals = (Point2i *)values.data();
 	switch(format) {
 	case FLOAT:
-		for(uint32_t i = 0; i < nvert; i++) {
+		for(uint32_t i = 0; i < nvert; i++) 
 			normals[i] = toOcta(((const Point3f *)buffer)[i], (int)q);
-		}
 		break;
 	case INT32:
 		for(uint32_t i = 0; i < nvert; i++)
@@ -135,6 +137,9 @@ void NormalAttr::deltaEncode(std::vector<Quad> &context) {
 			Quad &quad = context[i];
 			diffs[i*2 + 0] = values[quad.t*2 + 0] - values[quad.a*2 + 0];
 			diffs[i*2 + 1] = values[quad.t*2 + 1] - values[quad.a*2 + 1];
+			//seems to make a small difference
+//			diffs[i*2 + 0] = values[quad.t*2 + 0] - (values[quad.a*2 + 0] + values[quad.b*2 + 0] - values[quad.c*2 + 0]);
+//			diffs[i*2 + 1] = values[quad.t*2 + 1] - (values[quad.a*2 + 1] + values[quad.b*2 + 1] - values[quad.c*2 + 1]);
 		}
 		diffs.resize(context.size()*2); //unreferenced vertices
 
@@ -287,8 +292,8 @@ void NormalAttr::computeNormals(Point3f *normals, std::vector<Point3f> &estimate
 		Point3f &n = normals[i];
 
 		if(prediction == ESTIMATED || boundary[i]) {
-			Point2i &d = diffp[count++];
 			Point2i qn = toOcta(e, (int)q);
+			Point2i &d = diffp[count++];
 			n = toSphere(qn + d, (int)q);
 		} else {//no correction
 			n = Point3f(e[0], e[1], e[2]);

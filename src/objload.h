@@ -112,6 +112,24 @@ inline std::istream & operator>>(std::istream & in, std::set<T> & vec ){
 }
 
 inline std::istream & operator>>( std::istream & in, ObjModel::FaceVertex & f) {
+	if(in >> f.v){
+		   if(in.peek() == '/'){
+			   in.get();
+			   in >> f.t;
+			   in.clear();
+			   if(in.peek() == '/'){
+				   in.get();
+				   in >> f.n;
+				   in.clear();
+			   }
+		   }
+		   in.clear();
+		   --f.v;
+		   --f.t;
+		   --f.n;
+	   }
+	return in;
+
 	in >> f.v;
 //	cout << "V: " << f.v << endl;
 	if(in.peek() == ' ' || !in.good()) { // v

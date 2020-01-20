@@ -62,9 +62,9 @@ The Nile - Vatican Museums point cloud 167K vertices (14bits), textures (12 bits
 | Nile           | Corto   | Draco cl 1 | Draco cl 7 |
 | -------------   | -------:| ------:| ------------:|
 |                 |   890KB |  1.92MB | 1.70MB |
-| C++ decode      |     7ms | 47ms    | 53ms |
+| C++ decode      |     7ms | 43ms    | 81ms |
 | Js Chrome       |    18ms | 104ms   | 118ms |
-| JS Firefox      |    32ms | 123ms  |  134ms |
+| JS Firefox      |    32ms | 123ms  |  128ms |
 
 
 * C++ timing might be affected by compilation flags

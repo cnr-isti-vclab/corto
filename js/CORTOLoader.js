@@ -23,8 +23,8 @@ var CORTOLoader = function ( manager ) {
 	this.workerNextTaskID = 1;
 	this.workerSourceURL = '';
 
-	this.shortIndex = false;
-	this.shortNormals = false;
+	this.short_index = false;
+	this.short_normals = false;
 	this.worker = null;
 	this.lastRequest = 0;
 	this.callbacks = {};
@@ -51,13 +51,13 @@ CORTOLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 	/* use 16bits for face index if true */
 
 	setShortIndex: function(enabled) {
-		this.shortIndex = enabled;
+		this.short_index = enabled;
 		return this;
 	},
 
 	/* use 16bit for normals id true */
 	setShortNormals: function(enabled) {
-		this.shortIndex = enabled;
+		this.short_normals = enabled;
 		return this;
 	},
 
@@ -76,8 +76,8 @@ CORTOLoader.prototype = Object.assign( Object.create( Loader.prototype ), {
 			this.worker.postMessage( {
 				request: request,
 				buffer:buffer,
-				shortIndex: this.shortIndex,
-				shortNormals: this.shortNormals 
+				short_index: this.short_index,
+				short_normals: this.short_normals 
 			} );
 			this.callbacks[request] = { onLoad: onLoad, onError: onError }
 

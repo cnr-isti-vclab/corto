@@ -14,7 +14,7 @@ onmessage = async function(job) {
 /*	if(decoder.attributes.color && job.data.rgba_colors)
 		decoder.attributes.color.outcomponents = 4; */
 	
-	var geometry = CortoDecoder.decode(buffer, job.data.shortIndex, job.data.shortNormals);
+	var geometry = CortoDecoder.decode(buffer, job.data.short_index, job.data.short_normals);
 
 	//pass back job
 	postMessage({ geometry: geometry, request: job.data.request});

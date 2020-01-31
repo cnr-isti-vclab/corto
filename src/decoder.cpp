@@ -68,7 +68,7 @@ Decoder::Decoder(int len, const uchar *input): vertex_count(0) {
 		VertexAttribute *attr = nullptr;
 		switch(codec) {
 		case VertexAttribute::NORMAL_CODEC: attr = new NormalAttr(); break;
-		case VertexAttribute::COLOR_CODEC: attr = new ColorAttr(); break;
+		case VertexAttribute::COLOR_CODEC: attr = new ColorAttr(components); break;
 
 		case VertexAttribute::GENERIC_CODEC:
 		default:  //
@@ -106,6 +106,15 @@ bool Decoder::setAttribute(const char *name, char *buffer, VertexAttribute *attr
 	attr->buffer = buffer;
 	delete data[name];
 	data[name] = attr;
+	return true;
+}
+
+bool Decoder::setColors(uchar *buffer, int components) { 
+	if(data.find("color") == data.end()) return false;
+	ColorAttr *attr = dynamic_cast<crt::ColorAttr *>(data["color"]);
+	attr->format = VertexAttribute::UINT8;
+	attr->buffer = (char *)buffer;
+	attr->out_components = components;
 	return true;
 }
 

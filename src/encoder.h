@@ -63,6 +63,7 @@ public:
 	bool addNormals(const int16_t *buffer, int bits, NormalAttr::Prediction no = NormalAttr::ESTIMATED);
 
 	bool addColors(const unsigned char *buffer, int rbits = 6, int gbits = 7, int bbits = 6, int abits = 5);
+	bool addColors3(const unsigned char *buffer, int rbits = 6, int gbits = 7, int bbits = 6);
 
 	bool addUvs(const float *buffer, float q = 0);
 

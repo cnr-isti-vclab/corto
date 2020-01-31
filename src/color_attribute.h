@@ -27,7 +27,8 @@ namespace crt {
 class ColorAttr: public GenericAttr<uchar> {
 public:
 	int qc[4];
-	ColorAttr(): GenericAttr<uchar>(4) {
+	int out_components = 4;      //number of output components (either 3 or 4).
+	ColorAttr(int components = 4): GenericAttr<uchar>(components) {
 		qc[0] = qc[1] = qc[2] = 4;
 		qc[3] = 8;
 	}
@@ -45,14 +46,14 @@ public:
 
 	virtual void encode(uint32_t nvert, OutStream &stream) {
 		stream.restart();
-		for(int c = 0; c < 4; c++)
+		for(int c = 0; c < N; c++)
 			stream.write<uchar>((uchar)qc[c]);
 
 		stream.encodeValues<char>(nvert, (char *)diffs.data(), N);
 		size = stream.elapsed();
 	}
 	virtual void decode(uint32_t /*nvert*/, InStream &stream) {
-		for(int c = 0; c < 4; c++)
+		for(int c = 0; c < N; c++)
 			qc[c] = stream.readUint8();
 		stream.decodeValues<uchar>((uchar *)buffer, N);
 	}

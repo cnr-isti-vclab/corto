@@ -40,10 +40,10 @@ public:
 
 	Format format;    //input or output format
 	uint32_t size;    //compressed size (for stats and other nefarious purpouses)
-	int bits;    //quantization in bits;
+	int bits;         //quantization in bits;
 
 	VertexAttribute(): buffer(nullptr), N(0), q(0.0f), strategy(0), format(INT32), size(0) {}
-	virtual ~VertexAttribute(){}
+	virtual ~VertexAttribute() {}
 
 	virtual int codec() = 0; //identifies attribute class.
 
@@ -92,7 +92,7 @@ public:
 			break;
 		case INT8:
 			for(uint32_t i = 0; i < n; i++)
-				values[i] = ((const int16_t *)buffer)[i]/q;
+				values[i] = ((const int8_t *)buffer)[i]/q;
 			break;
 		case FLOAT:
 			for(uint32_t i = 0; i < n; i++)

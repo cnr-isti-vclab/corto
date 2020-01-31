@@ -166,6 +166,15 @@ bool Encoder::addColors(const unsigned char *buffer, int rbits, int gbits, int b
 	return ok;
 }
 
+bool Encoder::addColors3(const unsigned char *buffer, int rbits, int gbits, int bbits) {
+	ColorAttr *color = new ColorAttr(3);
+	color->setQ(rbits, gbits, bbits, 8);
+	color->format = VertexAttribute::UINT8;
+	bool ok = addAttribute("color", (char *)buffer, color);
+	if(!ok) delete color;
+	return ok;
+}
+
 bool Encoder::addUvs(const float *buffer, float q) {
 	GenericAttr<int> *uv = new GenericAttr<int>(2);
 	uv->q = q;

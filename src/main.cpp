@@ -279,8 +279,9 @@ int main(int argc, char *argv[]) {
 		decoder.setNormals(out.norms.data());
 	}
 	if(decoder.data.count("color")) {
-		out.colors.resize(nvert*4);
-		decoder.setColors(out.colors.data());
+		out.colors.resize(nvert*loader.nColorsComponents);
+		out.nColorsComponents = loader.nColorsComponents;
+		decoder.setColors(out.colors.data(), loader.nColorsComponents);
 	}
 	if(decoder.data.count("uv")) {
 		out.uvs.resize(nvert*2);

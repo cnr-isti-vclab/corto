@@ -72,16 +72,21 @@ void ColorAttr::dequantize(uint32_t nvert) {
 	switch(format) {
 	case UINT8:
 	{
-		uint8_t *c = (uint8_t *)buffer;
+		//this is inplace decoding! goiong from 3 to 4 require going in reverse.
+		uint8_t *c = (uint8_t *)buffer + N*nvert;
+		uint8_t *target = (uint8_t *)buffer + out_components*nvert;
 		Color4b color;
 		color[3] = 255;
-		for(uint32_t i = 0; i < nvert; i++) {
+		
+		while(c > (uint8_t *)buffer) {
+			c -= N;
+			target -= out_components;
+			
 			for(int k = 0; k < N; k++)
 				color[k] = c[k];
 			color = color.toRGB();
 			for(int k = 0; k < N; k++)
-				c[k] *= qc[k];
-			c += out_components;
+				target[k] = color[k]*qc[k];
 		}
 		break;
 	}

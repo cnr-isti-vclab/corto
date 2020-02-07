@@ -203,14 +203,8 @@ int main(int argc, char *argv[]) {
 		encoder.addNormals(loader.norms.data(), norm_bits, prediction);
 
 	if(loader.colors.size() && r_bits > 0) {
-		//code left as an example of 3 components RGB colors.
-		if(0) {
-			uint8_t * color3 = new uint8_t[loader.nvert*3];
-			for(int i = 0; i < loader.nvert; i++) {
-				for(int k =0 ; k < 3; k++)
-					color3[i*3 +k] = loader.colors[i*4+k];
-			}
-			encoder.addColors3(color3, r_bits, g_bits, b_bits);
+		if(loader.nColorsComponents == 3) {
+			encoder.addColors3(loader.colors.data(), r_bits, g_bits, b_bits);
 		} else
 			encoder.addColors(loader.colors.data(), r_bits, g_bits, b_bits, a_bits);
 	}

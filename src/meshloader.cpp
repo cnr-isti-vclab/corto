@@ -65,6 +65,9 @@ bool MeshLoader::loadPly(const std::string &filename) {
 
 	nface = index.size()/3;
 	nvert = coords.size()/3;
+	if(colors.size())
+		nColorsComponents = colors.size()/nvert;
+	
 	if(add_normals && !norms.size() && !wedge_norms.size())
 		addNormals();
 

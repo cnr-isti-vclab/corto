@@ -49,6 +49,7 @@ public:
 	std::vector<float> uvs;
 	std::vector<float> radiuses;
 	std::vector<uint8_t> colors;
+	uint32_t nColorsComponents = 0;
 
 	std::vector<uint32_t> index;
 

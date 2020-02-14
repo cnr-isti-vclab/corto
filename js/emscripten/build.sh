@@ -3,7 +3,7 @@
 #adjust this path before running. requires emsdk installed.
 source ~/devel/emsdk/emsdk_env.sh 
 
-semcc -std=c++11 emcorto.cpp \
+emcc -std=c++11 emcorto.cpp \
 ../../src/cstream.cpp \
 ../../src/bitstream.cpp \
 ../../src/tunstall.cpp \

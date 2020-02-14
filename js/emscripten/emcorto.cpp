@@ -50,8 +50,8 @@ void EMSCRIPTEN_KEEPALIVE setNormals16(Decoder *decoder, int16_t *buffer) {
 	decoder->setNormals(buffer);
 }
 
-void EMSCRIPTEN_KEEPALIVE setColors(Decoder *decoder, uchar *buffer) {
-	decoder->setColors(buffer);
+void EMSCRIPTEN_KEEPALIVE setColors(Decoder *decoder, uchar *buffer, int components = 4) {
+	decoder->setColors(buffer, components);
 }
 
 void EMSCRIPTEN_KEEPALIVE setUvs(Decoder *decoder, float *buffer) {

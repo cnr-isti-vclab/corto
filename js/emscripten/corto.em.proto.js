@@ -72,7 +72,7 @@ var CortoDecoder = (function() {
 			instance.exports.sbrk(4 -t);
 	}
 
-	function decode(source, shortIndex, shortNormal) {
+	function decode(source, shortIndex = false, shortNormal = false, colorComponents = 4) {
 		if(!source.length)
 			source = new Uint8Array(source);
 		var len = source.length;
@@ -143,7 +143,7 @@ var CortoDecoder = (function() {
 		if(hasColor) {
 			pad();
 			cptr = sbrk(nvert * 4);
-			exports.setColors(decoder, cptr);
+			exports.setColors(decoder, cptr, colorComponents);
 		}
 
 		exports.decode(decoder);
@@ -168,7 +168,7 @@ var CortoDecoder = (function() {
 		}
 
 		if(hasColor)
-			geometry.color = new Uint8Array(new Uint8Array(heap.buffer, cptr, nvert*4));
+			geometry.color = new Uint8Array(new Uint8Array(heap.buffer, cptr, nvert*colorComponents));
 
 		if(hasUv)
 			geometry.uv = new Float32Array(new Float32Array(heap.buffer, uptr, nvert*2));

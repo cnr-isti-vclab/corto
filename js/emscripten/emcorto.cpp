@@ -76,15 +76,3 @@ void EMSCRIPTEN_KEEPALIVE deleteDecoder(Decoder *decoder) {
 
 }
 
-//EMSCRIPTEN_BINDINGS(my_module) {
-//	emscripten::function("test", &test);
-//}
-
-/*EMSCRIPTEN_BINDINGS(my_class_example) {
-	class_<Decoder>("Corto")
-		.constructor<int, const uchar *>()
-//		.property("nvert", &Decoder::nvert, &Decoder::nvert)
-//		.property("nface", &Decoder::nface, &Decoder::nface)
-		.function("hasAttr", &Decoder::hasAttr);
-} */
-

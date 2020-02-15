@@ -10,13 +10,7 @@ onmessage = async function(job) {
 	if(!CortoDecoder.instance)
 		await CortoDecoder.ready;
 
-//TODO support 3 component colors
-/*	if(decoder.attributes.color && job.data.rgba_colors)
-		decoder.attributes.color.outcomponents = 4; */
-	
-	var model = CortoDecoder.decode(buffer, true, job.data.short_normals);
-
-	//pass back job
+	var model = CortoDecoder.decode(buffer, job.data.short_index, job.data.short_normals, job.data.rgba_colors ? 4 : 3);
 	postMessage({ model: model, buffer: buffer, request: job.data.request});
 };
 
@@ -59,13 +53,14 @@ var CortoDecoder = (function() {
 
 	function string(s) {
 		var str = Uint8Array.from(s, x => x.charCodeAt(0))
-		var ptr = instance.exports.sbrk(str.length+1);
+		var ptr = instance.exports.malloc(str.length+1);
 		heap.set(str, ptr);
 		heap[ptr + str.length] = 0;
 		return ptr; 
 	}
 
 	function pad() {
+		return;
 		var s = instance.exports.sbrk(0);
 		var t = s & 0x3;
 		if(t)
@@ -77,15 +72,19 @@ var CortoDecoder = (function() {
 			source = new Uint8Array(source);
 		var len = source.length;
 		var exports = instance.exports;
-		var sbrk = exports.sbrk;
+		var sbrk = exports.malloc; //yes I am a criminal.
 		var free = exports.free;
 
-		//copy source to heap. we could use directly source, but that is good only for the first em call.
-		var sptr = exports.malloc(len);
-		heap.set(source, sptr);
 
+//copy source to heap. we could use directly source, but that is good only for the first em call.
+
+
+		//We could use the heap instead of malloc, don't know cost (not much probably), and can't debug properly.
 		//set initial heap position, to be restored at the end of the deconding.
 		var pos = sbrk(0);
+
+		var sptr = sbrk(len);
+		heap.set(source, sptr);
 
 		var decoder = exports.newDecoder(len, sptr);
 		var nvert = exports.nvert(decoder);
@@ -98,19 +97,21 @@ var CortoDecoder = (function() {
 
 		var ngroups = exports.ngroups(decoder);
 		if(ngroups > 0) {
+			pad();
 			var gp = sbrk(4*ngroups);
 			exports.groups(decoder, gp);
 			geometry.groups =  new Uint32Array( ngroups*4);
 			geometry.grous.set(gp);
+			free(gp);
 		}
 
 		var hasNormal = exports.hasAttr(decoder, string("normal"));
 		var hasColor = exports.hasAttr(decoder, string("color"));
 		var hasUv = exports.hasAttr(decoder, string("uv"));
 
-		var iptr, pptr, nptr, cptr, uptr;
+		var iptr = 0, pptr = 0, nptr = 0, cptr = 0, uptr = 0;
 		if(nface) {
-			pad(); //memory align needed for int, short, floats arrays
+			pad();  //memory align needed for int, short, floats arrays if using sbrk
 			if(shortIndex) {
 				iptr = sbrk(nface * 6);
 				exports.setIndex16(decoder, iptr);
@@ -142,12 +143,12 @@ var CortoDecoder = (function() {
 
 		if(hasColor) {
 			pad();
-			cptr = sbrk(nvert * 4);
+			cptr = sbrk(nvert * colorComponents);
 			exports.setColors(decoder, cptr, colorComponents);
 		}
-
+		pad();
 		exports.decode(decoder);
-		exports.free(sptr); //source not needed anymore
+
 
 		//typed  arrays needs to be created in javascript space, not as views of heap (next call will overwrite them!)
 		//hence the double typed array.
@@ -175,8 +176,14 @@ var CortoDecoder = (function() {
 
 		exports.deleteDecoder(decoder);
 
-		//restore heap position.
-		sbrk(pos - sbrk(0)); 
+		//restore heap position if using sbrk
+		//sbrk(pos - sbrk(0)); 
+		free(sptr);
+		if(iptr) free(iptr);
+		if(pptr) free(pptr);
+		if(cptr) free(cptr);
+		if(nptr) free(nptr);
+		if(uptr) free(uptr);
 
 		return geometry;
 	};

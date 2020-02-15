@@ -51,14 +51,6 @@ var CortoDecoder = (function() {
 			env.emscripten_notify_memory_growth(0);
 		});
 
-	function string(s) {
-		var str = Uint8Array.from(s, x => x.charCodeAt(0))
-		var ptr = instance.exports.malloc(str.length+1);
-		heap.set(str, ptr);
-		heap[ptr + str.length] = 0;
-		return ptr; 
-	}
-
 	function pad() {
 		return;
 		var s = instance.exports.sbrk(0);
@@ -105,9 +97,9 @@ var CortoDecoder = (function() {
 			free(gp);
 		}
 
-		var hasNormal = exports.hasAttr(decoder, string("normal"));
-		var hasColor = exports.hasAttr(decoder, string("color"));
-		var hasUv = exports.hasAttr(decoder, string("uv"));
+		var hasNormal = exports.hasNormal(decoder);
+		var hasColor = exports.hasColor(decoder);
+		var hasUv = exports.hasUv(decoder);
 
 		var iptr = 0, pptr = 0, nptr = 0, cptr = 0, uptr = 0;
 		if(nface) {

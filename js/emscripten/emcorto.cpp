@@ -38,6 +38,20 @@ bool EMSCRIPTEN_KEEPALIVE hasAttr(Decoder *decoder, const char *attr) {
 	return decoder->hasAttr(attr);
 }
 
+bool EMSCRIPTEN_KEEPALIVE hasNormal(Decoder *decoder) {
+	return decoder->hasAttr("normal");
+}
+
+bool EMSCRIPTEN_KEEPALIVE hasColor(Decoder *decoder) {
+	return decoder->hasAttr("color");
+}
+
+bool EMSCRIPTEN_KEEPALIVE hasUv(Decoder *decoder) {
+	return decoder->hasAttr("uv");
+}
+
+
+
 void EMSCRIPTEN_KEEPALIVE setPositions(Decoder *decoder, float *buffer) {
 	decoder->setPositions(buffer);
 }

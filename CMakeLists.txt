@@ -15,7 +15,8 @@ SET(LIB_HEADERS
 	${CORTO_SOURCE_PATH}/point.h
 	${CORTO_SOURCE_PATH}/tunstall.h
 	${CORTO_SOURCE_PATH}/vertex_attribute.h
-	${CORTO_SOURCE_PATH}/zpoint.h)
+	${CORTO_SOURCE_PATH}/zpoint.h
+	${CORTO_SOURCE_PATH}/corto_codec.h)
 
 SET(LIB_SOURCES
 	${CORTO_SOURCE_PATH}/bitstream.cpp
@@ -24,7 +25,8 @@ SET(LIB_SOURCES
 	${CORTO_SOURCE_PATH}/decoder.cpp
 	${CORTO_SOURCE_PATH}/encoder.cpp
 	${CORTO_SOURCE_PATH}/normal_attribute.cpp
-	${CORTO_SOURCE_PATH}/tunstall.cpp)
+	${CORTO_SOURCE_PATH}/tunstall.cpp
+	${CORTO_SOURCE_PATH}/corto_codec.cpp)
 
 SET(EXE_SOURCE
 	${CORTO_SOURCE_PATH}/main.cpp
@@ -37,6 +39,7 @@ SET(EXE_HEADERS
 	${CORTO_SOURCE_PATH}/objload.h)
 
 ADD_LIBRARY(cortolib STATIC ${LIB_SOURCES} ${LIB_HEADERS})
+ADD_LIBRARY(cortocodec_unity SHARED ${LIB_SOURCES} ${LIB_HEADERS})
 ADD_EXECUTABLE(cortoexe ${EXE_SOURCE} ${EXE_HEADERS})
 
 SET(CORTO_DEFINITIONS "") 
@@ -63,7 +66,18 @@ elseif(APPLE)
 endif()
 
 target_include_directories(cortolib PUBLIC ${CORTO_SOURCE_PATH})
+#target_include_directories(cortocodec_unity PUBLIC ${CORTO_SOURCE_PATH})
 target_include_directories(cortoexe PUBLIC ${CORTO_SOURCE_PATH})
+
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    # G++
+#    target_compile_options(cortocodec PRIVATE -Wall -Wextra)
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
+    # MSVC
+#    target_compile_options(cortocodec_unity PRIVATE /EHsc /MTd /W2 /c)
+    # Set the DLLEXPORT variable to export symbols
+    target_compile_definitions(cortocodec_unity PRIVATE WIN_EXPORT)
+endif()
 
 target_link_libraries(cortoexe PUBLIC cortolib)
 

@@ -15,6 +15,7 @@ while still provide acceptable compression rates.
 * [corto](#corto) is program to compress **.ply** and **.obj** models
 * [libcorto](#libcorto) is a C++ compression/decompression library
 * [corto.js](#corto_js) a javascript library for .crt decompression
+* [corto.em.js](#corto_em) an emscripten library for .crt decompression (NEW! faster)
 * [CORTOLoader](#cortoloader), a threejs loader
 
 This work is based on the compression algorithm developed for the 
@@ -24,46 +25,50 @@ and visualization of multiresolution models. See [Fast decompression for web-bas
 Entropy compression is based on [Tunstall](#tunstall) coding, decompression require only table lookup and is very fast while
 similar in compression ratio to Huffman where the number of symbols is small.
 
+The C++ code is released under GPL licence, the Javascript code under MIT licence.
 
 ## Performances
 
-Decompression timing and size for a few models tested on a somewhat dated pc. (Intel Core i5-3450 @ 3.10GHz).
-Jvascript decompression time drops dramatically for repeadted run of complex algorithms, hence the 10th run result.
+Decompression timing and size for a few models tested on a midlevel notebook. (Intel® Core™ i7-8550U CPU @ 1.80GHz × 8 ).
+Things changed from the last time I made some timings: emscripten (and draco) improved a lot, corto is now available in emscritpem too.
 
-Bunny mesh 34K vertices (12 bits precision) courtesy of [Stanford](http://graphics.stanford.edu/data/3Dscanrep/)
+Corto library has a compression level settings from 1 (lower compression, faster) to 10 (higher compression, slower decompression) with 7 being the default.
 
-| Bunny           | Corto   | Draco  | OpenCTM |
-| -------------   | ------:| ------:| -------:|
-| Size            | 62.8KB | 63.6KB |   168KB |
-| C++ decode      |  2.3ms |   25ms* |    18ms* |
-| Js first run    |   27ms |  495ms |   113ms |
-| Js 10th run     |  6.5ms |   30ms |    52ms |
-| Js lib size     |   26KB |  673KB |    17KB |
+Bunny mesh 34K vertices (14 bits precision) courtesy of [Stanford](http://graphics.stanford.edu/data/3Dscanrep/)
+
+| Bunny               | Corto  | Draco cl 1 | Draco cl 7 |
+| -------------       | ------:|     ------:|  --------: |
+| Size                | 95.8KB |    122.0KB |    82.3KBH |
+| C++ decode          |    2ms |       7ms  |        9ms |
+| Js Chrome           |  4.6ms |       10ms |       13ms |  
+| Js Firefox          |    8ms |       12ms |       18ms |  
+| Js lib size (gz)    |   28KB |      268KB |      268KB |  
 
 
 Proserpina mesh 128K vertices (14 bits), textures (12 bits), normals (10 bits) courtesy of [egiptologo91 in Sketchfab](https://sketchfab.com/models/dd671b1fc15c481b8592284e155cd8cb)
 
-| Proserpina      | Corto   | Draco  | OpenCTM |
+| Proserpina      | Corto   | Draco cl 1  | Draco cl 7 |
 | -------------   | -------:| ------:| -------:|
-|                 |   982KB |  779KB |  1.13MB |
-| C++ decode      |    23ms | 220ms* |  100ms* |
-| Js first run    |   100ms | 1120ms |   420ms |
-| JS 10th run     |    60ms |  490ms |   330ms |
+|                 |   872KB | 1080KB |   672MB |
+| C++ decode      |    18ms |  62ms* |  170ms* |
+| Js Chrome       |    31ms |   62ms |   280ms |
+| JS Firefox      |    41ms |   88ms |   280ms |
 
 
-Palmyra point clout 500K vertices (18 bits), textures (12 bits) courtesy of [robotgoat in Sketchfab](https://sketchfab.com/models/13227e6ed7c44bdd9af2870dc68ca63e)
 
-| Palmyra         | Corto   | Draco  |
-| -------------   | -------:| ------:|
-|                 |   282KB |  301KB |
-| C++ decode      |    28ms | 644ms* |
-| Js first run    |    110ms | 2400ms |
-| JS 10th run     |    65ms | 1600ms |
+The Nile - Vatican Museums point cloud 167K vertices (14bits), textures (12 bits), normals(10 bits) courtesy of [egiptologo91 in Sketchfab](https://sketchfab.com/3d-models/the-nile-de5ecd487d194890b2af093428aa5ca2)
 
 
-* C++ timing might be somewhat affected by compilation flags
-* OpenCTM larger size is due mainly to simpler connectivity compression, 
-* Draco Javascript lib size is due to emscripten.
+| Nile           | Corto   | Draco cl 1 | Draco cl 7 |
+| -------------   | -------:| ------:| ------------:|
+|                 |   890KB |  1.92MB | 1.70MB |
+| C++ decode      |     7ms | 43ms    | 81ms |
+| Js Chrome       |    18ms | 104ms   | 118ms |
+| JS Firefox      |    32ms | 123ms  |  128ms |
+
+
+* C++ timing might be affected by compilation flags
+
 
 ## Building 
 
@@ -155,10 +160,34 @@ CortoDecoder decodes a .crt as an arraybuffer and returns an objects with attrib
 	request.send();
 	</script>
 
+### corto_em
+
+CortoDecoder decodes a .crt as an arraybuffer and returns an objects with attributes (positions, index, colors etc).
+The interface is slightly different. No decode object, just a decode function, with support for 16 bit indexes and normals.
+
+	<script src="js/corto.js"/>
+	<script>
+	var request = new XMLHttpRequest();
+	request.open('GET', 'bun_zipper.crt');
+	request.responseType = 'arraybuffer';
+	request.onload = function() {
+		var shortIndex = false;
+		var shortNormals = true;
+		var model = CortoDecoder.decode(this.response, shortIndex, shortNormals);
+		console.log(model.nvert, model.nface, model.groups);
+		console.log('Index: ', model.index);
+		console.log('Positions: ', model.position);
+		console.log('Colors: ', model.color);
+		console.log('Nornmals: ', model.normal);
+		console.log('Tex coords: ', model.uv);
+		//custom attributes can be encoded, see cortolib below for details.
+	}
+	request.send();
+	</script>
 ### libcorto
 
 Interface is not entirely stable, no mayor change is expected.
-See src/main.cpp for an extensive example.
+See `src/main.cpp` for an extensive example.
 
 
 	std::vector<float> coords;

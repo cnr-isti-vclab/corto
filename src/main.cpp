@@ -202,8 +202,12 @@ int main(int argc, char *argv[]) {
 	if(loader.norms.size() && norm_bits > 0)
 		encoder.addNormals(loader.norms.data(), norm_bits, prediction);
 
-	if(loader.colors.size() && r_bits > 0)
-		encoder.addColors(loader.colors.data(), r_bits, g_bits, b_bits, a_bits);
+	if(loader.colors.size() && r_bits > 0) {
+		if(loader.nColorsComponents == 3) {
+			encoder.addColors3(loader.colors.data(), r_bits, g_bits, b_bits);
+		} else
+			encoder.addColors(loader.colors.data(), r_bits, g_bits, b_bits, a_bits);
+	}
 
 	if(loader.uvs.size() && uv_bits > 0)
 		encoder.addUvs(loader.uvs.data(), pow(2, -uv_bits));
@@ -275,8 +279,9 @@ int main(int argc, char *argv[]) {
 		decoder.setNormals(out.norms.data());
 	}
 	if(decoder.data.count("color")) {
-		out.colors.resize(nvert*4);
-		decoder.setColors(out.colors.data());
+		out.colors.resize(nvert*loader.nColorsComponents);
+		out.nColorsComponents = loader.nColorsComponents;
+		decoder.setColors(out.colors.data(), loader.nColorsComponents);
 	}
 	if(decoder.data.count("uv")) {
 		out.uvs.resize(nvert*2);

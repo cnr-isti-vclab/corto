@@ -17,7 +17,6 @@ If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "color_attribute.h"
-
 using namespace crt;
 
 
@@ -29,25 +28,35 @@ void ColorAttr::quantize(uint32_t nvert, const char *buffer) {
 	switch(format) {
 	case UINT8:
 	{
-		const Color4b *colors = (const Color4b *)buffer;
+		const uint8_t *c = (const uint8_t *)buffer;
+		uint8_t *v = values.data();		
+		Color4b y;
 		for(uint32_t i = 0; i < nvert; i++) {
-			Color4b c = colors[i];
-			Color4b &y = *(Color4b *)&(values[i*N]);
-			for(int k = 0; k < 4; k++)
+			for(int k = 0; k < N; k++)
 				y[k] = c[k]/qc[k];
 			y = y.toYCC();
+			for(int k = 0; k < N; k++)
+				v[k] = y[k];
+			c += N;
+			v += N;
 		}
 	}
 		break;
 
 	case FLOAT:
 	{
-		const float *colors = (const float *)buffer;
+		Color4b y;
+		y[3] = 255;
+		const float *c = (const float *)buffer;
+		uint8_t *v = values.data();
 		for(uint32_t i = 0; i < nvert; i++) {
-			Color4b &y = *(Color4b *)&(values[i*N]);
-			for(int k = 0; k < 4; k++)
-				y[k] = ((int)(colors[i*N + k]*255.0f))/qc[k];
+			for(int k = 0; k < N; k++)
+				y[k] = ((int)(c[k]*255.0f))/qc[k];
 			y = y.toYCC();
+			for(int k = 0; k < N; k++)
+				v[k] = y[k];
+			c += N;
+			v += N;
 		}
 	}
 		break;
@@ -63,12 +72,21 @@ void ColorAttr::dequantize(uint32_t nvert) {
 	switch(format) {
 	case UINT8:
 	{
-		Color4b *colors = (Color4b *)buffer;
-		for(uint32_t i = 0; i < nvert; i++) {
-			Color4b &c = colors[i];
-			c = c.toRGB();
-			for(int k = 0; k < 4; k++)
-				c[k] *= qc[k];
+		//this is inplace decoding! goiong from 3 to 4 require going in reverse.
+		uint8_t *c = ((uint8_t *)buffer) + N*nvert;
+		uint8_t *target = ((uint8_t *)buffer) + out_components*nvert;
+		Color4b color;
+		color[3] = 255;
+		
+		while(c > (uint8_t *)buffer) {
+			c -= N;
+			target -= out_components;
+			
+			for(int k = 0; k < N; k++)
+				color[k] = c[k];
+			color = color.toRGB();
+			for(int k = 0; k < out_components; k++)
+				target[k] = color[k]*qc[k];
 		}
 		break;
 	}
@@ -76,11 +94,14 @@ void ColorAttr::dequantize(uint32_t nvert) {
 	{
 		std::vector<Color4b> colors(nvert);
 		memcpy(colors.data(), buffer, nvert*sizeof(Color4b));
+		float *c = (float *)buffer;
+		
 		for(uint32_t i = 0; i < nvert; i++) {
-			Color4b &c = colors[i];
-			c = c.toRGB();
-			for(int k = 0; k < 4; k++)
-				((float *)buffer)[i*4 +k] = (c[k]*qc[k])/255.0f;
+			Color4b &rgb = colors[i];
+			rgb = rgb.toRGB();
+			for(int k = 0; k < out_components; k++)
+				c[k] = (c[k]*qc[k])/255.0f;
+			c += out_components;
 		}
 		break;
 	}

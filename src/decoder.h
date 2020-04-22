@@ -51,9 +51,9 @@ public:
 	bool setPositions(float *buffer) { return setAttribute("position", (char *)buffer, VertexAttribute::FLOAT); }
 	bool setNormals(float *buffer)   { return setAttribute("normal", (char *)buffer, VertexAttribute::FLOAT); }
 	bool setNormals(int16_t *buffer) { return setAttribute("normal", (char *)buffer, VertexAttribute::INT16); }
-	bool setColors(uchar *buffer)    { return setAttribute("color", (char *)buffer, VertexAttribute::UINT8); }
-	bool setUvs(float *buffer)       { return setAttribute("uv", (char *)buffer, VertexAttribute::FLOAT); }
-
+	bool setUvs(float *buffer)       { return setAttribute("uv", (char *)buffer, VertexAttribute::FLOAT); }	
+	bool setColors(uchar *buffer, int components = 4); 
+	
 	bool setAttribute(const char *name, char *buffer, VertexAttribute::Format format);
 	bool setAttribute(const char *name, char *buffer, VertexAttribute *attr);
 

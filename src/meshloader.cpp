@@ -71,6 +71,9 @@ bool MeshLoader::loadPly(const std::string &filename) {
 
 	nface = index.size()/3;
 	nvert = coords.size()/3;
+	if(colors.size())
+		nColorsComponents = colors.size()/nvert;
+	
 	if(add_normals && !norms.size() && !wedge_norms.size())
 		addNormals();
 
@@ -299,8 +302,13 @@ bool MeshLoader::savePly(const string &filename, std::vector<std::string> &comme
 	out.add_properties_to_element("vertex", { "x", "y", "z" }, coords);
 	if(norms.size())
 		out.add_properties_to_element("vertex", { "nx", "ny", "nz" }, norms);
-	if(colors.size())
-		out.add_properties_to_element("vertex", { "red", "green", "blue", "alpha" }, colors);
+	
+	if(colors.size()) {
+		if(nColorsComponents == 4)
+			out.add_properties_to_element("vertex", { "red", "green", "blue", "alpha" }, colors);
+		else if(nColorsComponents == 3)
+			out.add_properties_to_element("vertex", { "red", "green", "blue" }, colors);
+	}
 	if(uvs.size()) {
 	/*		for(int i = 0; i < reindex.size(); i++) {
 			tex[i*2] = reuvs[reindex[i]*2];

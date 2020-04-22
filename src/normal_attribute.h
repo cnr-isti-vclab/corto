@@ -22,6 +22,18 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "point.h"
 #include "vertex_attribute.h"
 
+/* encoding sequence for Estimated
+ * quantize: convert to octa and quantize. stored to values
+ * preDelta: estimate normals, converto to octa, and subtract from values
+ * deltaEncode: just copy diffs from values to delta
+ * encode: to stream
+ *
+ * decoding sequence
+ * decode
+ * deltadecode: do nothing
+ * postdelta: convert the estimated to octa, add the diffs
+ * dequantize: dequantize and to sphere.
+ */
 
 namespace crt {
 

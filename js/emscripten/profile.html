@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<!-- load standard js decoder for testing -->
+	<script src="corto.em.js"></script>
+<script>
+	var CortoDecoderEm = CortoDecoder;
+</script>
+	<script src="../corto.js"></script>
+
+
+	<script>
+
+var cortodone = false;
+var cortoemdone = false;
+
+
+var Corto = {
+	onRuntimeInitialized: function() {
+		cortodone = true;
+		profile();
+	}
+};
+
+async function loadwasm() {
+	await  CortoDecoder.ready;
+	cortoemdone = true;
+	profile();
+};
+
+loadwasm();
+
+function profile() {
+	if(!cortodone) return;
+	if(!cortoemdone) return;
+
+var oReq = new XMLHttpRequest();
+oReq.open("GET", "../../models/meridiana_NC_110K.crt", true);
+oReq.responseType = "arraybuffer";
+
+oReq.onload = function (oEvent) {
+	var arrayBuffer = oReq.response; // Note: not oReq.responseText
+	if (!arrayBuffer) 
+		return;
+
+	var iter = 20;
+	var d = new Uint8Array(arrayBuffer);
+
+	var now = performance.now();
+	var geo1;
+	for(var i = 0; i < iter; i++) {
+		geo1 = Corto.decode(d.length,d);
+	}
+	console.log("em decoder", performance.now() - now, geo1); 
+
+	now = performance.now();
+	var geo2;
+	for(var i = 0; i < iter; i++) {
+		geo2 = CortoDecoderEm.decode(arrayBuffer);
+	}
+	console.log("emstandalone decoder", performance.now() - now, geo2);
+
+	now = performance.now();
+	var geo3;
+	for(var i = 0; i < iter; i++) {
+		var test = new CortoDecoder(arrayBuffer);
+		test.decode();
+		geo3 = test.geometry;
+	}
+	console.log("js decoder", performance.now() - now, geo3);
+};
+
+oReq.send(null);
+
+}
+
+
+  </script>
+  <script src="emcorto.js"></script>
+</html>

@@ -71,7 +71,7 @@ Decoder::Decoder(size_t len, const uchar *input): vertex_count(0) {
 		VertexAttribute *attr = nullptr;
 		switch(codec) {
 		case VertexAttribute::NORMAL_CODEC: attr = new NormalAttr(); break;
-		case VertexAttribute::COLOR_CODEC: attr = new ColorAttr(); break;
+		case VertexAttribute::COLOR_CODEC: attr = new ColorAttr(components); break;
 
 		case VertexAttribute::GENERIC_CODEC:
 		default:  //
@@ -109,6 +109,15 @@ bool Decoder::setAttribute(const char *name, char *buffer, VertexAttribute *attr
 	attr->buffer = buffer;
 	delete data[name];
 	data[name] = attr;
+	return true;
+}
+
+bool Decoder::setColors(uchar *buffer, int components) { 
+	if(data.find("color") == data.end()) return false;
+	ColorAttr *attr = dynamic_cast<crt::ColorAttr *>(data["color"]);
+	attr->format = VertexAttribute::UINT8;
+	attr->buffer = (char *)buffer;
+	attr->out_components = components;
 	return true;
 }
 
@@ -225,9 +234,9 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 
 			for(int k = 0; k < 3; k++) {
 				int v; //TODO just use last_index.
-				if(split & (1<<k))
+				if(split & (1<<k)) {
 					v = index.bitstream.read(splitbits);
-				else {
+				} else {
 					assert(vertex_count < index.prediction.size());
 					index.prediction[vertex_count] = Face(last_index, last_index, last_index);
 					last_index = v = vertex_count++;
@@ -287,7 +296,8 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 				index.prediction[vertex_count] = Face(v1, v0, e.v2);
 				opposite = vertex_count++;
 			}
-
+			assert(opposite < nvert);
+			
 			front[e.prev].next = new_edge;
 			front[e.next].prev = new_edge + 1;
 

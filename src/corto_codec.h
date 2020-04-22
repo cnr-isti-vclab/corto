@@ -38,7 +38,7 @@ namespace crt
         };
 
         // TODO : Use .json instead of Vector2*
-        Decoder EXPORT_API *CreateDecoder(int length, unsigned char* data, Vector2* decoderInfo);
+        Decoder EXPORT_API *CreateDecoder(size_t length, unsigned char* data, Vector2* decoderInfo);
         void EXPORT_API DestroyDecoder(Decoder* decoder);
         int EXPORT_API DecodeMesh(Decoder* decoder, Vector3* vertices, int* indices, Vector3* normals, Color* colors, Vector2* texcoord);
     }

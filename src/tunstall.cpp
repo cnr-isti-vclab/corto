@@ -24,6 +24,8 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include "tunstall.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 using namespace std;
 using namespace crt;
 
@@ -142,8 +144,8 @@ void Tunstall::createDecodingTables2() {
 	uint32_t n_words = 0;
 
 	uint32_t count = 2;
-	uint32_t p0 = probabilities[0].probability<<8;
-	uint32_t p1 = probabilities[1].probability<<8;
+	uint32_t p0 = (uint32_t) probabilities[0].probability<<8;
+	uint32_t p1 = (uint32_t) probabilities[1].probability<<8;
 	uint32_t prob = (p0*p0)>>16;
 	uint32_t max_count = (dictionary_size - 1)/(n_symbols - 1);
 	while(prob > p1 && count < max_count) {
@@ -485,3 +487,5 @@ float Tunstall::entropy() {
 	}
 	return -e;
 }
+
+#pragma GCC diagnostic pop

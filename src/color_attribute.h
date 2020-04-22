@@ -22,6 +22,8 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "vertex_attribute.h"
 #include "point.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 namespace crt {
 
 class ColorAttr: public GenericAttr<uchar> {
@@ -60,5 +62,7 @@ public:
 };
 
 } //namespace
+
+#pragma GCC diagnostic pop
 
 #endif // CRT_COLOR_ATTRIBUTE_H

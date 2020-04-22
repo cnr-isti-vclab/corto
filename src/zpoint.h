@@ -29,8 +29,8 @@ public:
 	uint64_t bits; //enough for 21 bit quantization.
 	uint32_t pos;
 
-	ZPoint(uint64_t b = 0): bits(b), pos(-1) {}
-	ZPoint(uint64_t x, uint64_t y, uint64_t z, int levels, int i): bits(0), pos(i) {
+	ZPoint(uint64_t b = 0): bits(b), pos((uint32_t)-1) {}
+	ZPoint(uint64_t x, uint64_t y, uint64_t z, int levels, uint32_t p): bits(0), pos(p) {
 		uint64_t l = 1;
 		for (int i = 0; i < levels; i++)
 			bits |= (x & l << i)<< (2*i) | (y & l << i) << (2*i + 1) | (z & l << i) << (2*i+2);

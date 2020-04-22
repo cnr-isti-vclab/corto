@@ -26,6 +26,9 @@ If not, see <http://www.gnu.org/licenses/>.
 
 #include "bitstream.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+
 typedef unsigned char uchar;
 
 using namespace std;
@@ -423,4 +426,7 @@ public:
 };
 
 } //namespace
+
+#pragma GCC diagnostic pop
+
 #endif // CRT_CSTREAM_H

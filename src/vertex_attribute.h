@@ -25,6 +25,9 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "cstream.h"
 #include "index_attribute.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+
 namespace crt {
 
 class VertexAttribute {
@@ -226,5 +229,7 @@ public:
 };
 
 }
+
+#pragma GCC diagnostic pop
 
 #endif // CRT_VERTEX_ATTRIBUTE_H

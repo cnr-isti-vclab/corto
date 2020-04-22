@@ -78,7 +78,7 @@ public:
 		return (uint32_t)i;
 	}
 	static int toInt(uint32_t i) {
-		int k = i;
+		int k = (int)i;
 		if(k&0x1)
 			k = (-k-1)/2;
 		else

@@ -41,6 +41,8 @@ static uint32_t bmask[] = {
 
 #define BITS_PER_WORD 32
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 
 //TODO is it faster using bmask or using ~((1L<<d)-1)?
 
@@ -139,3 +141,6 @@ void BitStream::push_back(uint32_t w) {
 	}
 	buffer[size++] = w;
 }
+
+
+#pragma GCC diagnostic pop

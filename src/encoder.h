@@ -71,8 +71,8 @@ public:
 	//its your job to fill attr variables appropriately (type and number of components in particular.
 	bool addAttribute(const char *name, char *buffer, VertexAttribute *attr);
 
-	void addGroup(int end_triangle) { index.groups.push_back(Group(end_triangle)); }
-	void addGroup(int end_triangle, std::map<std::string, std::string> &props) {
+	void addGroup(uint32_t end_triangle) { index.groups.push_back(Group(end_triangle)); }
+	void addGroup(uint32_t end_triangle, std::map<std::string, std::string> &props) {
 		Group g(end_triangle);
 		g.properties = props;
 		index.groups.push_back(g);

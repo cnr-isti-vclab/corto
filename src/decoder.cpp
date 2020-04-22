@@ -26,6 +26,8 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "tunstall.h"
 #include "decoder.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 using namespace std;
 using namespace crt;
 
@@ -58,11 +60,11 @@ Decoder::Decoder(size_t len, const uchar *input): vertex_count(0) {
 		exif[key] = stream.readString();
 	}
 
-	int nattr = stream.readUint32();
+	uint32_t nattr = stream.readUint32();
 
-	for(int i = 0; i < nattr; i++) {
+	for(uint32_t i = 0; i < nattr; i++) {
 		std::string name =  stream.readString();
-		int codec = stream.readUint32();
+        uint32_t codec = stream.readUint32();
 		float q = stream.readFloat();
 		uint32_t components = stream.readUint8();
 		uint32_t format = stream.readUint8();
@@ -296,7 +298,7 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 				index.prediction[vertex_count] = Face(v1, v0, e.v2);
 				opposite = vertex_count++;
 			}
-			assert(opposite < nvert);
+			assert(opposite < (int) nvert);
 			
 			front[e.prev].next = new_edge;
 			front[e.next].prev = new_edge + 1;
@@ -353,3 +355,6 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 		}
 	}
 }
+
+
+#pragma GCC diagnostic pop

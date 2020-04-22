@@ -3,7 +3,7 @@
 namespace crt
 {
     // TODO: Use a .json instead of Vector2
-    Decoder* CreateDecoder(int length, unsigned char* data, Vector2* decoderInfo)
+    Decoder* CreateDecoder(size_t length, unsigned char* data, Vector2* decoderInfo)
     {
         Decoder* decoder = new Decoder(length, data);
         
@@ -55,6 +55,6 @@ namespace crt
 
         decoder->decode();
 
-        return decoder->nface;
+        return (int) decoder->nface;
     }
 }

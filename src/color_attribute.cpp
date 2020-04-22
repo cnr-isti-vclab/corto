@@ -19,6 +19,8 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "color_attribute.h"
 using namespace crt;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 
 void ColorAttr::quantize(uint32_t nvert, const char *buffer) {
 	uint32_t n = N*nvert;
@@ -108,3 +110,5 @@ void ColorAttr::dequantize(uint32_t nvert) {
 	default: throw "Unsupported color output format.";
 	}
 }
+
+#pragma GCC diagnostic pop

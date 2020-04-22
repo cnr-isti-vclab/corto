@@ -19,6 +19,8 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <assert.h>
 #include "normal_attribute.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 using namespace crt;
 
 template <class T> void markBoundary(uint32_t nvert, uint32_t nface, T *index, std::vector<int32_t> &boundary) {
@@ -301,3 +303,5 @@ void NormalAttr::computeNormals(Point3f *normals, std::vector<Point3f> &estimate
 		}
 	}
 }
+
+#pragma GCC diagnostic pop

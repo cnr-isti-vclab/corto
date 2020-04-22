@@ -25,6 +25,9 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <zlib.h>
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+
 using namespace crt;
 using namespace std;
 
@@ -170,3 +173,5 @@ void InStream::lz4_decompress(vector<uchar> &data) {
 }
 #endif
 
+
+#pragma GCC diagnostic pop

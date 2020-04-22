@@ -25,6 +25,9 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "tunstall.h"
 #include "encoder.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+
 using namespace crt;
 using namespace std;
 
@@ -716,3 +719,5 @@ void Encoder::encodeFaces(int start, int end) {
 	}
 	index.max_front = std::max(index.max_front, (uint32_t)front.size());
 }
+
+#pragma GCC diagnostic pop

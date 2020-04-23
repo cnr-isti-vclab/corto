@@ -129,44 +129,6 @@ inline std::istream & operator>>( std::istream & in, ObjModel::FaceVertex & f) {
 		   --f.n;
 	   }
 	return in;
-
-	in >> f.v;
-//	cout << "V: " << f.v << endl;
-	if(in.peek() == ' ' || !in.good()) { // v
-		in.get();
-		goto finish;
-	}
-	in.get(); //reading texture now
-
-	if(in.peek() == ' ' || !in.good()) { // v
-		in.get();
-		goto finish;
-	}
-
-	if(in.peek() != '/')
-		in >> f.t; //if nothing after / just f.n remains -1
-//	cout << "T: " << f.t << endl;
-
-	if(in.peek() == ' ') { // v/n or v/
-		in.get();
-		goto finish;
-	}
-	in.get(); //reading normal now
-
-	if(in.peek() == ' ' || !in.good()) { // v
-		in.get();
-		goto finish;
-	}
-
-	if(in.peek() != '/')
-		in >> f.n;
-//	cout << "N: " << f.n << endl;
-
-	--f.v;
-	--f.t;
-	--f.n;
-
-	return in;
 }
 
 ObjModel parseObjModel( std::istream & in ){
@@ -319,9 +281,12 @@ IndexedModel convertToModel(const ObjModel & obj ) {
 		model.faces.push_back(remap[i]);
 
 	model.blocks = obj.blocks;
-
+	
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
 	for(auto i: model.faces)
-		assert(i < model.vertex.size()/3);
+		assert(i < model.vertex.size()/3); //optimized away on some builds -> leads to unused variable
+#pragma GCC diagnostic pop
 	return model;
 
 

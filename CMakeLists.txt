@@ -66,15 +66,15 @@ elseif(APPLE)
 endif()
 
 target_include_directories(cortolib PUBLIC ${CORTO_SOURCE_PATH})
-#target_include_directories(cortocodec_unity PUBLIC ${CORTO_SOURCE_PATH})
+target_include_directories(cortocodec_unity PUBLIC ${CORTO_SOURCE_PATH})
 target_include_directories(cortoexe PUBLIC ${CORTO_SOURCE_PATH})
 
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     # G++
-#    target_compile_options(cortocodec PRIVATE -Wall -Wextra)
+    target_compile_options(cortocodec_unity PRIVATE -Wall -Wextra)
 elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
     # MSVC
-#    target_compile_options(cortocodec_unity PRIVATE /EHsc /MTd /W2 /c)
+    target_compile_options(cortocodec_unity PRIVATE /EHsc /MTd /W2 /c)
     # Set the DLLEXPORT variable to export symbols
     target_compile_definitions(cortocodec_unity PRIVATE WIN_EXPORT)
 endif()

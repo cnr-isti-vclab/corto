@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.1)
 project(corto)
 
+set (CMAKE_CXX_STANDARD 11)
+
 SET(CORTO_SOURCE_PATH src)
 
 SET(LIB_HEADERS

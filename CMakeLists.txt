@@ -7,20 +7,21 @@ option(BUILD_CORTO_EXE "Build the command line binary of corto" ON)
 set (CMAKE_CXX_STANDARD 11)
 
 SET(CORTO_SOURCE_PATH src)
+SET(CORTO_HEADER_PATH include/corto)
 
 SET(LIB_HEADERS
-	${CORTO_SOURCE_PATH}/bitstream.h
-	${CORTO_SOURCE_PATH}/color_attribute.h
-	${CORTO_SOURCE_PATH}/corto.h
-	${CORTO_SOURCE_PATH}/cstream.h
-	${CORTO_SOURCE_PATH}/decoder.h
-	${CORTO_SOURCE_PATH}/encoder.h
-	${CORTO_SOURCE_PATH}/index_attribute.h
-	${CORTO_SOURCE_PATH}/normal_attribute.h
-	${CORTO_SOURCE_PATH}/point.h
-	${CORTO_SOURCE_PATH}/tunstall.h
-	${CORTO_SOURCE_PATH}/vertex_attribute.h
-	${CORTO_SOURCE_PATH}/zpoint.h
+	${CORTO_HEADER_PATH}/bitstream.h
+	${CORTO_HEADER_PATH}/color_attribute.h
+	${CORTO_HEADER_PATH}/corto.h
+	${CORTO_HEADER_PATH}/cstream.h
+	${CORTO_HEADER_PATH}/decoder.h
+	${CORTO_HEADER_PATH}/encoder.h
+	${CORTO_HEADER_PATH}/index_attribute.h
+	${CORTO_HEADER_PATH}/normal_attribute.h
+	${CORTO_HEADER_PATH}/point.h
+	${CORTO_HEADER_PATH}/tunstall.h
+	${CORTO_HEADER_PATH}/vertex_attribute.h
+	${CORTO_HEADER_PATH}/zpoint.h
 	${CORTO_SOURCE_PATH}/corto_codec.h)
 
 SET(LIB_SOURCES
@@ -66,7 +67,8 @@ elseif(APPLE)
 	endif(IOS)
 endif()
 
-target_include_directories(corto PUBLIC ${CORTO_SOURCE_PATH})
+target_include_directories(corto PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(corto PRIVATE ${CORTO_HEADER_PATH})
 
 target_compile_definitions(corto PUBLIC ${CORTO_DEFINITIONS})
 target_compile_options    (corto PUBLIC ${CORTOLIB_CFLAGS})
@@ -79,18 +81,18 @@ INSTALL(TARGETS corto
 	ARCHIVE DESTINATION lib)
 
 INSTALL(FILES
-	${CORTO_SOURCE_PATH}/bitstream.h
-	${CORTO_SOURCE_PATH}/color_attribute.h
-	${CORTO_SOURCE_PATH}/corto.h
-	${CORTO_SOURCE_PATH}/cstream.h
-	${CORTO_SOURCE_PATH}/decoder.h
-	${CORTO_SOURCE_PATH}/encoder.h
-	${CORTO_SOURCE_PATH}/index_attribute.h
-	${CORTO_SOURCE_PATH}/normal_attribute.h
-	${CORTO_SOURCE_PATH}/point.h
-	${CORTO_SOURCE_PATH}/tunstall.h
-	${CORTO_SOURCE_PATH}/vertex_attribute.h
-	${CORTO_SOURCE_PATH}/zpoint.h
+	${CORTO_HEADER_PATH}/bitstream.h
+	${CORTO_HEADER_PATH}/color_attribute.h
+	${CORTO_HEADER_PATH}/corto.h
+	${CORTO_HEADER_PATH}/cstream.h
+	${CORTO_HEADER_PATH}/decoder.h
+	${CORTO_HEADER_PATH}/encoder.h
+	${CORTO_HEADER_PATH}/index_attribute.h
+	${CORTO_HEADER_PATH}/normal_attribute.h
+	${CORTO_HEADER_PATH}/point.h
+	${CORTO_HEADER_PATH}/tunstall.h
+	${CORTO_HEADER_PATH}/vertex_attribute.h
+	${CORTO_HEADER_PATH}/zpoint.h
 	DESTINATION include/corto)
 
 if (BUILD_CORTO_CODEC_UNITY)

@@ -28,8 +28,6 @@ If not, see <http://www.gnu.org/licenses/>.
 
 typedef unsigned char uchar;
 
-using namespace std;
-
 namespace crt {
 
 int ilog2(uint64_t p);

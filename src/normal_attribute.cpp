@@ -213,7 +213,7 @@ void NormalAttr::postDelta(uint32_t nvert, uint32_t nface,
 	if(!coord)
 		throw "Position attr has been overloaded, Use DIFF normal strategy instead.";
 
-	vector<Point3f> estimated(nvert, Point3f(0, 0, 0));
+	std::vector<Point3f> estimated(nvert, Point3f(0, 0, 0));
 	if(index.faces32)
 		estimateNormals<uint32_t>(nvert, (Point3i *)coord->buffer, nface, index.faces32, estimated);
 	else

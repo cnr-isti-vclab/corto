@@ -21,6 +21,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 
 #include "encoder.h"
 #include "decoder.h"
@@ -148,17 +149,17 @@ int main(int argc, char *argv[]) {
 	//options for obj: join by material (discard group info).
 	//exif pairs: -exif key=value //write and override what would put inside (mtllib for example).
 
-	crt::MeshLoader loader;
-	loader.add_normals = add_normals;
-	bool ok = loader.load(input, group);
+	auto loader = std::make_shared<crt::MeshLoader>();
+	loader->add_normals = add_normals;
+	bool ok = loader->load(input, group);
 	if(!ok) {
 		cerr << "Failed loading model: " << input << endl;
 		return 1;
 	}
 
 	if(pointcloud)
-		loader.nface = 0;
-	pointcloud = (loader.nface == 0 || pointcloud);
+		loader->nface = 0;
+	pointcloud = (loader->nface == 0 || pointcloud);
 	crt::NormalAttr::Prediction prediction = crt::NormalAttr::BORDER;
 	if(!normal_prediction.empty()) {
 		if(normal_prediction == "delta")
@@ -176,126 +177,126 @@ int main(int argc, char *argv[]) {
 
 	crt::Timer timer;
 
-	crt::Encoder encoder(loader.nvert, loader.nface, crt::Stream::TUNSTALL);
+	auto encoder = std::make_shared<crt::Encoder>(loader->nvert, loader->nface, crt::Stream::TUNSTALL);
 
-	encoder.exif = loader.exif;
+	encoder->exif = loader->exif;
 	//add and override exif properties
 	for(auto it: exif)
-		encoder.exif[it.first] = it.second;
+		encoder->exif[it.first] = it.second;
 
-	for(auto &g: loader.groups)
-		encoder.addGroup(g.end, g.properties);
+	for(auto &g: loader->groups)
+		encoder->addGroup(g.end, g.properties);
 
 	if(pointcloud) {
 		if(vertex_bits)
-			encoder.addPositionsBits(loader.coords.data(), vertex_bits);
+			encoder->addPositionsBits(loader->coords.data(), vertex_bits);
 		else
-			encoder.addPositions(loader.coords.data(), vertex_q);
+			encoder->addPositions(loader->coords.data(), vertex_q);
 
 	} else {
 		if(vertex_bits)
-			encoder.addPositionsBits(loader.coords.data(), loader.index.data(), vertex_bits);
+			encoder->addPositionsBits(loader->coords.data(), loader->index.data(), vertex_bits);
 		else
-			encoder.addPositions(loader.coords.data(), loader.index.data(), vertex_q);
+			encoder->addPositions(loader->coords.data(), loader->index.data(), vertex_q);
 	}
 	//TODO add suppor for wedge and face attributes adding simplex attribute
-	if(loader.norms.size() && norm_bits > 0)
-		encoder.addNormals(loader.norms.data(), norm_bits, prediction);
+	if(loader->norms.size() && norm_bits > 0)
+		encoder->addNormals(loader->norms.data(), norm_bits, prediction);
 
-	if(loader.colors.size() && r_bits > 0) {
-		if(loader.nColorsComponents == 3) {
-			encoder.addColors3(loader.colors.data(), r_bits, g_bits, b_bits);
+	if(loader->colors.size() && r_bits > 0) {
+		if(loader->nColorsComponents == 3) {
+			encoder->addColors3(loader->colors.data(), r_bits, g_bits, b_bits);
 		} else
-			encoder.addColors(loader.colors.data(), r_bits, g_bits, b_bits, a_bits);
+			encoder->addColors(loader->colors.data(), r_bits, g_bits, b_bits, a_bits);
 	}
 
-	if(loader.uvs.size() && uv_bits > 0)
-		encoder.addUvs(loader.uvs.data(), pow(2, -uv_bits));
+	if(loader->uvs.size() && uv_bits > 0)
+		encoder->addUvs(loader->uvs.data(), pow(2, -uv_bits));
 
-	if(loader.radiuses.size())
-		encoder.addAttribute("radius", (char *)loader.radiuses.data(), crt::VertexAttribute::FLOAT, 1, 1.0f);
-	encoder.encode();
+	if(loader->radiuses.size())
+		encoder->addAttribute("radius", (char *)loader->radiuses.data(), crt::VertexAttribute::FLOAT, 1, 1.0f);
+	encoder->encode();
 
 
 	cout << "Encoding time: " << timer.elapsed() << "ms" << endl;
 
 	//encoder might actually change these number (unreferenced vertices, degenerate faces, duplicated coords in point clouds)
-	uint32_t nvert = encoder.nvert;
-	uint32_t nface = encoder.nface;
+	uint32_t nvert = encoder->nvert;
+	uint32_t nface = encoder->nface;
 
 	cout << "Nvert: " << nvert << " Nface: " << nface << endl;
-	cout << "Compressed to: " << encoder.stream.size() << endl;
-	cout << "Ratio: " << 100.0f*encoder.stream.size()/(nvert*12 + nface*12) << "%" << endl;
-	cout << "Bpv: " << 8.0f*encoder.stream.size()/nvert << endl << endl;
+	cout << "Compressed to: " << encoder->stream.size() << endl;
+	cout << "Ratio: " << 100.0f*encoder->stream.size()/(nvert*12 + nface*12) << "%" << endl;
+	cout << "Bpv: " << 8.0f*encoder->stream.size()/nvert << endl << endl;
 
-	cout << "Header: " << encoder.header_size << " bpv: " << (float)encoder.header_size/nvert << endl;
+	cout << "Header: " << encoder->header_size << " bpv: " << (float)encoder->header_size/nvert << endl;
 
-	crt::VertexAttribute *coord = encoder.data["position"];
+	crt::VertexAttribute *coord = encoder->data["position"];
 	cout << "Coord bpv; " << 8.0f*coord->size/nvert << endl;
 	cout << "Coord q: " << coord->q << " bits: " << coord->bits << endl << endl;
 
-	crt::VertexAttribute *norm = encoder.data["normal"];
+	crt::VertexAttribute *norm = encoder->data["normal"];
 	if(norm) {
 		cout << "Normal bpv; " << 8.0f*norm->size/nvert << endl;
 		cout << "Normal q: " << norm->q << " bits: " << norm->bits << endl << endl;
 	}
 
-	crt::ColorAttr *color = dynamic_cast<crt::ColorAttr *>(encoder.data["color"]);
+	crt::ColorAttr *color = dynamic_cast<crt::ColorAttr *>(encoder->data["color"]);
 	if(color) {
 		cout << "Color bpv; " << 8.0f*color->size/nvert << endl;
 		cout << "Color q: " << color->qc[0] << " " << color->qc[1] << " " << color->qc[2] << " " << color->qc[3] << endl;
 	}
 
-	crt::GenericAttr<int> *uv = dynamic_cast<crt::GenericAttr<int> *>(encoder.data["uv"]);
+	crt::GenericAttr<int> *uv = dynamic_cast<crt::GenericAttr<int> *>(encoder->data["uv"]);
 	if(uv) {
 		cout << "Uv bpv; " << 8.0f*uv->size/nvert << endl;
 		cout << "Uv q: " << uv->q << " bits: " << uv->bits << endl << endl;
 	}
 
 
-	crt::GenericAttr<int> *radius = dynamic_cast<crt::GenericAttr<int> *>(encoder.data["radius"]);
+	crt::GenericAttr<int> *radius = dynamic_cast<crt::GenericAttr<int> *>(encoder->data["radius"]);
 	if(radius) {
 		cout << "Radius  bpv; " << 8.0f*radius->size/nvert << endl;
 		cout << "Radius q: " << radius->q << " bits: " << radius->bits << endl << endl;
 	}
 
-	cout << "Face bpv; " << 8.0f*encoder.index.size/nvert << endl;
+	cout << "Face bpv; " << 8.0f*encoder->index.size/nvert << endl;
 
 
 
 	timer.start();
 
-	crt::Decoder decoder(encoder.stream.size(), encoder.stream.data());
-	assert(decoder.nface == nface);
-	assert(decoder.nvert = nvert);
+	auto decoder = std::make_shared<crt::Decoder>(encoder->stream.size(), encoder->stream.data());
+	assert(decoder->nface == nface);
+	assert(decoder->nvert == nvert);
 
-	crt::MeshLoader out;
-	out.nvert = encoder.nvert;
-	out.nface = encoder.nface;
-	out.coords.resize(nvert*3);
-	decoder.setPositions(out.coords.data());
-	if(decoder.data.count("normal")) {
-		out.norms.resize(nvert*3);
-		decoder.setNormals(out.norms.data());
+    auto out = std::make_shared<crt::MeshLoader>();
+	out->nvert = encoder->nvert;
+	out->nface = encoder->nface;
+	out->coords.resize(nvert*3);
+	decoder->setPositions(out->coords.data());
+	if(decoder->data.count("normal")) {
+		out->norms.resize(nvert*3);
+		decoder->setNormals(out->norms.data());
 	}
-	if(decoder.data.count("color")) {
-		out.colors.resize(nvert*loader.nColorsComponents);
-		out.nColorsComponents = loader.nColorsComponents;
-		decoder.setColors(out.colors.data(), loader.nColorsComponents);
+	if(decoder->data.count("color")) {
+		out->colors.resize(nvert*loader->nColorsComponents);
+		out->nColorsComponents = loader->nColorsComponents;
+		decoder->setColors(out->colors.data(), loader->nColorsComponents);
 	}
-	if(decoder.data.count("uv")) {
-		out.uvs.resize(nvert*2);
-		decoder.setUvs(out.uvs.data());
+	if(decoder->data.count("uv")) {
+		out->uvs.resize(nvert*2);
+		decoder->setUvs(out->uvs.data());
 	}
-	if(decoder.data.count("radius")) {
-		out.radiuses.resize(nvert);
-		decoder.setAttribute("radius", (char *)out.radiuses.data(), crt::VertexAttribute::FLOAT);
+	if(decoder->data.count("radius")) {
+		out->radiuses.resize(nvert);
+		decoder->setAttribute("radius", (char *)out->radiuses.data(), crt::VertexAttribute::FLOAT);
 	}
-	if(decoder.nface) {
-		out.index.resize(nface*3);
-		decoder.setIndex(out.index.data());
+	if(decoder->nface) {
+		out->index.resize(nface*3);
+		decoder->setIndex(out->index.data());
 	}
-	decoder.decode();
+	decoder->decode();
 
 	int delta = timer.elapsed();
 	if(nface) {
@@ -318,15 +319,21 @@ int main(int argc, char *argv[]) {
 		cerr << "Couldl not open file: " << output << endl;
 		return 1;
 	}
-	size_t count = encoder.stream.size();
-	size_t written = fwrite ( encoder.stream.data(), 1, count, file);
+	size_t count = encoder->stream.size();
+	size_t written = fwrite ( encoder->stream.data(), 1, count, file);
 	if(written != count) {
 		cerr << "Failed saving file: " << "test.crt" << endl;
 		return 1;
 	}
 	std::vector<std::string> comments;
 	if(!plyfile.empty())
-		out.savePly(plyfile, comments);
+		out->savePly(plyfile, comments);
+
+    // destroy objects in reverse order of dependency
+    decoder.reset();
+    out.reset();
+    encoder.reset();
+    loader.reset();
 
 	return 0;
 }

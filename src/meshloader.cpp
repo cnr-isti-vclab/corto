@@ -55,15 +55,25 @@ bool MeshLoader::loadPly(const std::string &filename) {
 	ply.request_properties_from_element("vertex", { "nx", "ny", "nz" }, norms);
 	ply.request_properties_from_element("vertex", { "red", "green", "blue", "alpha" }, colors);
 	ply.request_properties_from_element("vertex", { "texture_u", "texture_v" }, uvs);
+    if(uvs.empty()) { //Blender exports UVs as s and t
+        ply.request_properties_from_element("vertex", { "s", "t" }, uvs);
+    }
+    if(uvs.empty()) { //BStill no uvs? try u and v
+        ply.request_properties_from_element("vertex", { "u", "v" }, uvs);
+    }
 	ply.request_properties_from_element("vertex", { "radius" }, radiuses);
 
-	ply.request_properties_from_element("face", { "vertex_indices" }, index, 3);
+	ply.request_properties_from_element("face", { "vertex_indices" }, index, 6);
 	ply.request_properties_from_element("face", { "texcoord" }, wedge_uvs, 6);
 	ply.request_properties_from_element("face", { "texnumber" }, tex_number, 1);
 
 	ply.read(ss);
 
-	nface = index.size()/3;
+	auto indexCursor = ply.findUserDataTable("face", "vertex_indices");
+	nface = indexCursor
+		? indexCursor->items / 3
+		: index.size() / 3;
+	
 	nvert = coords.size()/3;
 	if(colors.size())
 		nColorsComponents = colors.size()/nvert;

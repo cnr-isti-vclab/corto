@@ -5,6 +5,7 @@
 // https://github.com/ddiakopoulos/tinyply
 
 #include "tinyply.h"
+#include <assert.h>
 
 using namespace tinyply;
 using namespace std;
@@ -107,6 +108,23 @@ void PlyFile::read_header_property(std::istream & is)
     get_elements().back().properties.emplace_back(is);
 }
 
+size_t PlyFile::prperty_size(PlyProperty::Type t) const {
+    size_t size = 0;
+    switch (t)
+    {
+    case PlyProperty::Type::INT8:       size = sizeof(int8_t);   break;
+    case PlyProperty::Type::UINT8:      size = sizeof(uint8_t);  break;
+    case PlyProperty::Type::INT16:      size = sizeof(int16_t);  break;
+    case PlyProperty::Type::UINT16:     size = sizeof(uint16_t); break;
+    case PlyProperty::Type::INT32:      size = sizeof(int32_t);  break;
+    case PlyProperty::Type::UINT32:     size = sizeof(uint32_t); break;
+    case PlyProperty::Type::FLOAT32:    size = sizeof(float);    break;
+    case PlyProperty::Type::FLOAT64:    size = sizeof(double);   break;
+    case PlyProperty::Type::INVALID:    throw std::invalid_argument("invalid ply property");
+    }
+    return size;
+}
+
 size_t PlyFile::skip_property_binary(const PlyProperty & property, std::istream & is)
 {
     static std::vector<char> skip(PropertyTable[property.propertyType].stride);
@@ -124,6 +142,7 @@ size_t PlyFile::skip_property_binary(const PlyProperty & property, std::istream 
         return 0;
     }
 }
+
 
 void PlyFile::skip_property_ascii(const PlyProperty & property, std::istream & is)
 {
@@ -320,12 +339,14 @@ void PlyFile::read_internal(std::istream & is)
     
     for (auto & element : get_elements())
     {
+        bool is_face_element = element.name == "face";
         if (std::find(requestedElements.begin(), requestedElements.end(), element.name) != requestedElements.end())
         {
             for (size_t count = 0; count < element.size; ++count)
             {
                 for (auto & property : element.properties)
                 {
+                    size_t prop_size = prperty_size(property.propertyType);
                     if (auto & cursor = userDataTable[make_key(element.name, property.name)])
                     {
                         if (property.isList)
@@ -333,19 +354,42 @@ void PlyFile::read_internal(std::istream & is)
 							size_t listSize = 0;
 							size_t dummyCount = 0;
                             read(property.listType, &listSize, dummyCount, is);
+                            bool tessellate_quad = is_face_element && listSize == 4;
                             if (cursor->realloc == false)
                             {
                                 cursor->realloc = true;
                                 resize_vector(property.propertyType, cursor->vector, listSize * element.size, cursor->data);
                             }
-                            for (size_t i = 0; i < listSize; ++i)
+                            if (tessellate_quad)
                             {
+                                assert(cursor->offset + prop_size * 6 <= cursor->size * prop_size);
+                                size_t start_offset = cursor->offset;
+                                for (size_t i = 0; i < 3; ++i)
+                                {
+                                    read(property.propertyType, (cursor->data + cursor->offset), cursor->offset, is);
+                                }
+                                memcpy(cursor->data + cursor->offset, cursor->data + start_offset, prop_size);
+                                cursor->offset += prop_size;
+                                memcpy(cursor->data + cursor->offset, cursor->data + start_offset + prop_size * 2, prop_size);
+                                cursor->offset += prop_size;
                                 read(property.propertyType, (cursor->data + cursor->offset), cursor->offset, is);
+                                cursor->items += 6;
+                            }
+                            else
+                            {
+                                assert(cursor->offset + prop_size * listSize <= cursor->size * prop_size);
+                                for (size_t i = 0; i < listSize; ++i)
+                                {
+                                    read(property.propertyType, (cursor->data + cursor->offset), cursor->offset, is);
+                                }
+                                cursor->items += listSize;
                             }
                         }
                         else
                         {
+                            assert(cursor->offset + prop_size <= cursor->size * prop_size);
                             read(property.propertyType, (cursor->data + cursor->offset), cursor->offset, is);
+                            cursor->items++;
                         }
                     }
                     else

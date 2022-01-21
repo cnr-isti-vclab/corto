@@ -48,6 +48,8 @@ namespace tinyply
 		uint8_t * data;
 		size_t offset;
 		bool realloc = false;
+		size_t size = 0;
+		size_t items = 0;
 	};
 
 	class PlyProperty
@@ -302,6 +304,8 @@ namespace tinyply
 			cursor->offset = 0;
 			cursor->vector = &source;
 			cursor->data = reinterpret_cast<uint8_t *>(source.data());
+			cursor->size = totalInstanceSize;
+			cursor->items = 0;
 
 			if (listCount > 1)
 			{
@@ -345,7 +349,14 @@ namespace tinyply
 			}
 		}
 
+		const DataCursor* findUserDataTable(const std::string &elem, const std::string &prop) const {
+			auto it = userDataTable.find(make_key(elem, prop));
+			return it != userDataTable.end() ? it->second.get() : nullptr;
+		}
+
 	private:
+
+		size_t prperty_size(PlyProperty::Type t) const;
 
 		size_t skip_property_binary(const PlyProperty & property, std::istream & is);
 		void skip_property_ascii(const PlyProperty & property, std::istream & is);

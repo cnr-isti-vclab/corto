@@ -63,13 +63,17 @@ bool MeshLoader::loadPly(const std::string &filename) {
     }
 	ply.request_properties_from_element("vertex", { "radius" }, radiuses);
 
-	ply.request_properties_from_element("face", { "vertex_indices" }, index, 3);
+	ply.request_properties_from_element("face", { "vertex_indices" }, index, 6);
 	ply.request_properties_from_element("face", { "texcoord" }, wedge_uvs, 6);
 	ply.request_properties_from_element("face", { "texnumber" }, tex_number, 1);
 
 	ply.read(ss);
 
-	nface = index.size()/3;
+	auto indexCursor = ply.findUserDataTable("face", "vertex_indices");
+	nface = indexCursor
+		? indexCursor->items / 3
+		: index.size() / 3;
+	
 	nvert = coords.size()/3;
 	if(colors.size())
 		nColorsComponents = colors.size()/nvert;

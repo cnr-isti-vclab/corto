@@ -322,12 +322,15 @@ void PlyFile::read_internal(std::istream & is)
     {
         if (std::find(requestedElements.begin(), requestedElements.end(), element.name) != requestedElements.end())
         {
+			//extra indices get triangulated TODO check if it is actually vertex_index
+			int extra_indices = 0;
             for (size_t count = 0; count < element.size; ++count)
             {
                 for (auto & property : element.properties)
                 {
                     if (auto & cursor = userDataTable[make_key(element.name, property.name)])
                     {
+						//if property is vertex_index, just
                         if (property.isList)
                         {
 							size_t listSize = 0;
@@ -338,10 +341,28 @@ void PlyFile::read_internal(std::istream & is)
                                 cursor->realloc = true;
                                 resize_vector(property.propertyType, cursor->vector, listSize * element.size, cursor->data);
                             }
-                            for (size_t i = 0; i < listSize; ++i)
+							//save initial offset;
+							auto pivot_offset = cursor->offset;
+							for (size_t i = 0; i < 3; ++i)
                             {
                                 read(property.propertyType, (cursor->data + cursor->offset), cursor->offset, is);
                             }
+							//support for quad meshes by triangulation.
+							if(listSize > 3) {
+								extra_indices += (listSize-2)*3;
+								resize_vector(property.propertyType, cursor->vector, 3 * (element.size + extra_indices), cursor->data);
+								int stride = PropertyTable[property.propertyType].stride;
+								size_t last_offset = cursor->offset - stride;
+
+								for(size_t i = 3; i < listSize; i++) {
+									memcpy(cursor->data + cursor->offset, cursor->data + pivot_offset, stride);
+									memcpy(cursor->data + cursor->offset + stride, cursor->data + last_offset, stride);
+									cursor->offset += 2*stride;
+									last_offset = cursor->offset;
+									read(property.propertyType, (cursor->data + cursor->offset), cursor->offset, is);
+								}
+							}
+
                         }
                         else
                         {

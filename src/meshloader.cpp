@@ -55,9 +55,16 @@ bool MeshLoader::loadPly(const std::string &filename) {
 	ply.request_properties_from_element("vertex", { "nx", "ny", "nz" }, norms);
 	ply.request_properties_from_element("vertex", { "red", "green", "blue", "alpha" }, colors);
 	ply.request_properties_from_element("vertex", { "texture_u", "texture_v" }, uvs);
+	if(uvs.empty())
+		ply.request_properties_from_element("vertex", { "s", "t" }, uvs);
+	if(uvs.empty())
+	ply.request_properties_from_element("vertex", { "u", "v" }, uvs);
+
 	ply.request_properties_from_element("vertex", { "radius" }, radiuses);
 
-	ply.request_properties_from_element("face", { "vertex_indices" }, index, 3);
+	ply.request_properties_from_element("face", { "vertex_index" }, index, 3);
+	if(index.empty())
+		ply.request_properties_from_element("face", { "vertex_indices" }, index, 3);
 	ply.request_properties_from_element("face", { "texcoord" }, wedge_uvs, 6);
 	ply.request_properties_from_element("face", { "texnumber" }, tex_number, 1);
 

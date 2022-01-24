@@ -349,8 +349,8 @@ void PlyFile::read_internal(std::istream & is)
                             }
 							//support for quad meshes by triangulation.
 							if(listSize > 3) {
-								extra_indices += (listSize-2)*3;
-								resize_vector(property.propertyType, cursor->vector, 3 * (element.size + extra_indices), cursor->data);
+								extra_indices += (listSize-3)*3;
+								resize_vector(property.propertyType, cursor->vector, 3 * element.size + extra_indices, cursor->data);
 								int stride = PropertyTable[property.propertyType].stride;
 								size_t last_offset = cursor->offset - stride;
 

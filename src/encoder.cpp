@@ -259,7 +259,8 @@ void Encoder::encodePointCloud() {
 	}
 	sort(zpoints.rbegin(), zpoints.rend());//, greater<ZPoint>());
 
-	int count = 0;
+	//remove duplicated points.
+	/*int count = 0;
 	for(unsigned int i = 1; i < nvert; i++) {
 		if(zpoints[i] == zpoints[count])
 			continue;
@@ -267,7 +268,7 @@ void Encoder::encodePointCloud() {
 		zpoints[count] = zpoints[i];
 	}
 	count++;
-	nvert = count;
+	nvert = count; */
 	zpoints.resize(nvert);
 
 	header_size = stream.elapsed();

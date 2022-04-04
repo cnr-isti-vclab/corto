@@ -97,7 +97,7 @@ INSTALL(FILES
 
 if (BUILD_CORTO_CODEC_UNITY)
 	ADD_LIBRARY(cortocodec_unity SHARED ${LIB_SOURCES} ${LIB_HEADERS})
-	target_include_directories(cortocodec_unity PUBLIC ${CORTO_SOURCE_PATH})
+	target_include_directories(cortocodec_unity PUBLIC ${CORTO_HEADER_PATH})
 	if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 		# G++
 		target_compile_options(cortocodec_unity PRIVATE -Wall -Wextra)
@@ -116,7 +116,7 @@ if (BUILD_CORTO_EXE)
 			set_xcode_property(cortoexe IPHONEOS_DEPLOYMENT_TARGET "9.2")
 		endif()
 	endif()
-	target_include_directories(cortoexe PUBLIC ${CORTO_SOURCE_PATH})
+	target_include_directories(cortoexe PUBLIC ${CORTO_HEADER_PATH})
 	target_link_libraries(cortoexe PUBLIC corto)
 
 	target_compile_options    (cortoexe PUBLIC ${CORTOEXE_CFLAGS})

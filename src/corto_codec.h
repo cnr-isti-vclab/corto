@@ -14,33 +14,42 @@
 
 namespace crt
 {
-    extern "C"
-    {
-        struct Color
-        {
-            float r;
-            float g;
-            float b;
-            float a;
-        };
+	extern "C"
+	{
+		struct Color
+		{
+			float r;
+			float g;
+			float b;
+			float a;
+		};
 
-        struct Vector2
-        {
-            float x;
-            float y;
-        };
+		struct Vector2
+		{
+			float x;
+			float y;
+		};
 
-        struct Vector3
-        {
-            float x;
-            float y;
-            float z;
-        };
+		struct Vector3
+		{
+			float x;
+			float y;
+			float z;
+		};
 
-        // TODO : Use .json instead of Vector2*
-        Decoder EXPORT_API *CreateDecoder(int length, unsigned char* data, Vector2* decoderInfo);
-        void EXPORT_API DestroyDecoder(Decoder* decoder);
-        int EXPORT_API DecodeMesh(Decoder* decoder, Vector3* vertices, int* indices, Vector3* normals, Color* colors, Vector2* texcoord);
-    }
+		// TODO : Use .json instead of Vector2*
+		Decoder EXPORT_API *CreateDecoder(int length, unsigned char* data, Vector2* decoderInfo);
+		void EXPORT_API DestroyDecoder(Decoder* decoder);
+		int EXPORT_API DecodeMesh(Decoder* decoder, Vector3* vertices, int* indices, Vector3* normals, Color* colors, Vector2* texcoord);
+
+		int GroupsSize(Decoder *decoder);
+		Group *GetGroup(Decoder *decoder, int i);
+		int GroupEnd(Group *group);
+		int GroupPropertiesSize(Group *group);
+		void GetGroupProperty(Group *group, int i, char *key, char *value);
+		int GetMTLSize(Decoder *decoder);
+		void GetMTL(Decoder *decoder, char *mtl);
+
+	}
 }
 #endif // !CORTO_UNITY_PLUGIN_H

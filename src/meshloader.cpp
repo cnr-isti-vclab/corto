@@ -40,7 +40,7 @@ bool MeshLoader::load(const std::string &filename, const string &group) {
 	if(endsWith(filename, ".ply") || endsWith(filename, ".PLY"))
 		return loadPly(filename);
 	if(endsWith(filename, ".obj") || endsWith(filename, ".OBJ"))
-		return loadObj(filename, group);
+		return loadObj(filename, group, true);
 	return false;
 }
 
@@ -129,12 +129,27 @@ bool MeshLoader::loadPly(const std::string &filename) {
 	return true;
 }
 
-bool MeshLoader::loadObj(const std::string &filename, const std::string &groupname) {
+bool MeshLoader::loadObj(const std::string &filename, const std::string &groupname, bool savemtl) {
 
 	obj::IndexedModel m = obj::loadModelFromFile(filename);
 
 	for(auto &mat: m.mtllibs)
 		exif["mtllib"] = mat;
+	if(savemtl && exif.count("mtllib")) {
+		FILE *fp = fopen(exif["mtllib"].c_str(), "rb");
+		if(fp) {
+			fseek(fp, 0, SEEK_END);
+			long fsize = ftell(fp);
+			fseek(fp, 0, SEEK_SET);
+
+			char *buffer = new char[fsize+1];
+			fread(buffer, fsize, 1, fp);
+			fclose(fp);
+			buffer[fsize] = 0;
+			exif["mtl"] = string(buffer);
+			delete []buffer;
+		}
+	}
 	swap(m.vertex, coords);
 	swap(m.texCoord, uvs);
 	swap(m.normal, norms);
@@ -170,7 +185,7 @@ bool MeshLoader::loadObj(const std::string &filename, const std::string &groupna
 		int facecount = 0;
 		int vertcount = 0;
 		vector<float> newcoords(coords.size());
-		for(int i = start; i < g.end; i++) {
+		for(size_t i = start; i < g.end; i++) {
 			for(int k = 0; k < 3; k++) {
 				int v = index[i*3+k];
 				if(reorder[v] == -1) {

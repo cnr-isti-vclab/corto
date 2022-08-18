@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
 
 	crt::Decoder decoder(encoder.stream.size(), encoder.stream.data());
 	assert(decoder.nface == nface);
-	assert(decoder.nvert = nvert);
+	assert(decoder.nvert == nvert);
 
 	crt::MeshLoader out;
 	out.nvert = encoder.nvert;

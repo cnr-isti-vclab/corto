@@ -109,18 +109,17 @@ void PlyFile::read_header_property(std::istream & is)
 
 size_t PlyFile::skip_property_binary(const PlyProperty & property, std::istream & is)
 {
-    static std::vector<char> skip(PropertyTable[property.propertyType].stride);
     if (property.isList)
     {
 		size_t listSize = 0;
 		size_t dummyCount = 0;
         read_property_binary(property.listType, &listSize, dummyCount, is);
-        for (size_t i = 0; i < listSize; ++i) is.read(skip.data(), PropertyTable[property.propertyType].stride);
+		for (size_t i = 0; i < listSize; ++i) is.ignore(PropertyTable[property.propertyType].stride);
         return listSize;
     }
     else
     {
-        is.read(skip.data(), PropertyTable[property.propertyType].stride);
+		is.ignore(PropertyTable[property.propertyType].stride);
         return 0;
     }
 }

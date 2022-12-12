@@ -32,7 +32,7 @@ The C++ code is released under GPL licence, the Javascript code under MIT licenc
 Decompression timing and size for a few models tested on a midlevel notebook. (Intel® Core™ i7-8550U CPU @ 1.80GHz × 8 ).
 Things changed from the last time I made some timings: emscripten (and draco) improved a lot, corto is now available in emscritpem too.
 
-Corto library has a compression level settings from 1 (lower compression, faster) to 10 (higher compression, slower decompression) with 7 being the default.
+Draco library has a compression level settings from 1 (lower compression, faster) to 10 (higher compression, slower decompression) with 7 being the default.
 
 Bunny mesh 34K vertices (14 bits precision) courtesy of [Stanford](http://graphics.stanford.edu/data/3Dscanrep/)
 

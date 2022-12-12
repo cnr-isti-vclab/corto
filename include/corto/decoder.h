@@ -11,7 +11,7 @@ the Free Software Foundation; either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received
 a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
@@ -51,12 +51,13 @@ public:
 	bool setPositions(float *buffer) { return setAttribute("position", (char *)buffer, VertexAttribute::FLOAT); }
 	bool setNormals(float *buffer)   { return setAttribute("normal", (char *)buffer, VertexAttribute::FLOAT); }
 	bool setNormals(int16_t *buffer) { return setAttribute("normal", (char *)buffer, VertexAttribute::INT16); }
-	bool setUvs(float *buffer)       { return setAttribute("uv", (char *)buffer, VertexAttribute::FLOAT); }	
-	bool setColors(uchar *buffer, int components = 4); 
-	
+	bool setUvs(float *buffer)       { return setAttribute("uv", (char *)buffer, VertexAttribute::FLOAT); }
+	bool setColors(uchar *buffer, int components = 4);
 	bool setAttribute(const char *name, char *buffer, VertexAttribute::Format format);
 	bool setAttribute(const char *name, char *buffer, VertexAttribute *attr);
-
+#ifdef FB_CORTO_CHANGES
+	bool setAttribute(const char* name, uint32_t frameWidth, uint32_t frameHeight);
+#endif
 	void setIndex(uint32_t *buffer) { index.faces32 = buffer; }
 	void setIndex(uint16_t *buffer) { index.faces16 = buffer; }
 

@@ -11,7 +11,7 @@ the Free Software Foundation; either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received
 a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
@@ -109,7 +109,17 @@ bool Decoder::setAttribute(const char *name, char *buffer, VertexAttribute *attr
 	return true;
 }
 
-bool Decoder::setColors(uchar *buffer, int components) { 
+#ifdef FB_CORTO_CHANGES
+bool Decoder::setAttribute(const char* name, uint32_t frameWidth, uint32_t frameHeight) {
+	if (data.find(name) == data.end()) return false;
+	VertexAttribute* attr = data[name];
+	attr->frameWidth = frameWidth;
+	attr->frameHeight = frameHeight;
+	return true;
+}
+#endif
+
+bool Decoder::setColors(uchar *buffer, int components) {
 	if(data.find("color") == data.end()) return false;
 	ColorAttr *attr = dynamic_cast<crt::ColorAttr *>(data["color"]);
 	attr->format = VertexAttribute::UINT8;
@@ -294,7 +304,7 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 				opposite = vertex_count++;
 			}
 			assert(opposite < nvert);
-			
+
 			front[e.prev].next = new_edge;
 			front[e.next].prev = new_edge + 1;
 

@@ -11,7 +11,7 @@ the Free Software Foundation; either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received
 a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
@@ -70,7 +70,13 @@ public:
 	bool addAttribute(const char *name, const char *buffer, VertexAttribute::Format format, int components, float q, uint32_t strategy = 0);
 	//its your job to fill attr variables appropriately (type and number of components in particular.
 	bool addAttribute(const char *name, char *buffer, VertexAttribute *attr);
-
+#ifdef FB_CORTO_CHANGES
+	void setZstdCompressionLevel(int compressionLevel);
+	bool setStrategyAttribute(
+            const char* name,
+            VertexAttribute::Strategy strategy);
+	void setOptimizationMode(bool optimizeForSpeed); 
+#endif
 	void addGroup(int end_triangle) { index.groups.push_back(Group(end_triangle)); }
 	void addGroup(int end_triangle, std::map<std::string, std::string> &props) {
 		Group g(end_triangle);
@@ -83,7 +89,9 @@ public:
 private:
 	uint32_t current_vertex;
 	uint32_t last_index; //moved here so that it works across groups
-
+#ifdef FB_CORTO_CHANGES
+	bool optimizeForSpeed;
+#endif
 
 	std::vector<bool> boundary;
 	std::vector<int> encoded;    //encoded vertex number
@@ -93,6 +101,9 @@ private:
 
 	void encodeMesh();
 	void encodeFaces(int start, int end);
+#ifdef FB_CORTO_CHANGES
+	void encodeFacesOpt(int start, int end);
+#endif
 };
 
 } //namespace

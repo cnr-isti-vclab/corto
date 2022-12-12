@@ -55,6 +55,12 @@ endif()
 
 ADD_LIBRARY(corto STATIC ${LIB_SOURCES} ${LIB_HEADERS})
 
+# TEMPORARY ZSTD INTEGRATION
+link_directories("C:/Program Files/vcpkg/packages/zstd_x86-windows/lib")
+target_link_libraries(corto PRIVATE zstd)
+target_include_directories(corto PRIVATE "C:/Program Files/vcpkg/packages/zstd_x86-windows/include")
+
+
 SET(CORTOLIB_CFLAGS ${CORTO_CFLAGS})
 
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")

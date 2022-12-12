@@ -89,6 +89,8 @@ int main(int argc, char *argv[]) {
 	string normal_prediction;
 	std::map<std::string, std::string> exif;
 
+#if 0
+	// Parse args
 	int c;
 	while((c = getopt(argc, argv, "pAo:v:n:c:u:q:N:e:P:G:")) != -1) {
 		switch(c) {
@@ -144,10 +146,16 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	input = argv[optind];
+#endif
+
+	input = "cortomodels/models/avatar.obj";
+	output = "cortomodels/compressed/avatar.crt";
+	plyfile = "cortomodels/decompressed/avatar.ply";
 
 	//options for obj: join by material (discard group info).
 	//exif pairs: -exif key=value //write and override what would put inside (mtllib for example).
 
+	// Load mesh
 	crt::MeshLoader loader;
 	loader.add_normals = add_normals;
 	bool ok = loader.load(input, group);
@@ -176,6 +184,7 @@ int main(int argc, char *argv[]) {
 
 	crt::Timer timer;
 
+	// Encode
 	crt::Encoder encoder(loader.nvert, loader.nface, crt::Stream::TUNSTALL);
 
 	encoder.exif = loader.exif;
@@ -216,9 +225,9 @@ int main(int argc, char *argv[]) {
 		encoder.addAttribute("radius", (char *)loader.radiuses.data(), crt::VertexAttribute::FLOAT, 1, 1.0f);
 	encoder.encode();
 
-
 	cout << "Encoding time: " << timer.elapsed() << "ms" << endl;
 
+	// Print out compression details
 	//encoder might actually change these number (unreferenced vertices, degenerate faces, duplicated coords in point clouds)
 	uint32_t nvert = encoder.nvert;
 	uint32_t nface = encoder.nface;
@@ -261,10 +270,9 @@ int main(int argc, char *argv[]) {
 
 	cout << "Face bpv; " << 8.0f*encoder.index.size/nvert << endl;
 
-
-
 	timer.start();
 
+	// Decode
 	crt::Decoder decoder(encoder.stream.size(), encoder.stream.data());
 	assert(decoder.nface == nface);
 	assert(decoder.nvert = nvert);
@@ -315,7 +323,7 @@ int main(int argc, char *argv[]) {
 
 	FILE *file = fopen(output.c_str(), "wb");
 	if(!file) {
-		cerr << "Couldl not open file: " << output << endl;
+		cerr << "Could not open file: " << output << endl;
 		return 1;
 	}
 	size_t count = encoder.stream.size();

@@ -89,6 +89,7 @@ int main(int argc, char *argv[]) {
 	string normal_prediction;
 	std::map<std::string, std::string> exif;
 
+
 #if 0
 	// Parse args
 	int c;

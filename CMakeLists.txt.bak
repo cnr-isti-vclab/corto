@@ -44,7 +44,7 @@ SET(EXE_HEADERS
 	${CORTO_SOURCE_PATH}/tinyply.h
 	${CORTO_SOURCE_PATH}/objload.h)
 
-SET(CORTO_DEFINITIONS "")
+SET(CORTO_DEFINITIONS "FB_CORTO_CHANGES")
 
 if(MSVC)
 	SET(CORTO_CFLAGS /nologo /W3)
@@ -54,11 +54,11 @@ else()
 endif()
 
 ADD_LIBRARY(corto STATIC ${LIB_SOURCES} ${LIB_HEADERS})
-# TEMPORARY ZSTD INTEGRATION
-link_directories("C:/Program Files/vcpkg/packages/zstd_x86-windows/lib")
-target_link_libraries(corto PRIVATE zstd)
-target_include_directories(corto PRIVATE "C:/Program Files/vcpkg/packages/zstd_x86-windows/include")
 
+# TEMPORARY ZSTD INTEGRATION
+add_subdirectory(zstd-dev/build/cmake)
+target_link_libraries(corto PUBLIC libzstd_static)
+target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include/")
 
 SET(CORTOLIB_CFLAGS ${CORTO_CFLAGS})
 
@@ -115,12 +115,17 @@ if (BUILD_CORTO_CODEC_UNITY)
 endif()
 if (BUILD_CORTO_EXE)
 	ADD_EXECUTABLE(cortoexe ${EXE_SOURCE} ${EXE_HEADERS})
+	
 	SET(CORTOEXE_CFLAGS ${CORTO_CFLAGS})
 	if(APPLE)
 		if(IOS)
 			set_xcode_property(cortoexe IPHONEOS_DEPLOYMENT_TARGET "9.2")
 		endif()
 	endif()
+	# TMP ZSTD
+	target_link_libraries(cortoexe PUBLIC libzstd_static)
+	target_include_directories(cortoexe PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include/")
+
 	target_include_directories(cortoexe PUBLIC ${CORTO_HEADER_PATH})
 	target_link_libraries(cortoexe PUBLIC corto)
 

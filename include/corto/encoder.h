@@ -48,6 +48,7 @@ public:
 	OutStream stream;
 
 	Encoder(uint32_t _nvert, uint32_t _nface = 0, Stream::Entropy entropy = Stream::TUNSTALL);
+	Encoder() = default;
 	~Encoder();
 
 

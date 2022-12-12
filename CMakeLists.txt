@@ -24,7 +24,8 @@ SET(LIB_HEADERS
 	${CORTO_HEADER_PATH}/tunstall.h
 	${CORTO_HEADER_PATH}/vertex_attribute.h
 	${CORTO_HEADER_PATH}/zpoint.h
-	${CORTO_SOURCE_PATH}/corto_codec.h)
+	${CORTO_SOURCE_PATH}/corto_codec.h
+	${CORTO_SOURCE_PATH}/tinydir.h)
 
 SET(LIB_SOURCES
 	${CORTO_SOURCE_PATH}/bitstream.cpp
@@ -55,6 +56,7 @@ else()
 endif()
 
 ADD_LIBRARY(corto STATIC ${LIB_SOURCES} ${LIB_HEADERS})
+target_compile_definitions(corto PUBLIC ${CORTO_DEFINITIONS})
 
 # TEMPORARY ZSTD INTEGRATION
 add_subdirectory(zstd-dev/build/cmake)
@@ -113,6 +115,7 @@ if (BUILD_CORTO_CODEC_UNITY)
 endif()
 if (BUILD_CORTO_EXE)
 	ADD_EXECUTABLE(cortoexe ${EXE_SOURCE} ${EXE_HEADERS})
+	target_include_directories(cortoexe PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include/")
 	target_include_directories(cortoexe PUBLIC ${CORTO_HEADER_PATH})
 	target_link_libraries(cortoexe PUBLIC corto)
 	set_target_properties(cortoexe PROPERTIES OUTPUT_NAME "corto")

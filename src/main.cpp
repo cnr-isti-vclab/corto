@@ -46,7 +46,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <unordered_map>
 #include <sstream>
 
-#define ENABLE_CONSOLE_LOG	0
+#define ENABLE_CONSOLE_LOG	1
 
 using namespace crt;
 using namespace std;
@@ -338,16 +338,16 @@ int main(int argc, char *argv[]) {
 	bool accelerateCompression[2] = { false, true };
 	bool hasCompressionLevels[2] = { false, true };
 	std::vector<std::string> modelPaths = GetModelPaths("cortomodels/models");
-	crt::Stream::Entropy toCompare[2] = {crt::Stream::TUNSTALL, crt::Stream::ZSTD };
+	crt::Stream::Entropy toCompare[2] = {crt::Stream::LZ4};
 
 	for (uint32_t i=0; i<modelPaths.size(); i+=modelIncrease)
 		modelCSVs[modelPaths[i]] = {};
 
-	for (uint32_t e=0; e<2; e++)
+	for (uint32_t e=0; e<1; e++)
 	{
 		string optString = "";
 		string levelString = "";
-		string entropyString = toCompare[e] == crt::Stream::TUNSTALL ? "Tunstall" : "ZSTD";
+		string entropyString = "LZ4";
 
 		for (bool opt : accelerateCompression)
 		{
@@ -371,10 +371,10 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Entropy method
-	for (uint32_t e = 0; e < 2; e++)
+	for (uint32_t e = 0; e < 1; e++)
 	{
 #if ENABLE_CONSOLE_LOG
-		cout << "TESTING " << (toCompare[e] == crt::Stream::TUNSTALL ? "TUNSTALL" : "ZSTD") << endl;
+		cout << "TESTING " << "LZ4" << endl;
 #endif
 		// Compression acceleration
 		for (uint32_t a = 0; a < 2; a++)

@@ -19,9 +19,9 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "cstream.h"
 
 #include "tunstall.h"
+#include <lz4/lz4.h>
+#include <lz4/lz4hc.h>
 #ifdef ENTROPY_TESTS
-#include "lz4/lz4.h"
-#include "lz4/lz4hc.h"
 #include <zlib.h>
 #endif
 
@@ -53,8 +53,8 @@ int OutStream::compress(uint32_t size, uchar *data) {
 #endif
 #ifdef ENTROPY_TESTS
 	case ZLIB:     return zlib_compress(data, size);
-	case LZ4:     return lz4_compress(data, size);
 #endif
+	case LZ4:     return lz4_compress(data, size);
 	default:
 		throw "Unknown entropy";
 	}
@@ -77,8 +77,8 @@ void InStream::decompress(vector<uchar> &data) {
 #endif
 #ifdef ENTROPY_TESTS
 	case ZLIB:     zlib_decompress(data); break;
-	case LZ4:     lz4_decompress(data); break;
 #endif
+	case LZ4:     lz4_decompress(data); break;
 	default:
 		throw "Unknown entropy";
 	}
@@ -184,6 +184,8 @@ void InStream::zlib_decompress(vector<uchar> &data) {
 	unsigned char *compressed_data = readArray<unsigned char>(compressed_size);
 	uncompress((Bytef *)data.data(), &size, (Bytef *)compressed_data, compressed_size);
 }
+#endif
+
 
 int OutStream::lz4_compress(uchar *data, int size) {
 
@@ -200,12 +202,11 @@ int OutStream::lz4_compress(uchar *data, int size) {
 }
 
 void InStream::lz4_decompress(vector<uchar> &data) {
-	int size = read<int>();
+	int size = readUint32();
 	data.resize(size);
-	int compressed_size = read<int>();
+	int compressed_size = readUint32();
 	if(!size) return;
 
 	uchar *compressed_data = readArray<uchar>(compressed_size);
 	LZ4_decompress_safe((const char *)compressed_data, (char *)data.data(), compressed_size, size);
 }
-#endif

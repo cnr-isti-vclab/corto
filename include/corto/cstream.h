@@ -80,8 +80,9 @@ public:
 
 #ifdef ENTROPY_TESTS
 	int  zlib_compress(uchar *data, int size);
-	int  lz4_compress(uchar *data, int size);
 #endif
+
+	int  lz4_compress(uchar *data, int size);
 
 	template<class T> void write(T c) {
 		uchar *pos = grow(sizeof(T));
@@ -242,8 +243,10 @@ public:
 
 #ifdef ENTROPY_TESTS
 	int  zlib_compress(uchar *data, int size);
-	int  lz4_compress(uchar *data, int size);
 #endif
+
+	void lz4_decompress(std::vector<uchar>& data);
+	int  lz4_compress(uchar *data, int size);
 
 	void init(int /*_size*/, const uchar *_buffer) {
 		buffer = _buffer; //I'm not lying, I won't touch it.

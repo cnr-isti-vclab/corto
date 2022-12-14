@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(corto)
 
-option(BUILD_CORTO_CODEC_UNITY "Build the unity codec shared library of corto" ON)
+option(BUILD_CORTO_CODEC_UNITY "Build the unity codec shared library of corto" OFF)
 option(BUILD_CORTO_EXE "Build the command line binary of corto" ON)
 
 SET(CMAKE_CXX_STANDARD 11)
@@ -60,12 +60,13 @@ target_compile_definitions(corto PUBLIC ${CORTO_DEFINITIONS})
 
 # TEMPORARY ZSTD INTEGRATION
 add_subdirectory(zstd-dev/build/cmake)
-target_link_libraries(corto PUBLIC liblz4_static)
-target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/lz4_x86-windows/include")
+target_link_libraries(corto PUBLIC libzstd_shared)
+target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include")
 
 # TEMPORARY LZ4 INTEGRATION
-target_link_libraries(corto PUBLIC libzstd_shared)
-target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include/")
+add_subdirectory(lz4-dev/build/cmake)
+target_link_libraries(corto PUBLIC lz4_shared)
+target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/lz4_x86-windows/include")
 
 SET(CORTOLIB_CFLAGS ${CORTO_CFLAGS})
 
@@ -104,24 +105,11 @@ INSTALL(FILES
 	${CORTO_HEADER_PATH}/zpoint.h
 	DESTINATION include/corto)
 
-if (BUILD_CORTO_CODEC_UNITY)
-	ADD_LIBRARY(cortocodec_unity SHARED ${LIB_SOURCES} ${LIB_HEADERS})
-	target_include_directories(cortocodec_unity PUBLIC ${CORTO_HEADER_PATH})
-	if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-		# G++
-		target_compile_options(cortocodec_unity PRIVATE -Wall -Wextra)
-	elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
-		# MSVC
-		target_compile_options(cortocodec_unity PRIVATE /EHsc /MTd /W2 /c)
-		# Set the DLLEXPORT variable to export symbols
-		target_compile_definitions(cortocodec_unity PRIVATE WIN_EXPORT)
-	endif()
-endif()
 if (BUILD_CORTO_EXE)
 	ADD_EXECUTABLE(cortoexe ${EXE_SOURCE} ${EXE_HEADERS})
-	target_include_directories(cortoexe PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include/")
 	target_include_directories(cortoexe PUBLIC ${CORTO_HEADER_PATH})
 	target_link_libraries(cortoexe PUBLIC corto)
+
 	set_target_properties(cortoexe PROPERTIES OUTPUT_NAME "corto")
 
 	INSTALL(TARGETS cortoexe

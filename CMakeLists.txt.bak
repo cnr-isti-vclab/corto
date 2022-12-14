@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(corto)
 
-option(BUILD_CORTO_CODEC_UNITY "Build the unity codec shared library of corto" ON)
+option(BUILD_CORTO_CODEC_UNITY "Build the unity codec shared library of corto" OFF)
 option(BUILD_CORTO_EXE "Build the command line binary of corto" ON)
 
 SET(CMAKE_CXX_STANDARD 11)
@@ -24,7 +24,8 @@ SET(LIB_HEADERS
 	${CORTO_HEADER_PATH}/tunstall.h
 	${CORTO_HEADER_PATH}/vertex_attribute.h
 	${CORTO_HEADER_PATH}/zpoint.h
-	${CORTO_SOURCE_PATH}/corto_codec.h)
+	${CORTO_SOURCE_PATH}/corto_codec.h
+	${CORTO_SOURCE_PATH}/tinydir.h)
 
 SET(LIB_SOURCES
 	${CORTO_SOURCE_PATH}/bitstream.cpp
@@ -55,12 +56,18 @@ else()
 endif()
 
 ADD_LIBRARY(corto STATIC ${LIB_SOURCES} ${LIB_HEADERS})
-target_compile_options(corto PUBLIC ${CORTO_DEFINITIONS})
+target_compile_definitions(corto PUBLIC ${CORTO_DEFINITIONS})
 
 # TEMPORARY ZSTD INTEGRATION
 add_subdirectory(zstd-dev/build/cmake)
 target_link_libraries(corto PUBLIC libzstd_shared)
-target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include/")
+target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include")
+
+# TEMPORARY LZ4 INTEGRATION
+add_subdirectory(lz4-dev/build/cmake)
+target_link_libraries(corto PUBLIC lz4)
+set(BUILD_SHARED_LIBS ON)
+target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/lz4_x86-windows/include")
 
 SET(CORTOLIB_CFLAGS ${CORTO_CFLAGS})
 
@@ -114,7 +121,6 @@ if (BUILD_CORTO_CODEC_UNITY)
 endif()
 if (BUILD_CORTO_EXE)
 	ADD_EXECUTABLE(cortoexe ${EXE_SOURCE} ${EXE_HEADERS})
-	target_include_directories(cortoexe PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include/")
 	target_include_directories(cortoexe PUBLIC ${CORTO_HEADER_PATH})
 	target_link_libraries(cortoexe PUBLIC corto)
 	set_target_properties(cortoexe PROPERTIES OUTPUT_NAME "corto")

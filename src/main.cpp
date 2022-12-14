@@ -21,10 +21,12 @@ If not, see <http://www.gnu.org/licenses/>.
 	
 	-	gargo		8
 	-	laurana		9
-	-	mba			10		YES					YES			YES
-	-	moebius		11		/		YES			YES			/
-	-	sphere		17		/		YES			YES			YES
+	-	mba			10		YES		NO			YES			YES
+	-	moebius		11		/		YES			NO			/
+	-	sphere		17		/		YES			NO			YES
 
+
+	- Remove ENTROPY_TESTS and use a macro per compression library
 */
 
 #include <assert.h>
@@ -41,16 +43,25 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "meshloader.h"
 #include "timer.h"
 
-#define ENABLE_CONSOLE_LOG	1
+#include <unordered_map>
+#include <sstream>
 
+#define ENABLE_CONSOLE_LOG	0
 
 using namespace crt;
 using namespace std;
 using namespace tinyply;
 
+struct CompressionStat
+{
+	float EncodingTime;
+	float DecodingTime;
+	float Ratio;
+};
+
 struct MeshData
 {
-	uint32_t ColorComponents;
+	uint32_t ColorComponents = 3;
 };
 
 struct CompressionSettings
@@ -222,6 +233,7 @@ CompressionResult CompressModel(string path, CompressionSettings& settings)
 	encoder->encode();
 
 	// Setup result
+	ret.Mesh.ColorComponents = loader.nColorsComponents;
 	ret.EncodingTime = timer.elapsed();
 	ret.Error = 0;
 	ret.NVerts = encoder->nvert;
@@ -271,9 +283,7 @@ DecompressionResult DecompressModel(string path, CompressionResult& res)
 		out.index.resize(res.NFaces * 3);
 		decoder.setIndex(out.index.data());
 	}
-	cout << endl << "Data set";
 	decoder.decode();
-	cout << endl;
 
 	int delta = timer.elapsed();
 	float DecodingTime;
@@ -281,52 +291,84 @@ DecompressionResult DecompressModel(string path, CompressionResult& res)
 	ret.DecodingTime = delta;
 	ret.Error = 0;
 
-	if (!endsWith(path, ".crt"))
-		path += ".crt";
-
-	/*FILE* file = fopen(("cortomodels/compressed/" + path).c_str(), "wb");
-	if (!file) {
-		cerr << "Could not open file: " << path << endl;
-		return 1;
-	}
-	size_t count = res.CompressionEncoder->stream.size();
-	size_t written = fwrite(res.CompressionEncoder->stream.data(), 1, count, file);
-	if (written != count) {
-		cerr << "Failed saving file: " << "test.crt" << endl;
-		return 1;
-	}
-	std::vector<std::string> comments;
-	if (!path.empty())
-		out.savePly("cortomodels/decompressed/" + path + ".ply", comments);
-		*/
-
 	return ret;
 }
 
-void ResultMessage(CompressionSettings& settings, string modelPath, CompressionResult cr, DecompressionResult dr, ofstream& outFile)
+void AddResult(string modelPath, unordered_map<string, string>& models, float encodingTime, float decodingTime, float ratio)
 {
-	string encodingString = settings.Entropy == crt::Stream::Entropy::TUNSTALL ? "Tunstall" : "ZSTD";
-	string acceleratedString = settings.Optimize ? "Accelerated" : "Unaccelerated";
+	stringstream ss;
+	ss << encodingTime << ";" << decodingTime << ";" << ratio << ",";
+	models[modelPath] += ss.str();
+}
 
-	outFile << "MODEL: " << modelPath << "\t\t" << acceleratedString << " " << encodingString << " level " << settings.CompressionLevel << endl;
-	outFile << "COMPRESSSION DATA:" << endl;
-	outFile << "Uncompressed size:\t" << cr.UnencodedSize<< "\tEncoded size: " << cr.EncodedSize << endl;
-	outFile << "Encoding time:\t" << cr.EncodingTime << "\tDecoding time: " << dr.DecodingTime<< endl;
-	outFile << "Vertices:\t" << cr.NVerts << "\tCompression ratio: " << cr.Ratio << endl << endl;
+void PrintCSVs(string folder, string header, unordered_map<string, std::vector<CompressionStat>> modelsData)
+{
+	for (auto& model : modelsData)
+	{
+		ofstream file(folder + "/" + model.first + ".csv");
+		file << header << endl;
+
+		file << "Encoding time,";
+		for (auto& stat : model.second)
+			file << stat.EncodingTime << ",";
+		file << endl;
+
+		file << "Decoding time,";
+		for (auto& stat : model.second)
+			file << stat.DecodingTime << ",";
+		file << endl;
+
+		file << "Compression ratio,";
+		for (auto& stat : model.second)
+			file << stat.Ratio << ",";
+		file << endl;
+
+		file.close();
+	}
 }
 
 int main(int argc, char *argv[]) {
-	string input;
-	string output;
-	string plyfile;
+	string csvHeader = "/,";
 	ofstream results("results.txt");
+	unordered_map<string, std::vector<CompressionStat>> modelCSVs;
 
-	int nIterations = 1, modelIncrease = 1;
+	// Fix back these params
+	int nIterations = 10, modelIncrease = 1;
 	int minCompressionLevel = -5, maxCompressionLevel = 22, compressionLevelIncrease = 5;
 	bool accelerateCompression[2] = { false, true };
 	bool hasCompressionLevels[2] = { false, true };
 	std::vector<std::string> modelPaths = GetModelPaths("cortomodels/models");
-	crt::Stream::Entropy toCompare[2] = {crt::Stream::TUNSTALL, crt::Stream::ZSTD};
+	crt::Stream::Entropy toCompare[2] = {crt::Stream::TUNSTALL, crt::Stream::ZSTD };
+
+	for (uint32_t i=0; i<modelPaths.size(); i+=modelIncrease)
+		modelCSVs[modelPaths[i]] = {};
+
+	for (uint32_t e=0; e<2; e++)
+	{
+		string optString = "";
+		string levelString = "";
+		string entropyString = toCompare[e] == crt::Stream::TUNSTALL ? "Tunstall" : "ZSTD";
+
+		for (bool opt : accelerateCompression)
+		{
+			int minLevel = 0, maxLevel = 1;
+			if (opt)
+				optString = "Opt";
+
+			if (hasCompressionLevels[e])
+			{
+				minLevel = minCompressionLevel;
+				maxLevel = maxCompressionLevel;
+			}
+			
+			for (int i = minLevel; i < maxLevel; i+=compressionLevelIncrease)
+			{
+				stringstream ss;
+				ss << optString << entropyString << " " << i << ",";
+				csvHeader += ss.str();
+			}
+		}
+	}
 
 	// Entropy method
 	for (uint32_t e = 0; e < 2; e++)
@@ -342,6 +384,8 @@ int main(int argc, char *argv[]) {
 #endif
 			for (uint32_t m = 0; m <modelPaths.size(); m += modelIncrease)
 			{
+				if (m == 10 || m == 14 || m == 16)
+					continue;
 #if ENABLE_CONSOLE_LOG
 				cout << "Model: " << modelPaths[m] << endl;
 #endif
@@ -369,13 +413,8 @@ int main(int argc, char *argv[]) {
 
 					for (uint32_t i = 0; i < nIterations; i++)
 					{
-						cout << "Compressing...";
 						compResult = CompressModel("cortomodels/models/" + modelPaths[m], settings);
-						cout << "compressed." << endl;
-
-						cout << "Decompressing...";
 						decompResult = DecompressModel(modelPaths[m], compResult);
-						cout << "decompressed." << endl;
 
 						encodingTime += compResult.EncodingTime;
 						decodingTime += decompResult.DecodingTime;						
@@ -387,12 +426,14 @@ int main(int argc, char *argv[]) {
 					compResult.EncodingTime = (float)encodingTime / nIterations;
 					decompResult.DecodingTime = (float)decodingTime / nIterations;
 
-					ResultMessage(settings, modelPaths[m], compResult, decompResult, results);
+					CompressionStat stats = { compResult.EncodingTime, decompResult.DecodingTime, compResult.Ratio };
+					modelCSVs[modelPaths[m]].push_back(stats);
 				}
 			}
 		}
 	}
 
+	PrintCSVs("results", csvHeader, modelCSVs);
 	results.close();
 	return 0;
 }

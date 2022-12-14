@@ -60,6 +60,10 @@ target_compile_definitions(corto PUBLIC ${CORTO_DEFINITIONS})
 
 # TEMPORARY ZSTD INTEGRATION
 add_subdirectory(zstd-dev/build/cmake)
+target_link_libraries(corto PUBLIC liblz4_static)
+target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/lz4_x86-windows/include")
+
+# TEMPORARY LZ4 INTEGRATION
 target_link_libraries(corto PUBLIC libzstd_shared)
 target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include/")
 

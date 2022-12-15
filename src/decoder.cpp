@@ -109,15 +109,6 @@ bool Decoder::setAttribute(const char *name, char *buffer, VertexAttribute *attr
 	return true;
 }
 
-#ifdef FB_CORTO_CHANGES
-bool Decoder::setAttribute(const char* name, uint32_t frameWidth, uint32_t frameHeight) {
-	if (data.find(name) == data.end()) return false;
-	VertexAttribute* attr = data[name];
-	attr->frameWidth = frameWidth;
-	attr->frameHeight = frameHeight;
-	return true;
-}
-#endif
 
 bool Decoder::setColors(uchar *buffer, int components) {
 	if(data.find("color") == data.end()) return false;

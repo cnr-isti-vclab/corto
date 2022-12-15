@@ -55,9 +55,6 @@ public:
 	bool setColors(uchar *buffer, int components = 4);
 	bool setAttribute(const char *name, char *buffer, VertexAttribute::Format format);
 	bool setAttribute(const char *name, char *buffer, VertexAttribute *attr);
-#ifdef FB_CORTO_CHANGES
-	bool setAttribute(const char* name, uint32_t frameWidth, uint32_t frameHeight);
-#endif
 	void setIndex(uint32_t *buffer) { index.faces32 = buffer; }
 	void setIndex(uint16_t *buffer) { index.faces16 = buffer; }
 

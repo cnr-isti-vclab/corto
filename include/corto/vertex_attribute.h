@@ -41,10 +41,7 @@ public:
 	Format format;    //input or output format
 	uint32_t size;    //compressed size (for stats and other nefarious purpouses)
 	int bits;         //quantization in bits;
-#ifdef FB_CORTO_CHANGES
-	int frameWidth = 0;
-	int frameHeight = 0;
-#endif
+
 	VertexAttribute()
             : buffer(nullptr),
               N(0),
@@ -193,20 +190,6 @@ public:
 		uint32_t n = N*nvert;
 		switch(format) {
 		case FLOAT:
-#ifdef FB_CORTO_CHANGES
-			if (frameWidth > 0 && frameHeight > 0) {
-				// In case frame width/height are provided, normalize x,y
-				// to device coordinates and convert depth back to float
-				float factorWidth  = q / frameWidth;
-				float factorHeight = q / frameHeight;
-				float* fbuffer = reinterpret_cast<float*>(buffer);
-				for (uint32_t i = 0; i < n; i += 3) {
-					 fbuffer[i+0] = coords[i+0] * factorWidth;
-					 fbuffer[i+1] = coords[i+1] * factorHeight;
-					 fbuffer[i+2] = h2f(coords[i+2] * q);
-				}
-			} else
-#endif
 			for(uint32_t i = 0; i < n; i++)
 					((float *)buffer)[i] = coords[i]*q;
 			break;
@@ -247,14 +230,6 @@ public:
 			break;
 		}
 	}
-#ifdef FB_CORTO_CHANGES
-private:
-	// Originally taken from https://github.com/g-truc/glm/blob/master/glm/gtc/packing.inl#L112
-    static float h2f(uint16_t h) {
-	   uint32_t f = ((h & 0x8000) << 16) | (((h & 0x7c00) + 0x1C000) << 13) | ((h & 0x03FF) << 13);
-	   return *((float*)&f);
-    }
-#endif
 };
 
 }

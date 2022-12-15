@@ -26,10 +26,6 @@ If not, see <http://www.gnu.org/licenses/>.
 
 #include "bitstream.h"
 
-#ifdef FB_CORTO_CHANGES
-#include <zstd.h>
-#endif
-
 typedef unsigned char uchar;
 
 namespace crt {
@@ -38,11 +34,11 @@ int ilog2(uint64_t p);
 
 class Stream {
 public:
-	enum Entropy { NONE = 0, TUNSTALL = 1, HUFFMAN = 2, ZLIB = 3, LZ4 = 4
-#ifdef FB_CORTO_CHANGES
-	, ZSTD = 5
+	enum Entropy { NONE = 0, TUNSTALL = 1, HUFFMAN = 2, ZLIB = 3
+#ifdef ENABLE_LZ4
+		, LZ4 = 4
 #endif
-};
+	};
 	Entropy entropy;
 	Stream(): entropy(TUNSTALL) {}
 };
@@ -51,15 +47,9 @@ class OutStream: public Stream {
 protected:
 	std::vector<uchar> buffer;
 	size_t stopwatch; //used to measure stream partial size.
-#ifdef FB_CORTO_CHANGES
-	int compressionlevel;
-#endif
 
 public:
 	OutStream(size_t r = 0): stopwatch(0)
-#ifdef FB_CORTO_CHANGES
-	,compressionlevel(3)
-#endif
 	{ buffer.reserve(r); }
 	uint32_t size() { return buffer.size(); }
 	uchar *data() { return buffer.data(); }
@@ -71,18 +61,14 @@ public:
 	}
 	int  compress(uint32_t size, uchar *data);
 	int  tunstall_compress(unsigned char *data, int size);
-#ifdef FB_CORTO_CHANGES
-	int zstd_compress(uchar* data, int size);
-	void setCompressionLevel(int compression_level) {
-		compressionlevel = compression_level;
-	}
-#endif
 
 #ifdef ENTROPY_TESTS
 	int  zlib_compress(uchar *data, int size);
 #endif
 
+#ifdef ENABLE_LZ4
 	int  lz4_compress(uchar *data, int size);
+#endif
 
 	template<class T> void write(T c) {
 		uchar *pos = grow(sizeof(T));
@@ -239,14 +225,15 @@ public:
 
 	void decompress(std::vector<uchar> &data);
 	void tunstall_decompress(std::vector<uchar> &data);
-	void zstd_decompress(std::vector<uchar>& data);
 
 #ifdef ENTROPY_TESTS
 	int  zlib_compress(uchar *data, int size);
 #endif
 
+#ifdef ENABLE_LZ4
 	void lz4_decompress(std::vector<uchar>& data);
 	int  lz4_compress(uchar *data, int size);
+#endif
 
 	void init(int /*_size*/, const uchar *_buffer) {
 		buffer = _buffer; //I'm not lying, I won't touch it.

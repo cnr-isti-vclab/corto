@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.1)
 project(corto)
 
-option(BUILD_CORTO_CODEC_UNITY "Build the unity codec shared library of corto" OFF)
+option(BUILD_CORTO_CODEC_UNITY "Build the unity codec shared library of corto" ON)
 option(BUILD_CORTO_EXE "Build the command line binary of corto" ON)
+option(BUILD_CORTO_BENCHMARK	"Build the benchmark program of corto" ON)
 
 SET(CMAKE_CXX_STANDARD 11)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,8 +25,7 @@ SET(LIB_HEADERS
 	${CORTO_HEADER_PATH}/tunstall.h
 	${CORTO_HEADER_PATH}/vertex_attribute.h
 	${CORTO_HEADER_PATH}/zpoint.h
-	${CORTO_SOURCE_PATH}/corto_codec.h
-	${CORTO_SOURCE_PATH}/tinydir.h)
+	${CORTO_SOURCE_PATH}/corto_codec.h)
 
 SET(LIB_SOURCES
 	${CORTO_SOURCE_PATH}/bitstream.cpp
@@ -47,7 +47,18 @@ SET(EXE_HEADERS
 	${CORTO_SOURCE_PATH}/tinyply.h
 	${CORTO_SOURCE_PATH}/objload.h)
 
-SET(CORTO_DEFINITIONS "FB_CORTO_CHANGES")
+SET(BENCHMARK_SOURCE
+	${CORTO_SOURCE_PATH}/benchmark.cpp
+	${CORTO_SOURCE_PATH}/meshloader.cpp
+	${CORTO_SOURCE_PATH}/tinyply.cpp)
+)
+
+SET(BENCHMARK_HEADERS
+	${CORTO_SOURCE_PATH}/meshloader.h
+	${CORTO_SOURCE_PATH}/tinyply.h
+	${CORTO_SOURCE_PATH}/objload.h)
+
+SET(CORTO_DEFINITIONS "")
 
 if(MSVC)
 	add_compile_options(/nologo /W3 -D_CRT_SECURE_NO_DEPRECATE)
@@ -56,30 +67,6 @@ else()
 endif()
 
 ADD_LIBRARY(corto STATIC ${LIB_SOURCES} ${LIB_HEADERS})
-target_compile_definitions(corto PUBLIC ${CORTO_DEFINITIONS})
-
-# TEMPORARY ZSTD INTEGRATION
-add_subdirectory(zstd-dev/build/cmake)
-target_link_libraries(corto PUBLIC libzstd_shared)
-target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/zstd_x86-windows/include")
-
-# TEMPORARY LZ4 INTEGRATION
-add_subdirectory(lz4-dev/build/cmake)
-target_link_libraries(corto PUBLIC lz4)
-set(BUILD_SHARED_LIBS ON)
-target_include_directories(corto PUBLIC "C:/Program Files/vcpkg/packages/lz4_x86-windows/include")
-
-SET(CORTOLIB_CFLAGS ${CORTO_CFLAGS})
-
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
-	LIST(APPEND CORTOLIB_CFLAGS -fPIC)
-elseif(APPLE)
-	LIST(APPEND CORTOLIB_CFLAGS -fvisibility=hidden)
-	if(IOS)
-		LIST(APPEND CORTOLIB_CFLAGS -fembed-bitcode)
-		set_xcode_property(corto IPHONEOS_DEPLOYMENT_TARGET "9.2")
-	endif(IOS)
-endif()
 
 target_include_directories(corto PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(corto PRIVATE ${CORTO_HEADER_PATH})
@@ -119,6 +106,7 @@ if (BUILD_CORTO_CODEC_UNITY)
 		target_compile_definitions(cortocodec_unity PRIVATE WIN_EXPORT)
 	endif()
 endif()
+
 if (BUILD_CORTO_EXE)
 	ADD_EXECUTABLE(cortoexe ${EXE_SOURCE} ${EXE_HEADERS})
 	target_include_directories(cortoexe PUBLIC ${CORTO_HEADER_PATH})
@@ -126,6 +114,29 @@ if (BUILD_CORTO_EXE)
 	set_target_properties(cortoexe PROPERTIES OUTPUT_NAME "corto")
 
 	INSTALL(TARGETS cortoexe
+		RUNTIME DESTINATION bin
+		BUNDLE DESTINATION bin
+		LIBRARY DESTINATION lib
+		ARCHIVE DESTINATION lib)
+endif()
+
+if (BUILD_CORTO_BENCHMARK)
+	ADD_EXECUTABLE(cortobenchmark ${BENCHMARK_SOURCE} ${BENCHMARK_HEADERS})
+	add_subdirectory(deps/lz4/build/cmake)
+
+	target_include_directories(cortobenchmark 
+		PUBLIC ${CORTO_HEADER_PATH}
+		PUBLIC deps/lz4/lib
+	)
+
+	target_link_libraries(cortobenchmark 
+		PUBLIC corto
+		PUBLIC lz4_static
+	)
+
+	set_target_properties(cortobenchmark PROPERTIES OUTPUT_NAME "corto_benchmark")
+
+	INSTALL(TARGETS cortobenchmark
 		RUNTIME DESTINATION bin
 		BUNDLE DESTINATION bin
 		LIBRARY DESTINATION lib

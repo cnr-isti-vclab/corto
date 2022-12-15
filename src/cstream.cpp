@@ -19,8 +19,12 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "cstream.h"
 
 #include "tunstall.h"
-#include <lz4/lz4.h>
-#include <lz4/lz4hc.h>
+
+#ifdef ENABLE_LZ4
+#include <lz4.h>
+#include <lz4hc.h>
+#endif
+
 #ifdef ENTROPY_TESTS
 #include <zlib.h>
 #endif
@@ -48,13 +52,12 @@ int OutStream::compress(uint32_t size, uchar *data) {
 		return sizeof(size) + size;
 
 	case TUNSTALL: return tunstall_compress(data, size);
-#ifdef FB_CORTO_CHANGES
-	case ZSTD: return zstd_compress(data, size);
-#endif
 #ifdef ENTROPY_TESTS
 	case ZLIB:     return zlib_compress(data, size);
 #endif
+#ifdef ENABLE_LZ4
 	case LZ4:     return lz4_compress(data, size);
+#endif
 	default:
 		throw "Unknown entropy";
 	}
@@ -72,13 +75,12 @@ void InStream::decompress(vector<uchar> &data) {
 		break;
 	}
 	case TUNSTALL: tunstall_decompress(data); break;
-#ifdef FB_CORTO_CHANGES
-	case ZSTD: zstd_decompress(data); break;
-#endif
 #ifdef ENTROPY_TESTS
 	case ZLIB:     zlib_decompress(data); break;
 #endif
+#ifdef ENABLE_LZ4
 	case LZ4:     lz4_decompress(data); break;
+#endif
 	default:
 		throw "Unknown entropy";
 	}
@@ -125,40 +127,6 @@ void InStream::tunstall_decompress(vector<uchar> &data) {
 		t.decompress(compressed_data, compressed_size, data.data(), size);
 }
 
-#ifdef FB_CORTO_CHANGES
-int OutStream::zstd_compress(uchar* data, int size) {
-  // Determine the maximum buffer size and allocate it
-  size_t zstd_compressed_size = ZSTD_compressBound(size);
-  // A possible improvement is to preallocate one buffer and resize it as needed
-  // instead of allocation per call, although timing saving is small
-  unsigned char* compressed_data = new unsigned char[zstd_compressed_size];
-  size_t compressed_size = ZSTD_compress(
-      compressed_data, zstd_compressed_size, data, size, compressionlevel);
-  write<int>(size);   
-  if (!ZSTD_isError(compressed_size)) {
-    write<int>(compressed_size);
-    writeArray<uchar>(compressed_size, compressed_data);
-  } else {
-    compressed_size = 0;
-    write<int>(compressed_size);
-  }
-  delete[] compressed_data;
-  return sizeof(int)*2 + compressed_size;	// Two integers plus the entropy coded stream
-}
-
-
-void InStream::zstd_decompress(vector<uchar>& data) {
-  int size = readUint32();
-  data.resize(size);
-  int compressed_size = readUint32();
-  if (!size)
-    return;
-
-  uchar* compressed_data = readArray<uchar>(compressed_size);
-  size_t decompressed_size = ZSTD_decompress(
-      (char*)data.data(), size, compressed_data, compressed_size);
-}
-#endif
 #ifdef ENTROPY_TESTS
 
 int OutStream::zlib_compress(uchar *data, int size) {
@@ -187,6 +155,8 @@ void InStream::zlib_decompress(vector<uchar> &data) {
 #endif
 
 
+#ifdef ENABLE_LZ4
+
 int OutStream::lz4_compress(uchar *data, int size) {
 
 	int compressed_size = LZ4_compressBound(size);
@@ -210,3 +180,5 @@ void InStream::lz4_decompress(vector<uchar> &data) {
 	uchar *compressed_data = readArray<uchar>(compressed_size);
 	LZ4_decompress_safe((const char *)compressed_data, (char *)data.data(), compressed_size, size);
 }
+
+#endif

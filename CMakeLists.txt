@@ -126,13 +126,19 @@ if (BUILD_CORTO_BENCHMARK)
 
 	target_include_directories(cortobenchmark 
 		PUBLIC ${CORTO_HEADER_PATH}
+	)
+	target_include_directories(corto
 		PUBLIC deps/lz4/lib
 	)
 
 	target_link_libraries(cortobenchmark 
 		PUBLIC corto
+	)
+	target_link_libraries(corto 
 		PUBLIC lz4_static
 	)
+	
+	target_compile_definitions(corto PUBLIC ENABLE_LZ4)
 
 	set_target_properties(cortobenchmark PROPERTIES OUTPUT_NAME "corto_benchmark")
 

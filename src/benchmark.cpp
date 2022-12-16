@@ -17,16 +17,7 @@ If not, see <http://www.gnu.org/licenses/>.
 */
 
 /* CRASH
-*		name		idx		Opt?	NonOpt?		TUNSTALL?	ZSTD?
-	
-	-	gargo		8
-	-	laurana		9
-	-	mba			10		YES		NO			YES			YES
-	-	moebius		11		/		YES			NO			/
-	-	sphere		17		/		YES			NO			YES
-
-
-	- Remove ENTROPY_TESTS and use a macro per compression library
+	- BUGS: test sphere.ply (idx 16)
 */
 
 #include <assert.h>
@@ -46,6 +37,16 @@ If not, see <http://www.gnu.org/licenses/>.
 #include <unordered_map>
 #include <sstream>
 
+#ifndef _WIN32
+#include <unistd.h>
+#else
+#include <stdio.h>
+#include <string.h>
+int opterr = 1, optind = 1, optopt, optreset;
+const char* optarg;
+int getopt(int nargc, char* const nargv[], const char* ostr);
+#endif
+
 #define ENABLE_CONSOLE_LOG	1
 
 using namespace crt;
@@ -56,18 +57,13 @@ struct CompressionStat
 {
 	float EncodingTime;
 	float DecodingTime;
+	uint32_t NTriangles;
 	float Ratio;
-};
-
-struct MeshData
-{
-	uint32_t ColorComponents = 3;
 };
 
 struct CompressionSettings
 {
 	crt::Stream::Entropy Entropy;
-	bool Optimize;
 	int CompressionLevel;
 	bool PointCloud = false;
 	bool AddNormals = false;
@@ -87,7 +83,7 @@ struct CompressionSettings
 
 struct CompressionResult
 {
-	MeshData Mesh;
+	uint32_t ColorComponents = 3;
 	Encoder* CompressionEncoder;
 
 	uint32_t NVerts;
@@ -127,63 +123,61 @@ static ifstream::pos_type filesize(const char* filename)
 	return in.tellg();
 }
 
-static vector<string> GetModelPaths(string root)
+static string CrtEntropyToString(crt::Stream::Entropy e)
 {
-	std::vector<string> ret;
-	tinydir_dir dir;
-	tinydir_open(&dir, root.c_str());
-
-	while (dir.has_next)
+	switch (e)
 	{
-		tinydir_file file;
-		tinydir_readfile(&dir, &file);
-
-		if (file.is_dir && file.is_reg)
-		{
-			// Explore the dir
-			vector<string> result = GetModelPaths(file.path);
-			ret.insert(ret.end(), result.begin(), result.end());
-		}
-		else if (endsWith(file.path, ".ply") || endsWith(file.path, ".obj"))
-			ret.push_back(file.name);
-		
-		tinydir_next(&dir);
+	case crt::Stream::TUNSTALL:return "TUNSTALL";
+	case crt::Stream::LZ4:return "LZ4";
 	}
+	return "";
+}
 
-	tinydir_close(&dir);
+
+void usage()
+{
+	cerr <<
+	R"use(Usage: cortobenchmark [OPTIONS] <FILE>
+
+	FILE is the path to a file containing paths to .ply or .obj models to use as a benchmark
+	  -i <iterations>: number of compression / decompression iterations per model
+	  -s <step>: step to transition from a compression level to the next
+	)use";
+}
+
+static vector<string> GetModelPaths(string inputPath)
+{
+	vector<string> ret;
+	ifstream inputFile(inputPath);
+	string path;
+
+	while (inputFile >> path)
+		ret.push_back(path);
 
 	return ret;
 }
 
 CompressionResult CompressModel(string path, CompressionSettings& settings)
 {
+	Timer loadingTime;
 	CompressionResult ret;
 	// Load mesh
-	crt::MeshLoader loader;
-	loader.add_normals = settings.AddNormals;
-	bool ok = loader.load(path, settings.Group);
-	if (!ok) {
-		cerr << "Failed loading model: " << path << endl;
-		return 1;
-	}
+	static crt::MeshLoader loader;
+	static string prevPath;
 
-	if (settings.PointCloud)
-		loader.nface = 0;
-	settings.PointCloud = (loader.nface == 0 || settings.PointCloud);
-	crt::NormalAttr::Prediction prediction = crt::NormalAttr::BORDER;
-	if (!settings.NormalPrediction.empty()) {
-		if (settings.NormalPrediction == "delta")
-			prediction = crt::NormalAttr::DIFF;
-		else if (settings.NormalPrediction == "border")
-			prediction = crt::NormalAttr::BORDER;
-		else if (settings.NormalPrediction == "estimated")
-			prediction = crt::NormalAttr::ESTIMATED;
-		else {
-			cerr << "Unknown normal prediction: " << prediction << " expecting: delta, border or estimated" << endl;
+	if (path.compare(prevPath) != 0)
+	{
+		prevPath = path;
+		loader = crt::MeshLoader();
+		loader.add_normals = settings.AddNormals;
+		bool ok = loader.load(path, settings.Group);
+		if (!ok) {
+			cerr << "Failed loading model: " << path << endl;
 			return 1;
 		}
 	}
 
+	crt::NormalAttr::Prediction prediction = crt::NormalAttr::BORDER;
 	crt::Timer timer;
 
 	// Encode
@@ -231,7 +225,7 @@ CompressionResult CompressModel(string path, CompressionSettings& settings)
 	encoder->encode();
 
 	// Setup result
-	ret.Mesh.ColorComponents = loader.nColorsComponents;
+	ret.ColorComponents = loader.nColorsComponents;
 	ret.EncodingTime = timer.elapsed();
 	ret.Error = 0;
 	ret.NVerts = encoder->nvert;
@@ -265,9 +259,9 @@ DecompressionResult DecompressModel(string path, CompressionResult& res)
 		decoder.setNormals(out.norms.data());
 	}
 	if (decoder.data.count("color")) {
-		out.colors.resize(res.NVerts * res.Mesh.ColorComponents);
-		out.nColorsComponents = res.Mesh.ColorComponents;
-		decoder.setColors(out.colors.data(), res.Mesh.ColorComponents);
+		out.colors.resize(res.NVerts * res.ColorComponents);
+		out.nColorsComponents = res.ColorComponents;
+		decoder.setColors(out.colors.data(), res.ColorComponents);
 	}
 	if (decoder.data.count("uv")) {
 		out.uvs.resize(res.NVerts * 2);
@@ -292,157 +286,224 @@ DecompressionResult DecompressModel(string path, CompressionResult& res)
 	return ret;
 }
 
-void AddResult(string modelPath, unordered_map<string, string>& models, float encodingTime, float decodingTime, float ratio)
+int ParseOptions(int argc, char** argv, string& inputPath, uint32_t& nIterations, uint32_t& step)
 {
-	stringstream ss;
-	ss << encodingTime << ";" << decodingTime << ";" << ratio << ",";
-	models[modelPath] += ss.str();
-}
+	int c;
+	nIterations = 10;
+	step = 1;
 
-void PrintCSVs(string folder, string header, unordered_map<string, std::vector<CompressionStat>> modelsData)
-{
-	for (auto& model : modelsData)
-	{
-		ofstream file(folder + "/" + model.first + ".csv");
-		file << header << endl;
-
-		file << "Encoding time,";
-		for (auto& stat : model.second)
-			file << stat.EncodingTime << ",";
-		file << endl;
-
-		file << "Decoding time,";
-		for (auto& stat : model.second)
-			file << stat.DecodingTime << ",";
-		file << endl;
-
-		file << "Compression ratio,";
-		for (auto& stat : model.second)
-			file << stat.Ratio << ",";
-		file << endl;
-
-		file.close();
+	while ((c = getopt(argc, argv, "i::s::")) != -1) {
+		switch (c) {
+		case 'i': 
+		{
+			int arg = atoi(optarg);
+			nIterations = arg > 0 ? arg : 10;  
+			break;  // n iterations
+		}
+		case 's':
+		{
+			int arg = atoi(optarg);
+			step = arg > 0 ? arg : 1;
+			break; // compression level step
+		}
+		case '?': usage(); return -1;
+		default:
+			cerr << "Unknown option: " << (char)c << endl;
+			usage();
+			return -2;
+		}
 	}
+	if (optind == argc) {
+		cerr << "Missing filename" << endl;
+		usage();
+		return -3;
+	}
+
+	if (optind != argc - 1) {
+#ifdef _WIN32
+		cerr << "Too many arguments or argument before other options\n";
+#else
+		cerr << "Too many arguments\n";
+#endif
+		usage();
+		return -4;
+	}
+
+	inputPath = argv[optind];
+	return 0;
 }
 
 int main(int argc, char *argv[]) {
-	string csvHeader = "/,";
-	ofstream results("results.txt");
-	unordered_map<string, std::vector<CompressionStat>> modelCSVs;
+	string inputPath;
+	uint32_t nIterations, compressionLevelIncrease;
+	if (ParseOptions(argc, argv, inputPath, nIterations, compressionLevelIncrease) != 0)
+		return -1;
 
-	// -f file con percorsi modelli
-	// -i numero iterazioni (default 10)
-	// -s step per livello di compressione
-	//		- I livelli li fai tutti, min e max salvati
+	string csvContent;
+	ofstream results("results.csv");
+	unordered_map<crt::Stream::Entropy, std::vector<int>> compressionLevels = {
+		{crt::Stream::LZ4, {0,0}},
+		{crt::Stream::TUNSTALL, {0,0}}
+	};
 
-	/*
-		- Un csv in totale
-		- Una riga per modello
-		- Encoding, decoding, ratio, Encoding in MT/s, Decoding in MT/s
-	*/
+	std::vector<std::string> modelPaths = GetModelPaths(inputPath);
+	std::vector<crt::Stream::Entropy> toCompare = { crt::Stream::TUNSTALL, crt::Stream::LZ4 };
 
-	int nIterations = 10, modelIncrease = 1;
-	int minCompressionLevel = -5, maxCompressionLevel = 22, compressionLevelIncrease = 5;
-	// no
-	bool accelerateCompression[2] = { false, true };
-	bool hasCompressionLevels[2] = { false, true };
-	std::vector<std::string> modelPaths = GetModelPaths("cortomodels/models");
-	crt::Stream::Entropy toCompare[2] = {crt::Stream::TUNSTALL};
-
-	for (uint32_t i=0; i<modelPaths.size(); i+=modelIncrease)
-		modelCSVs[modelPaths[i]] = {};
-
-	for (uint32_t e=0; e<1; e++)
+	// Generate CSV header
+	csvContent = "Model,";
+	for (uint32_t i = 0; i < toCompare.size(); i++)
 	{
-		string optString = "";
-		string levelString = "";
-		string entropyString = "LZ4";
+		std::stringstream ss;
+		string entropyString = CrtEntropyToString(toCompare[i]);
 
-		for (bool opt : accelerateCompression)
+		for (uint32_t c = compressionLevels[toCompare[i]][0]; c <= compressionLevels[toCompare[i]][1]; c++)
 		{
-			int minLevel = 0, maxLevel = 1;
-			if (opt)
-				optString = "Opt";
-
-			if (hasCompressionLevels[e])
-			{
-				minLevel = minCompressionLevel;
-				maxLevel = maxCompressionLevel;
-			}
-			
-			for (int i = minLevel; i < maxLevel; i+=compressionLevelIncrease)
-			{
-				stringstream ss;
-				ss << optString << entropyString << " " << i << ",";
-				csvHeader += ss.str();
-			}
+			ss << entropyString << " Lev" << c << " enc,";
+			ss << entropyString << " Lev" << c << " dec,";
+			ss << entropyString << " Lev" << c << " ratio,";
+			ss << entropyString << " Lev" << c << " enc MT/s,";
+			ss << entropyString << " Lev" << c << " dec MT/s,";
 		}
+		
+		csvContent += ss.str();
 	}
+	csvContent += "\n";
 
-	// Entropy method
-	for (uint32_t e = 0; e < 1; e++)
+	for (uint32_t m = 0; m < modelPaths.size(); m++)
 	{
+		string modelResults = modelPaths[m] + ",";
 #if ENABLE_CONSOLE_LOG
-		cout << "TESTING " << "LZ4" << endl;
+		cout << "CURRENT MODEL: " << modelPaths[m] << endl;
 #endif
-		// Compression acceleration
-		for (uint32_t a = 0; a < 2; a++)
+		for (uint32_t e = 0; e < toCompare.size(); e++)
 		{
 #if ENABLE_CONSOLE_LOG
-			cout << "Acceleration: " << accelerateCompression[a] << endl;
+			cout << "CURRENT ENTROPY: " << CrtEntropyToString(toCompare[e]) << endl;
 #endif
-			for (uint32_t m = 0; m <modelPaths.size(); m += modelIncrease)
+			int minLevel = compressionLevels[toCompare[e]][0], maxLevel = compressionLevels[toCompare[e]][1];
+			// Compression levels
+			for (int l = minLevel; l <= maxLevel; l += compressionLevelIncrease)
 			{
-				if (m == 10 || m == 14 || m == 16)
-					continue;
 #if ENABLE_CONSOLE_LOG
-				cout << "Model: " << modelPaths[m] << endl;
+				cout << "COMPRESSION LEVEL: " << l << endl;
 #endif
-				int minLevel = 0, maxLevel = 1;
-				if (hasCompressionLevels[e])
+				float encodingTime = 0, decodingTime = 0;
+				CompressionSettings settings;
+
+				settings.CompressionLevel = l;
+				settings.Entropy = toCompare[e];
+
+				CompressionResult compResult;
+				DecompressionResult decompResult;
+
+				for (uint32_t i = 0; i < nIterations; i++)
 				{
-					minLevel = minCompressionLevel;
-					maxLevel = maxCompressionLevel;
-				}
-				// Compression levels
-				for (int l = minLevel; l < maxLevel; l += compressionLevelIncrease)
-				{
-#if ENABLE_CONSOLE_LOG
-					cout << "Compression level: " << l << endl;
-#endif
-					float encodingTime = 0, decodingTime = 0;
-					CompressionSettings settings;
-
-					settings.CompressionLevel = l;
-					settings.Optimize = accelerateCompression[a];
-					settings.Entropy = toCompare[e];
-
-					CompressionResult compResult;
-					DecompressionResult decompResult;
-
-					for (uint32_t i = 0; i < nIterations; i++)
+					compResult = CompressModel(modelPaths[m], settings);
+					if (compResult.Error != 0)
 					{
-						compResult = CompressModel("cortomodels/models/" + modelPaths[m], settings);
-						decompResult = DecompressModel(modelPaths[m], compResult);
+						cout << "A compression error occurred, saving partial results and aborting benchmark." << endl;
+						results << csvContent;
+						results.close();
+						return -1;
+					}
+					decompResult = DecompressModel(modelPaths[m], compResult);
 
-						encodingTime += compResult.EncodingTime;
-						decodingTime += decompResult.DecodingTime;						
-
-						delete compResult.CompressionEncoder;
+					if (decompResult.Error != 0)
+					{
+						cout << "A decompression error occurred, saving partial results and aborting benchmark." << endl;
+						results << csvContent;
+						results.close();
+						return -1;
 					}
 
-					compResult.UnencodedSize = filesize(("cortomodels/models/" + modelPaths[m]).c_str());
-					compResult.EncodingTime = (float)encodingTime / nIterations;
-					decompResult.DecodingTime = (float)decodingTime / nIterations;
+					encodingTime += compResult.EncodingTime;
+					decodingTime += decompResult.DecodingTime;
 
-					CompressionStat stats = { compResult.EncodingTime, decompResult.DecodingTime, compResult.Ratio };
-					modelCSVs[modelPaths[m]].push_back(stats);
+					delete compResult.CompressionEncoder;
 				}
+
+				compResult.UnencodedSize = filesize((modelPaths[m]).c_str());
+				compResult.EncodingTime = (float)encodingTime / nIterations;
+				decompResult.DecodingTime = (float)decodingTime / nIterations;
+
+#if ENABLE_CONSOLE_LOG
+				cout << "Encoding time: " << compResult.EncodingTime << endl 
+					 << "Decoding time: " << decompResult.DecodingTime << endl;
+#endif
+
+				CompressionStat stats = { compResult.EncodingTime, decompResult.DecodingTime, compResult.Ratio };
+
+				stringstream ss;
+				ss << compResult.EncodingTime << "," << decompResult.DecodingTime << "," << compResult.Ratio << "," <<
+					(compResult.NFaces / (max(compResult.EncodingTime, 0.1f) * 1000.0f)) << "," << 
+					(compResult.NFaces / (max(decompResult.DecodingTime, 0.1f) * 1000.0f)) << ",";
+				modelResults += ss.str();
 			}
 		}
+		modelResults += "\n";
+		csvContent += modelResults;
 	}
 
-	PrintCSVs("results", csvHeader, modelCSVs);
+	results << csvContent;
 	results.close();
 	return 0;
 }
+
+
+#ifdef _WIN32
+
+int getopt(int nargc, char* const nargv[], const char* ostr) {
+	static const char* place = "";        // option letter processing
+	const char* oli;                      // option letter list index
+
+	if (optreset || !*place) {             // update scanning pointer
+		optreset = 0;
+		if (optind >= nargc || *(place = nargv[optind]) != '-') {
+			place = "";
+			return -1;
+		}
+
+		if (place[1] && *++place == '-') { // found "--"
+			++optind;
+			place = "";
+			return -1;
+		}
+	}                                       // option letter okay?
+
+	if ((optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, optopt))) {
+		// if the user didn't specify '-' as an option,  assume it means -1.
+		if (optopt == (int)'-')
+			return (-1);
+		if (!*place)
+			++optind;
+		if (opterr && *ostr != ':')
+			cout << "illegal option -- " << optopt << "\n";
+		return ('?');
+	}
+
+	if (*++oli != ':') {                    // don't need argument
+		optarg = NULL;
+		if (!*place)
+			++optind;
+
+	}
+	else {                                // need an argument
+		if (*place)                         // no white space
+			optarg = place;
+		else if (nargc <= ++optind) {       // no arg
+			place = "";
+			if (*ostr == ':')
+				return (':');
+			if (opterr)
+				cout << "option requires an argument -- " << optopt << "\n";
+			return (':');
+		}
+		else                              // white space
+			optarg = nargv[optind];
+		place = "";
+		++optind;
+	}
+	return optopt;                          // dump back option letter
+}
+
+#endif

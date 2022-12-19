@@ -47,20 +47,22 @@ class OutStream: public Stream {
 protected:
 	std::vector<uchar> buffer;
 	size_t stopwatch; //used to measure stream partial size.
+	int compression_level;
 
 public:
 	OutStream(size_t r = 0): stopwatch(0)
 	{ buffer.reserve(r); }
-	uint32_t size() { return buffer.size(); }
-	uchar *data() { return buffer.data(); }
-	void reserve(size_t r) { buffer.reserve(r); }
-	void restart() { stopwatch = buffer.size(); }
-	uint32_t elapsed() {
+	inline uint32_t size() { return buffer.size(); }
+	inline uchar *data() { return buffer.data(); }
+	inline void reserve(size_t r) { buffer.reserve(r); }
+	inline void restart() { stopwatch = buffer.size(); }
+	inline uint32_t elapsed() {
 		size_t e = size() - stopwatch; stopwatch = size();
 		return (uint32_t)e;
 	}
+	inline void setCompressionLevel(int l) { compression_level = l; }
 	int  compress(uint32_t size, uchar *data);
-	int  tunstall_compress(unsigned char *data, int size);
+	int  tunstall_compress(uchar *data, int size);
 
 #ifdef ENTROPY_TESTS
 	int  zlib_compress(uchar *data, int size);
@@ -232,7 +234,6 @@ public:
 
 #ifdef ENABLE_LZ4
 	void lz4_decompress(std::vector<uchar>& data);
-	int  lz4_compress(uchar *data, int size);
 #endif
 
 	void init(int /*_size*/, const uchar *_buffer) {

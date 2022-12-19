@@ -57,6 +57,7 @@ FILE is the path to a .ply or a .obj 3D model.
   -c <bits>: color bits quantization. Default 6.
   -u <bits>: texture coordinate bits. Default 10.
   -q <step>: quantization step unit (float) instead of bits for vertex coordinates
+  -l <level>: compression level for the entropy algorithm
   -N <prediction>: normal prediction can be:
 	  delta: use difference from previous normal (fastest)
 	  estimated: use difference from compute normals (smaller)
@@ -85,12 +86,13 @@ int main(int argc, char *argv[]) {
 	int b_bits = 6;
 	int a_bits = 5;
 	int uv_bits = 12;
+	int comp_level = -1;
 
 	string normal_prediction;
 	std::map<std::string, std::string> exif;
 
 	int c;
-	while((c = getopt(argc, argv, "pAo:v:n:c:u:q:N:e:P:G:")) != -1) {
+	while((c = getopt(argc, argv, "pAo:v:n:c:u:q:l:N:e:P:G:")) != -1) {
 		switch(c) {
 		case 'o': output = optarg;  break;  //output filename
 		case 'p': pointcloud = true; break; //force pointcloud
@@ -101,6 +103,7 @@ int main(int argc, char *argv[]) {
 		case 'g': g_bits = atoi(optarg); break;
 		case 'b': b_bits = atoi(optarg); break;
 		case 'a': a_bits = atoi(optarg); break;
+		case 'l': comp_level = atoi(optarg); break;
 
 		case 'u': uv_bits     = atoi(optarg); break;
 		case 'q': vertex_q    = (float)atof(optarg); break;
@@ -177,7 +180,7 @@ int main(int argc, char *argv[]) {
 	crt::Timer timer;
 
 	crt::Encoder encoder(loader.nvert, loader.nface, crt::Stream::TUNSTALL);
-
+	encoder.setCompressionLevel(comp_level);
 	encoder.exif = loader.exif;
 	//add and override exif properties
 	for(auto it: exif)

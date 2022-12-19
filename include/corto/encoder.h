@@ -80,11 +80,11 @@ public:
 	}
 
 	void encode();
+	inline void setCompressionLevel(int l) { stream.setCompressionLevel(l); }
 
 private:
 	uint32_t current_vertex;
 	uint32_t last_index; //moved here so that it works across groups
-
 
 	std::vector<bool> boundary;
 	std::vector<int> encoded;    //encoded vertex number

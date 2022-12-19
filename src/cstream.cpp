@@ -88,21 +88,22 @@ void InStream::decompress(vector<uchar> &data) {
 
 int OutStream::tunstall_compress(uchar *data, int size) {
 	Tunstall t;
+	
 	t.getProbabilities(data, size);
-
 	t.createDecodingTables2();
 	t.createEncodingTables();
 
 	int compressed_size;
-	unsigned char *compressed_data = t.compress(data, size, compressed_size);
+	unsigned char* compressed_data = t.compress(data, size, compressed_size);
 
 	write<uchar>(t.probabilities.size());
-	writeArray<uchar>(t.probabilities.size()*2, (uchar *)t.probabilities.data());
+	writeArray<uchar>(t.probabilities.size() * 2, (uchar*)t.probabilities.data());
 
 
 	write<int>(size);
 	write<int>(compressed_size);
 	writeArray<unsigned char>(compressed_size, compressed_data);
+	
 	delete []compressed_data;
 	//return compressed_size;
 	return 1 + t.probabilities.size()*2 + 4 + 4 + compressed_size;
@@ -161,11 +162,16 @@ int OutStream::lz4_compress(uchar *data, int size) {
 
 	int compressed_size = LZ4_compressBound(size);
 	uchar *compressed_data = new uchar[compressed_size];
-	compressed_size = LZ4_compress_HC((const char *)data, (char *)compressed_data, size, compressed_size, 9);
 
+	if (compression_level < LZ4HC_CLEVEL_MIN)
+		compressed_size = LZ4_compress((const char*)data, (char*)compressed_data, size);
+	else
+		compressed_size = LZ4_compress_HC((const char*)data, (char*)compressed_data, size, compressed_size, compression_level);
+	
 	write<int>(size);
 	write<int>(compressed_size);
 	writeArray<uchar>(compressed_size, compressed_data);
+	
 	delete []compressed_data;
 	//return compressed_size;
 	return 4 + 4 + compressed_size;

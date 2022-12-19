@@ -16,10 +16,6 @@ a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* CRASH
-	- BUGS: test sphere.ply (idx 16)
-*/
-
 #include <assert.h>
 #include <sstream>
 #include <fstream>
@@ -30,9 +26,9 @@ If not, see <http://www.gnu.org/licenses/>.
 #include "decoder.h"
 
 #include "tinyply.h"
-#include "tinydir.h"
 #include "meshloader.h"
 #include "timer.h"
+#include <lz4hc.h>
 
 #include <unordered_map>
 #include <sstream>
@@ -342,7 +338,7 @@ int main(int argc, char *argv[]) {
 	string csvContent;
 	ofstream results("results.csv");
 	unordered_map<crt::Stream::Entropy, std::vector<int>> compressionLevels = {
-		{crt::Stream::LZ4, {0,0}},
+		{crt::Stream::LZ4, {LZ4HC_CLEVEL_MIN-1, LZ4HC_CLEVEL_MAX}},
 		{crt::Stream::TUNSTALL, {0,0}}
 	};
 
@@ -356,7 +352,7 @@ int main(int argc, char *argv[]) {
 		std::stringstream ss;
 		string entropyString = CrtEntropyToString(toCompare[i]);
 
-		for (uint32_t c = compressionLevels[toCompare[i]][0]; c <= compressionLevels[toCompare[i]][1]; c++)
+		for (uint32_t c = compressionLevels[toCompare[i]][0]; c <= compressionLevels[toCompare[i]][1]; c+=compressionLevelIncrease)
 		{
 			ss << entropyString << " Lev" << c << " enc,";
 			ss << entropyString << " Lev" << c << " dec,";
@@ -406,8 +402,8 @@ int main(int argc, char *argv[]) {
 						results.close();
 						return -1;
 					}
+					
 					decompResult = DecompressModel(modelPaths[m], compResult);
-
 					if (decompResult.Error != 0)
 					{
 						cout << "A decompression error occurred, saving partial results and aborting benchmark." << endl;
@@ -435,8 +431,8 @@ int main(int argc, char *argv[]) {
 
 				stringstream ss;
 				ss << compResult.EncodingTime << "," << decompResult.DecodingTime << "," << compResult.Ratio << "," <<
-					(compResult.NFaces / (max(compResult.EncodingTime, 0.1f) * 1000.0f)) << "," << 
-					(compResult.NFaces / (max(decompResult.DecodingTime, 0.1f) * 1000.0f)) << ",";
+					((compResult.NVerts / 3) / (max(compResult.EncodingTime, 0.1f) * 1000.0f)) << "," << 
+					((compResult.NVerts / 3)/ (max(decompResult.DecodingTime, 0.1f) * 1000.0f)) << ",";
 				modelResults += ss.str();
 			}
 		}
@@ -446,6 +442,7 @@ int main(int argc, char *argv[]) {
 
 	results << csvContent;
 	results.close();
+
 	return 0;
 }
 

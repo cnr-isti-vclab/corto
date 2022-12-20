@@ -67,7 +67,7 @@ var CortoDecoder = (function() {
 		WebAssembly.instantiate(unhex(wasm_base), { env:env, wasi_unstable:env })
 		.then(function(result) {
 			instance = result.instance;
-			instance.exports._start();
+			instance.exports._initialize();
 			env.emscripten_notify_memory_growth(0);
 		});
 

@@ -3,7 +3,7 @@
 #include <emscripten.h>
 
 
-#include "../../src/decoder.h"
+#include "../../../include/corto/decoder.h"
 
 
 using namespace crt;

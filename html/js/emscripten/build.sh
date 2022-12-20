@@ -1,18 +1,21 @@
 #!/bin/bash
 
 #adjust this path before running. requires emsdk installed.
-source ~/devel/emsdk/emsdk_env.sh 
+source "../../../../../Tools/emsdk/emsdk_env.sh"
 
 emcc -std=c++11 emcorto.cpp \
-../../src/cstream.cpp \
-../../src/bitstream.cpp \
-../../src/tunstall.cpp \
-../../src/normal_attribute.cpp \
-../../src/color_attribute.cpp \
-../../src/decoder.cpp \
--O3 -DNDEBUG \
--s EXPORTED_FUNCTIONS='["_ngroups", "_groups", "_nvert", "_nface", "_decode", "_malloc", "_free", "_sbrk","__start"]' \
--s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=24576 -s TOTAL_MEMORY=1048576 -o decoder_base.wasm 
+../../../src/cstream.cpp \
+../../../src/bitstream.cpp \
+../../../src/tunstall.cpp \
+../../../src/normal_attribute.cpp \
+../../../src/color_attribute.cpp \
+../../../src/decoder.cpp \
+-I ../../../include/corto/ \
+-O3 \
+-DNDEBUG \
+-s EXPORTED_FUNCTIONS='["_ngroups", "_groups", "_nvert", "_nface", "_decode", "_malloc", "_free", "_sbrk","__initialize"]' \
+-s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=24576 -s TOTAL_MEMORY=1048576 -o decoder_base.wasm \
+--no-entry
 
 #-g \
 #--debug \
@@ -31,3 +34,5 @@ sed -f sed_command.txt corto.em.proto.js > ../corto.em.js
 
 #serve pages for testing as:
 #emrun --no_browser --port 8080 .
+
+exec $SHELL

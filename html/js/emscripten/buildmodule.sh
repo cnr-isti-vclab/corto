@@ -1,19 +1,25 @@
 #!/bin/bash
-source /home/ponchio/devel/emsdk/emsdk_env.sh 
+
+#adjust this path before running. requires emsdk installed.
+source "../../../../../Tools/emsdk/emsdk_env.sh"
+
 emcc -std=c++11 emcorto.cpp \
-../../src/cstream.cpp \
-../../src/bitstream.cpp \
-../../src/tunstall.cpp \
-../../src/normal_attribute.cpp \
-../../src/color_attribute.cpp \
-../../src/decoder.cpp \
--o emcorto.html --post-js post.js \
+../../../src/cstream.cpp \
+../../../src/bitstream.cpp \
+../../../src/tunstall.cpp \
+../../../src/normal_attribute.cpp \
+../../../src/color_attribute.cpp \
+../../../src/decoder.cpp \
+-o emcorto.mjs --post-js post.js \
 -O3 \
--s "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall']" \
+-I ../../../include/corto/ \
+-s "EXPORTED_RUNTIME_METHODS=['ccall']" \
 --memory-init-file 0 \
 -s DISABLE_EXCEPTION_CATCHING=1 \
 -s ALLOW_MEMORY_GROWTH=1 \
--s EXPORT_NAME="'Corto'"
+-s EXPORT_NAME="'Corto'" \
+-s EXPORT_ES6=1 \
+-s MODULARIZE=1
 
 
 #closure has a bug with ccall function not being hashed correctly. saves only 10KB
@@ -27,3 +33,5 @@ emcc -std=c++11 emcorto.cpp \
 
 #serve pages for testing as:
 #emrun --no_browser --port 8080 .
+
+exec $SHELL

@@ -180,6 +180,7 @@ CompressionResult CompressModel(string path, CompressionSettings& settings)
 	crt::Encoder* encoder = new Encoder(loader.nvert, loader.nface, settings.Entropy);
 	ret.CompressionEncoder = encoder;
 
+	encoder->setCompressionLevel(settings.CompressionLevel);
 	encoder->exif = loader.exif;
 	//add and override exif properties
 	for (auto it : settings.Exif)

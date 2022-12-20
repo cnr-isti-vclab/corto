@@ -27,9 +27,9 @@ emcc -std=c++11 emcorto.cpp \
 
 # TODO: check simd support
 #-munimplemented-simd128 -mbulk-memory
-echo -n "s#\(var wasm_base = \)\".*\";#\\1\"" > sed_command.txt
-hexdump -v -e '1/1 "%02X"' decoder_base.wasm >> sed_command.txt
-echo "\";#" >> sed_command.txt
+printf "s/var wasm_base = \".*\";/var wasm_base=\"" > sed_command.txt
+xxd -ps -c 0 decoder_base.wasm | tr -d '\n' >> sed_command.txt
+printf "\";/" >> sed_command.txt
 sed -f sed_command.txt corto.em.proto.js > ../corto.em.js
 
 #serve pages for testing as:

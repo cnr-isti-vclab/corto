@@ -10,9 +10,14 @@ emcc -std=c++11 emcorto.cpp \
 ../../../src/normal_attribute.cpp \
 ../../../src/color_attribute.cpp \
 ../../../src/decoder.cpp \
+../../../deps/lz4/lib/lz4.c \
+../../../deps/lz4/lib/lz4file.c \
+../../../deps/lz4/lib/lz4frame.c \
+../../../deps/lz4/lib/lz4hc.c \
+../../../deps/lz4/lib/xxhash.c \
 -o emcorto.mjs --post-js post.js \
 -O3 \
--I ../../../include/corto/ \
+-I ../../../include/corto/ ../../../deps/lz4/ \
 -s "EXPORTED_RUNTIME_METHODS=['ccall']" \
 --memory-init-file 0 \
 -s DISABLE_EXCEPTION_CATCHING=1 \

@@ -3,6 +3,8 @@
 #adjust this path before running. requires emsdk installed.
 source "../../../../../Tools/emsdk/emsdk_env.sh"
 
+# Split LZ4 and corto, link at the end
+
 emcc -std=c++11 emcorto.cpp \
 ../../../src/cstream.cpp \
 ../../../src/bitstream.cpp \
@@ -10,7 +12,12 @@ emcc -std=c++11 emcorto.cpp \
 ../../../src/normal_attribute.cpp \
 ../../../src/color_attribute.cpp \
 ../../../src/decoder.cpp \
--I ../../../include/corto/ \
+../../../deps/lz4/lib/lz4.c \
+../../../deps/lz4/lib/lz4file.c \
+../../../deps/lz4/lib/lz4frame.c \
+../../../deps/lz4/lib/lz4hc.c \
+../../../deps/lz4/lib/xxhash.c \
+-I ../../../include/corto/ ../../../deps/lz4/ \
 -O3 \
 -DNDEBUG \
 -s EXPORTED_FUNCTIONS='["_ngroups", "_groups", "_nvert", "_nface", "_decode", "_malloc", "_free", "_sbrk","__initialize"]' \

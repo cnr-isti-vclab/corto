@@ -50,8 +50,6 @@ bool EMSCRIPTEN_KEEPALIVE hasUv(Decoder *decoder) {
 	return decoder->hasAttr("uv");
 }
 
-
-
 void EMSCRIPTEN_KEEPALIVE setPositions(Decoder *decoder, float *buffer) {
 	decoder->setPositions(buffer);
 }

@@ -4,24 +4,24 @@
 source "../../../../../Tools/emsdk/emsdk_env.sh"
 
 # Split LZ4 and corto, link at the end
+# Add lz4.c (similar to emcorto.cpp)
+# Compress and compressBound probably shouldn't be part of the library
 
-emcc -std=c++11 emcorto.cpp \
+emcc -std=c++11 emcorto.cpp emlz4.cpp \
 ../../../src/cstream.cpp \
 ../../../src/bitstream.cpp \
 ../../../src/tunstall.cpp \
 ../../../src/normal_attribute.cpp \
 ../../../src/color_attribute.cpp \
 ../../../src/decoder.cpp \
-../../../deps/lz4/lib/lz4.c \
-../../../deps/lz4/lib/lz4file.c \
-../../../deps/lz4/lib/lz4frame.c \
-../../../deps/lz4/lib/lz4hc.c \
-../../../deps/lz4/lib/xxhash.c \
--I ../../../include/corto/ ../../../deps/lz4/ \
--O3 \
--DNDEBUG \
+-I ../../../include/corto/ \
+-I ../../../deps/lz4/lib/ \
+-o decoder_base.wasm \
 -s EXPORTED_FUNCTIONS='["_ngroups", "_groups", "_nvert", "_nface", "_decode", "_malloc", "_free", "_sbrk","__initialize"]' \
--s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=24576 -s TOTAL_MEMORY=1048576 -o decoder_base.wasm \
+-s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=24576 -s TOTAL_MEMORY=1048576 \
+-O3 \
+-DENABLE_LZ4=1 \
+-DNDEBUG \
 --no-entry
 
 #-g \

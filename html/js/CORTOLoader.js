@@ -39,8 +39,8 @@ THREE.CORTOLoader.prototype = {
 		loader.load(url, function(blob) {
 
 			var now = performance.now();
-			var decoder = new CortoDecoder(blob);
-			var model = decoder.decode();
+			var decoder = CortoDecoderEm;
+			var model = decoder.decode(blob);
 
 			/*used for debug and profiling */
 			var ms = performance.now() - now;
@@ -68,7 +68,7 @@ THREE.CORTOLoader.prototype = {
 		if (model.nface)
 			geometry.setIndex(new THREE.BufferAttribute(model.index, 1));
 
-		if(model.groups.length > 0) {
+		if(model.groups && model.groups.length > 0) {
 			var start = 0;
 			for(var i = 0; i < model.groups.length; i++) {
 				var g = model.groups[i];
@@ -101,7 +101,7 @@ THREE.CORTOLoader.prototype = {
 			options.side = THREE.DoubleSide;
 
 			var materials = [];
-			for(var i = 0; i < model.groups.length; i++) {
+			for(var i = 0; model.groups && i < model.groups.length; i++) {
 				var opt = Object.assign({}, options);
 				var group = model.groups[i];
 				if(group.properties.texture) {

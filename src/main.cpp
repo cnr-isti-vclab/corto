@@ -64,6 +64,7 @@ FILE is the path to a .ply or a .obj 3D model.
 	  border: store difference only for boundary vertices (smaller, inaccurate)
   -P <file.ply>: decompress and save as .ply for debugging purpouses
   -G <group>: extract only a group in obj
+  -A: add normals to the output file
 )use";
 }
 

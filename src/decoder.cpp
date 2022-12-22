@@ -162,7 +162,7 @@ void Decoder::decodeMesh() {
 	index.decodeGroups(stream);
 	index.decode(stream);
 
-	for(auto it: data)
+	for(auto it : data)
 		it.second->decode(nvert, stream);
 
 	index.prediction.resize(nvert);

@@ -148,7 +148,7 @@ var CortoDecoder = (function() {
 				nptr = sbrk(nvert * 6);
 				exports.setNormals16(decoder, nptr);
 			} else {
-				pptr = sbrk(nvert * 12);
+				nptr = sbrk(nvert * 12);
 				exports.setNormals32(decoder, nptr);
 			}
 		}

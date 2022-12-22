@@ -76,14 +76,18 @@ THREE.CORTOLoader.prototype = {
 				start = g.end;
 			}
 		}
+		else {
+			model.groups = [{end: model.nface, properties:{}}];
+			geometry.addGroup(0, model.nface * 3, 0);
+		}
 
-		geometry.addAttribute('position', new THREE.BufferAttribute(model.position, 3));
+		geometry.setAttribute('position', new THREE.BufferAttribute(model.position, 3));
 		if(model.color)
-			geometry.addAttribute('color', new THREE.BufferAttribute(model.color, 3, true));
+			geometry.setAttribute('color', new THREE.BufferAttribute(model.color, 3, true));
 		if (model.normal)
-			geometry.addAttribute('normal', new THREE.BufferAttribute(model.normal, 3, true));
+			geometry.setAttribute('normal', new THREE.BufferAttribute(model.normal, 3, true));
 		if (model.uv)
-			geometry.addAttribute('uv', new THREE.BufferAttribute(model.uv, 2));
+			geometry.setAttribute('uv', new THREE.BufferAttribute(model.uv, 2));
 		return geometry;
 	},
 
@@ -91,7 +95,7 @@ THREE.CORTOLoader.prototype = {
 
 		var promise = { waiting: 0 }
 		var options = {}
-		options.shading = model.normal? THREE.SmoothShading : THREE.FlatShading;
+		options.flatShading = model.normal? true : true;
 		if(model.color)
 			options.vertexColors = THREE.VertexColors;
 		else
@@ -116,7 +120,7 @@ THREE.CORTOLoader.prototype = {
 				else
 					materials.push(new THREE.MeshLambertMaterial(opt));
 			}
-			mesh.material = new THREE.MultiMaterial(materials);
+			mesh.material = materials;
 
 		} else {
 			options.size = 2;

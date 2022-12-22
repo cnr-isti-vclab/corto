@@ -62,7 +62,7 @@ struct CompressionSettings
 	crt::Stream::Entropy Entropy;
 	int CompressionLevel;
 	bool PointCloud = false;
-	bool AddNormals = false;
+	bool AddNormals = true;
 	string Group;
 	string NormalPrediction;
 	std::map<std::string, std::string> Exif;

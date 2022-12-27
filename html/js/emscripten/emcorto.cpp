@@ -26,6 +26,55 @@ void EMSCRIPTEN_KEEPALIVE groups(Decoder *decoder, int *groups) {
 	}
 }
 
+const char* EMSCRIPTEN_KEEPALIVE getPropName(Decoder* decoder, int group, int prop) {
+	int n = decoder->index.groups.size();
+	if (group < 0 || group >= n)
+		return nullptr;
+	int p = decoder->index.groups[group].properties.size();
+	if (prop < 0 || prop >= p)
+		return nullptr;
+	
+	int i=0;
+	for (auto& property : decoder->index.groups[group].properties) {
+		if (i == prop)
+			return property.first.c_str();
+		i++;
+	}
+	
+	return nullptr;
+}
+
+const char* EMSCRIPTEN_KEEPALIVE getPropValue(Decoder* decoder, int group, int prop) {
+	int n = decoder->index.groups.size();
+	if (group < 0 || group >= n)
+		return nullptr;
+	int p = decoder->index.groups[group].properties.size();
+	if (prop < 0 || prop >= p)
+		return nullptr;
+	
+	int i=0;
+	for (auto& property : decoder->index.groups[group].properties) {
+		if (i == prop)
+			return property.second.c_str();
+		i++;
+	}
+	
+	return nullptr;
+}
+
+
+
+int EMSCRIPTEN_KEEPALIVE groupEnd(Decoder* decoder, int group) {
+	int n = decoder->index.groups.size();
+	if (group < 0 || group >= n)
+		return 0;
+	return decoder->index.groups[group].end;
+}
+
+int EMSCRIPTEN_KEEPALIVE nprops(Decoder* decoder, int group) {
+	return decoder->index.groups[group].properties.size();
+}
+
 int EMSCRIPTEN_KEEPALIVE nvert(Decoder *decoder) {
 	return decoder->nvert;
 }

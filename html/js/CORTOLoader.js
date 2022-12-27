@@ -95,7 +95,7 @@ THREE.CORTOLoader.prototype = {
 
 		var promise = { waiting: 0 }
 		var options = {}
-		options.flatShading = model.normal? true : true;
+		options.flatShading = model.normal? false : true;
 		if(model.color)
 			options.vertexColors = THREE.VertexColors;
 		else

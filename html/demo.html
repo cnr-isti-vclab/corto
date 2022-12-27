@@ -73,7 +73,7 @@ function getURLParameter(name) {
 var model = getURLParameter('model');
 var path = getURLParameter('path');
 if(!path) path = 'models/';
-if(!model) model = 'tarta_lz4.crt';
+if(!model) model = 'tarta.crt';
 
 var loader = new THREE.CORTOLoader({ path: path}); //can pass a material or a multimaterial if you know whats' in the model.
 

@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+
 onmessage = async function(job) {
 	if(typeof(job.data) == "string") return;
 
@@ -61,6 +62,48 @@ var CortoDecoder = (function() {
 			bytes[i / 2] = parseInt(data.substr(i, 2), 16);
 		}
 		return bytes.buffer;
+	}
+	
+	var UTF8Decoder = typeof TextDecoder != "undefined" ? new TextDecoder("utf8") : undefined;
+
+	function UTF8ArrayToString(heapOrArray, idx, maxBytesToRead) {
+		var endIdx = idx + maxBytesToRead;
+		var endPtr = idx;
+		while (heapOrArray[endPtr] && !(endPtr >= endIdx)) ++endPtr;
+		if (endPtr - idx > 16 && heapOrArray.buffer && UTF8Decoder) {
+			return UTF8Decoder.decode(heapOrArray.subarray(idx, endPtr));
+		}
+		var str = "";
+		while (idx < endPtr) {
+			var u0 = heapOrArray[idx++];
+			if (!(u0 & 128)) {
+				str += String.fromCharCode(u0);
+				continue;
+			}
+			var u1 = heapOrArray[idx++] & 63;
+			if ((u0 & 224) == 192) {
+			str += String.fromCharCode((u0 & 31) << 6 | u1);
+			continue;
+			}
+			var u2 = heapOrArray[idx++] & 63;
+			if ((u0 & 240) == 224) {
+				u0 = (u0 & 15) << 12 | u1 << 6 | u2;
+			} else {
+				if ((u0 & 248) != 240) warnOnce("Invalid UTF-8 leading byte " + ptrToString(u0) + " encountered when deserializing a UTF-8 string in wasm memory to a JS string!");
+				u0 = (u0 & 7) << 18 | u1 << 12 | u2 << 6 | heapOrArray[idx++] & 63;
+			}
+			if (u0 < 65536) {
+				str += String.fromCharCode(u0);
+			} else {
+				var ch = u0 - 65536;
+				str += String.fromCharCode(55296 | ch >> 10, 56320 | ch & 1023);
+			}
+		}
+		return str;
+	}
+
+	function UTF8ToString(ptr, maxBytesToRead) {
+		return ptr ? UTF8ArrayToString(heap, ptr, maxBytesToRead) : "";
 	}
 
 	var promise =
@@ -105,17 +148,7 @@ var CortoDecoder = (function() {
 		var geometry = {
 			nvert: nvert,
 			nface: nface,
-		}
-
-		var ngroups = exports.ngroups(decoder);
-		if(ngroups > 0) {
-			pad();
-			var gp = sbrk(4*ngroups);
-			exports.groups(decoder, gp);
-			geometry.groups =  new Uint32Array( ngroups*4);
-			geometry.grous.set(gp);
-			free(gp);
-		}
+		}		
 
 		var hasNormal = exports.hasNormal(decoder);
 		var hasColor = exports.hasColor(decoder);
@@ -160,6 +193,30 @@ var CortoDecoder = (function() {
 		}
 		pad();
 		exports.decode(decoder);
+
+		var ngroups = exports.ngroups(decoder);
+		geometry.groups = [];
+
+		for (let i=0; i<ngroups; i++) {
+			let group = {end: exports.groupEnd(decoder, i), properties:{}};
+			let nProps = exports.nprops(decoder, i);
+			let name = new Uint8Array(256);
+			let value = new Uint8Array(256);
+
+			if (nProps != 0) {
+				for (let j=0; j<nProps; j++) {
+					let namePtr = exports.getPropName(decoder, i, j);
+					let valuePtr = exports.getPropValue(decoder, i, j);
+
+					let name = UTF8ToString(namePtr);
+					let value = UTF8ToString(valuePtr);
+
+
+					group.properties[name] = value;
+				}
+			}
+			geometry.groups.push(group);
+		}
 
 
 		//typed  arrays needs to be created in javascript space, not as views of heap (next call will overwrite them!)

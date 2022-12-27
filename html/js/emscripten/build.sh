@@ -17,12 +17,12 @@ emcc -std=c++11 emcorto.cpp emlz4.cpp \
 -I ../../../include/corto/ \
 -I ../../../deps/lz4/lib/ \
 -o decoder_base.wasm \
--s EXPORTED_FUNCTIONS='["_ngroups", "_groups", "_nvert", "_nface", "_decode", "_malloc", "_free", "_sbrk","__initialize"]' \
+-s EXPORTED_FUNCTIONS='["_ngroups", "_groups", "_getPropName", "_getPropValue", "_groupEnd", "_nprops", "_nvert", "_nface", "_decode", "_malloc", "_memcpy", "_free", "_sbrk","__initialize"]' \
 -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=24576 -s TOTAL_MEMORY=1048576 \
 -O3 \
 -DENABLE_LZ4=1 \
 -DNDEBUG \
---no-entry
+--no-entry -msimd128
 
 #-g \
 #--debug \

@@ -3,23 +3,20 @@
 #adjust this path before running. requires emsdk installed.
 source "../../../../../Tools/emsdk/emsdk_env.sh"
 
-emcc -std=c++11 emcorto.cpp \
+emcc -std=c++11 emcorto.cpp emlz4.cpp \
 ../../../src/cstream.cpp \
 ../../../src/bitstream.cpp \
 ../../../src/tunstall.cpp \
 ../../../src/normal_attribute.cpp \
 ../../../src/color_attribute.cpp \
 ../../../src/decoder.cpp \
-../../../deps/lz4/lib/lz4.c \
-../../../deps/lz4/lib/lz4file.c \
-../../../deps/lz4/lib/lz4frame.c \
-../../../deps/lz4/lib/lz4hc.c \
-../../../deps/lz4/lib/xxhash.c \
 -o emcorto.mjs --post-js post.js \
 -O3 \
--I ../../../include/corto/ ../../../deps/lz4/ \
+-I ../../../include/corto/ \
+-I ../../../deps/lz4/lib \
 -s "EXPORTED_RUNTIME_METHODS=['ccall']" \
 --memory-init-file 0 \
+-DENABLE_LZ4=1 \
 -s DISABLE_EXCEPTION_CATCHING=1 \
 -s ALLOW_MEMORY_GROWTH=1 \
 -s EXPORT_NAME="'Corto'" \

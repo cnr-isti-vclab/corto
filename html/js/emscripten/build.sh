@@ -41,5 +41,3 @@ sed -f sed_command.txt corto.em.proto.js > ../corto.em.js
 
 #serve pages for testing as:
 #emrun --no_browser --port 8080 .
-
-exec $SHELL

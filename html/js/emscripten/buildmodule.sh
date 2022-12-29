@@ -35,5 +35,3 @@ emcc -std=c++11 emcorto.cpp emlz4.cpp \
 
 #serve pages for testing as:
 #emrun --no_browser --port 8080 .
-
-exec $SHELL

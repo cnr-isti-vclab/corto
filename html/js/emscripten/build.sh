@@ -1,18 +1,28 @@
 #!/bin/bash
 
 #adjust this path before running. requires emsdk installed.
-source ~/devel/emsdk/emsdk_env.sh 
+source "../../../../../Tools/emsdk/emsdk_env.sh"
 
-emcc -std=c++11 emcorto.cpp \
-../../src/cstream.cpp \
-../../src/bitstream.cpp \
-../../src/tunstall.cpp \
-../../src/normal_attribute.cpp \
-../../src/color_attribute.cpp \
-../../src/decoder.cpp \
--O3 -DNDEBUG \
--s EXPORTED_FUNCTIONS='["_ngroups", "_groups", "_nvert", "_nface", "_decode", "_malloc", "_free", "_sbrk","__start"]' \
--s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=24576 -s TOTAL_MEMORY=1048576 -o decoder_base.wasm 
+# Split LZ4 and corto, link at the end
+# Add lz4.c (similar to emcorto.cpp)
+# Compress and compressBound probably shouldn't be part of the library
+
+emcc -std=c++11 emcorto.cpp emlz4.cpp \
+../../../src/cstream.cpp \
+../../../src/bitstream.cpp \
+../../../src/tunstall.cpp \
+../../../src/normal_attribute.cpp \
+../../../src/color_attribute.cpp \
+../../../src/decoder.cpp \
+-I ../../../include/corto/ \
+-I ../../../deps/lz4/lib/ \
+-o decoder_base.wasm \
+-s EXPORTED_FUNCTIONS='["_ngroups", "_groups", "_getPropName", "_getPropValue", "_groupEnd", "_nprops", "_nvert", "_nface", "_decode", "_malloc", "_memcpy", "_free", "_sbrk","__initialize"]' \
+-s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=24576 -s TOTAL_MEMORY=1048576 \
+-O3 \
+-DENABLE_LZ4=1 \
+-DNDEBUG \
+--no-entry -msimd128
 
 #-g \
 #--debug \
@@ -24,9 +34,9 @@ emcc -std=c++11 emcorto.cpp \
 
 # TODO: check simd support
 #-munimplemented-simd128 -mbulk-memory
-echo -n "s#\(var wasm_base = \)\".*\";#\\1\"" > sed_command.txt
-hexdump -v -e '1/1 "%02X"' decoder_base.wasm >> sed_command.txt
-echo "\";#" >> sed_command.txt
+printf "s/var wasm_base = \".*\";/var wasm_base=\"" > sed_command.txt
+xxd -ps -c 0 decoder_base.wasm | tr -d '\n' >> sed_command.txt
+printf "\";/" >> sed_command.txt
 sed -f sed_command.txt corto.em.proto.js > ../corto.em.js
 
 #serve pages for testing as:

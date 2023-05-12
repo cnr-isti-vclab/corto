@@ -39,8 +39,8 @@ THREE.CORTOLoader.prototype = {
 		loader.load(url, function(blob) {
 
 			var now = performance.now();
-			var decoder = new CortoDecoder(blob);
-			var model = decoder.decode();
+			var decoder = CortoDecoderEm;
+			var model = decoder.decode(blob);
 
 			/*used for debug and profiling */
 			var ms = performance.now() - now;
@@ -68,7 +68,7 @@ THREE.CORTOLoader.prototype = {
 		if (model.nface)
 			geometry.setIndex(new THREE.BufferAttribute(model.index, 1));
 
-		if(model.groups.length > 0) {
+		if(model.groups && model.groups.length > 0) {
 			var start = 0;
 			for(var i = 0; i < model.groups.length; i++) {
 				var g = model.groups[i];
@@ -76,14 +76,18 @@ THREE.CORTOLoader.prototype = {
 				start = g.end;
 			}
 		}
+		else {
+			model.groups = [{end: model.nface, properties:{}}];
+			geometry.addGroup(0, model.nface * 3, 0);
+		}
 
-		geometry.addAttribute('position', new THREE.BufferAttribute(model.position, 3));
+		geometry.setAttribute('position', new THREE.BufferAttribute(model.position, 3));
 		if(model.color)
-			geometry.addAttribute('color', new THREE.BufferAttribute(model.color, 3, true));
+			geometry.setAttribute('color', new THREE.BufferAttribute(model.color, 3, true));
 		if (model.normal)
-			geometry.addAttribute('normal', new THREE.BufferAttribute(model.normal, 3, true));
+			geometry.setAttribute('normal', new THREE.BufferAttribute(model.normal, 3, true));
 		if (model.uv)
-			geometry.addAttribute('uv', new THREE.BufferAttribute(model.uv, 2));
+			geometry.setAttribute('uv', new THREE.BufferAttribute(model.uv, 2));
 		return geometry;
 	},
 
@@ -91,7 +95,7 @@ THREE.CORTOLoader.prototype = {
 
 		var promise = { waiting: 0 }
 		var options = {}
-		options.shading = model.normal? THREE.SmoothShading : THREE.FlatShading;
+		options.flatShading = model.normal? false : true;
 		if(model.color)
 			options.vertexColors = THREE.VertexColors;
 		else
@@ -101,7 +105,7 @@ THREE.CORTOLoader.prototype = {
 			options.side = THREE.DoubleSide;
 
 			var materials = [];
-			for(var i = 0; i < model.groups.length; i++) {
+			for(var i = 0; model.groups && i < model.groups.length; i++) {
 				var opt = Object.assign({}, options);
 				var group = model.groups[i];
 				if(group.properties.texture) {
@@ -116,7 +120,7 @@ THREE.CORTOLoader.prototype = {
 				else
 					materials.push(new THREE.MeshLambertMaterial(opt));
 			}
-			mesh.material = new THREE.MultiMaterial(materials);
+			mesh.material = materials;
 
 		} else {
 			options.size = 2;

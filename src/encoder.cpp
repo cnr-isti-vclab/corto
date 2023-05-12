@@ -11,7 +11,7 @@ the Free Software Foundation; either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received
 a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
@@ -203,7 +203,6 @@ bool Encoder::addAttribute(const char *name, char *buffer, VertexAttribute *attr
 	return true;
 }
 
-
 void Encoder::encode() {
 	stream.reserve(nvert);
 
@@ -212,13 +211,13 @@ void Encoder::encode() {
 	stream.write<uchar>(stream.entropy);
 
 	stream.write<uint32_t>(exif.size());
-	for(auto it: exif) {
+	for (auto it : exif) {
 		stream.writeString(it.first.c_str());
 		stream.writeString(it.second.c_str());
 	}
 
 	stream.write<int>(data.size());
-	for(auto it: data) {
+	for (auto it : data) {
 		stream.writeString(it.first.c_str());                //name
 		stream.write<int>(it.second->codec());
 		stream.write<float>(it.second->q);
@@ -309,19 +308,19 @@ void Encoder::encodePointCloud() {
 void Encoder::encodeMesh() {
 	encoded.resize(nvert, -1);
 
-	if(!index.groups.size()) index.groups.push_back(nface);
+	if (!index.groups.size()) index.groups.push_back(nface);
 	//remove degenerate faces
-	uint32_t start =  0;
+	uint32_t start = 0;
 	uint32_t count = 0;
-	for(Group &g: index.groups) {
-		for(uint32_t i = start; i < g.end; i++) {
-			uint32_t *f = &index.faces[i*3];
+	for (Group& g : index.groups) {
+		for (uint32_t i = start; i < g.end; i++) {
+			uint32_t* f = &index.faces[i * 3];
 
-			if(f[0] == f[1] || f[0] == f[2] || f[1] == f[2])
+			if (f[0] == f[1] || f[0] == f[2] || f[1] == f[2])
 				continue;
 
-			if(count != i) {
-				uint32_t *dest = &index.faces[count*3];
+			if (count != i) {
+				uint32_t* dest = &index.faces[count * 3];
 				dest[0] = f[0];
 				dest[1] = f[1];
 				dest[2] = f[2];
@@ -331,31 +330,31 @@ void Encoder::encodeMesh() {
 		start = g.end;
 		g.end = count;
 	}
-	index.faces.resize(count*3);
+	index.faces.resize(count * 3);
 	nface = count;
 
 	//BitStream bitstream(nvert/4);
-	index.bitstream.reserve(nvert/4);
+	index.bitstream.reserve(nvert / 4);
 	prediction.resize(nvert);
 
-	start =  0;
-	for(Group &g: index.groups) {
+	start = 0;
+	for (Group& g : index.groups) {
 		encodeFaces(start, g.end);
 		start = g.end;
 	}
 #ifdef PRESERVED_UNREFERENCED
 	//encoding unreferenced vertices
-	for(uint32_t i = 0; i < nvert; i++) {
-		if(encoded[i] != -1)
+	for (uint32_t i = 0; i < nvert; i++) {
+		if (encoded[i] != -1)
 			continue;
-		int last = current_vertex-1;
+		int last = current_vertex - 1;
 		prediction.emplace_back(Quad(i, last, last, last));
 		current_vertex++;
 	}
 #endif
 
 	//predelta works using the original indexes, we will deal with unreferenced vertices later (due to prediction resize)
-	for(auto it: data)
+	for (auto it : data)
 		it.second->preDelta(nvert, nface, data, index);
 
 	//cout << "Unreference vertices: " << nvert - current_vertex << " remaining: " << current_vertex << endl;
@@ -364,7 +363,7 @@ void Encoder::encodeMesh() {
 
 
 
-	for(auto it: data)
+	for (auto it : data)
 		it.second->deltaEncode(prediction);
 
 	stream.write<int>(nvert);
@@ -373,9 +372,8 @@ void Encoder::encodeMesh() {
 	index.encodeGroups(stream);
 	index.encode(stream);
 
-	for(auto it: data)
+	for (auto it : data)
 		it.second->encode(nvert, stream);
-
 }
 
 class McFace {

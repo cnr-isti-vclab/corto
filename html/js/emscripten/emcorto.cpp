@@ -3,7 +3,7 @@
 #include <emscripten.h>
 
 
-#include "../../src/decoder.h"
+#include "../../../include/corto/decoder.h"
 
 
 using namespace crt;
@@ -24,6 +24,55 @@ void EMSCRIPTEN_KEEPALIVE groups(Decoder *decoder, int *groups) {
 	for(int i = 0; i < n; i++) {
 		groups[i] = decoder->index.groups[i].end;
 	}
+}
+
+const char* EMSCRIPTEN_KEEPALIVE getPropName(Decoder* decoder, int group, int prop) {
+	int n = decoder->index.groups.size();
+	if (group < 0 || group >= n)
+		return nullptr;
+	int p = decoder->index.groups[group].properties.size();
+	if (prop < 0 || prop >= p)
+		return nullptr;
+	
+	int i=0;
+	for (auto& property : decoder->index.groups[group].properties) {
+		if (i == prop)
+			return property.first.c_str();
+		i++;
+	}
+	
+	return nullptr;
+}
+
+const char* EMSCRIPTEN_KEEPALIVE getPropValue(Decoder* decoder, int group, int prop) {
+	int n = decoder->index.groups.size();
+	if (group < 0 || group >= n)
+		return nullptr;
+	int p = decoder->index.groups[group].properties.size();
+	if (prop < 0 || prop >= p)
+		return nullptr;
+	
+	int i=0;
+	for (auto& property : decoder->index.groups[group].properties) {
+		if (i == prop)
+			return property.second.c_str();
+		i++;
+	}
+	
+	return nullptr;
+}
+
+
+
+int EMSCRIPTEN_KEEPALIVE groupEnd(Decoder* decoder, int group) {
+	int n = decoder->index.groups.size();
+	if (group < 0 || group >= n)
+		return 0;
+	return decoder->index.groups[group].end;
+}
+
+int EMSCRIPTEN_KEEPALIVE nprops(Decoder* decoder, int group) {
+	return decoder->index.groups[group].properties.size();
 }
 
 int EMSCRIPTEN_KEEPALIVE nvert(Decoder *decoder) {
@@ -49,8 +98,6 @@ bool EMSCRIPTEN_KEEPALIVE hasColor(Decoder *decoder) {
 bool EMSCRIPTEN_KEEPALIVE hasUv(Decoder *decoder) {
 	return decoder->hasAttr("uv");
 }
-
-
 
 void EMSCRIPTEN_KEEPALIVE setPositions(Decoder *decoder, float *buffer) {
 	decoder->setPositions(buffer);

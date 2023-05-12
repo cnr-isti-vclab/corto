@@ -11,7 +11,7 @@ the Free Software Foundation; either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received
 a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
@@ -42,7 +42,14 @@ public:
 	uint32_t size;    //compressed size (for stats and other nefarious purpouses)
 	int bits;         //quantization in bits;
 
-	VertexAttribute(): buffer(nullptr), N(0), q(0.0f), strategy(0), format(INT32), size(0) {}
+	VertexAttribute()
+            : buffer(nullptr),
+              N(0),
+              q(0.0f),
+              strategy(0),
+              format(INT32),
+              size(0)
+        {}
 	virtual ~VertexAttribute() {}
 
 	virtual int codec() = 0; //identifies attribute class.
@@ -184,7 +191,7 @@ public:
 		switch(format) {
 		case FLOAT:
 			for(uint32_t i = 0; i < n; i++)
-				((float *)buffer)[i] = coords[i]*q;
+					((float *)buffer)[i] = coords[i]*q;
 			break;
 
 		case INT16:

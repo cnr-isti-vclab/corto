@@ -13,6 +13,7 @@
 <!--script src="js/corto.js"></script-->
 
 <script src="js/attribute.js"></script>
+<script src="js/stream.js"></script>
 <script src="js/tunstall.js"></script>
 <script>var CortoDecoderEm = CortoDecoder;</script>
 <script src="js/cortodecoder.js"></script>
@@ -69,7 +70,7 @@ var path = getURLParameter('path');
 if(!path) path = 'models/';
 if(!model) model = 'tarta.crt';
 
-var loader = new THREE.CORTOLoader({ path: path }); //can pass a material or a multimaterial if you know whats' in the model.
+var loader = new THREE.CORTOLoader({ path: path}); //can pass a material or a multimaterial if you know whats' in the model.
 
 var decode_times = [];
 var em_times = [];
@@ -132,8 +133,8 @@ function profile() {
 		return;
 
 	var now = performance.now();
-	var decoder = new CortoDecoder(blob);
-	var model = decoder.decode();
+	var decoder = CortoDecoderEm;
+	var model = decoder.decode(blob);
 	var ms = performance.now() - now;
 	decode_times.push(ms);
 	console.log((model.nvert/1024.0).toFixed(1) + "KV", ms.toFixed(1) + "ms", ((model.nvert/1000)/ms).toFixed(2) + "MV/s");

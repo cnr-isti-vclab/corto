@@ -11,7 +11,7 @@ the Free Software Foundation; either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received
 a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
@@ -34,7 +34,11 @@ int ilog2(uint64_t p);
 
 class Stream {
 public:
-	enum Entropy { NONE = 0, TUNSTALL = 1, HUFFMAN = 2, ZLIB = 3, LZ4 = 4 };
+	enum Entropy { NONE = 0, TUNSTALL = 1, HUFFMAN = 2, ZLIB = 3
+#ifdef ENABLE_LZ4
+		, LZ4 = 4
+#endif
+	};
 	Entropy entropy;
 	Stream(): entropy(TUNSTALL) {}
 };
@@ -43,22 +47,28 @@ class OutStream: public Stream {
 protected:
 	std::vector<uchar> buffer;
 	size_t stopwatch; //used to measure stream partial size.
+	int compression_level;
 
 public:
-	OutStream(size_t r = 0): stopwatch(0) { buffer.reserve(r); }
-	uint32_t size() { return buffer.size(); }
-	uchar *data() { return buffer.data(); }
-	void reserve(size_t r) { buffer.reserve(r); }
-	void restart() { stopwatch = buffer.size(); }
-	uint32_t elapsed() {
+	OutStream(size_t r = 0): stopwatch(0)
+	{ buffer.reserve(r); }
+	inline uint32_t size() { return buffer.size(); }
+	inline uchar *data() { return buffer.data(); }
+	inline void reserve(size_t r) { buffer.reserve(r); }
+	inline void restart() { stopwatch = buffer.size(); }
+	inline uint32_t elapsed() {
 		size_t e = size() - stopwatch; stopwatch = size();
 		return (uint32_t)e;
 	}
+	inline void setCompressionLevel(int l) { compression_level = l; }
 	int  compress(uint32_t size, uchar *data);
-	int  tunstall_compress(unsigned char *data, int size);
+	int  tunstall_compress(uchar *data, int size);
 
 #ifdef ENTROPY_TESTS
 	int  zlib_compress(uchar *data, int size);
+#endif
+
+#ifdef ENABLE_LZ4
 	int  lz4_compress(uchar *data, int size);
 #endif
 
@@ -162,7 +172,7 @@ public:
 		write(bitstream);
 		compress(logs.size(), logs.data());
 	}
-	
+
 	//encode DIFFS
 	template <class T> void encodeDiffs(uint32_t size, T *values) {
 		BitStream bitstream(size);
@@ -175,7 +185,7 @@ public:
 			}
 			int ret = ilog2(abs(val)) + 1;  //0 -> 0, [1,-1] -> 1 [-2,-3,2,3] -> 2
 			logs[i] = (uchar)ret;
-			
+
 			int middle = (1<<ret)>>1;
 			if(val < 0) val = -val -middle;
 			bitstream.write(val, ret);
@@ -183,7 +193,7 @@ public:
 		write(bitstream);
 		compress(logs.size(), logs.data());
 	}
-	
+
 	//encode POSITIVE values
 	template <class T> void encodeIndices(uint32_t size, T *values) {
 		BitStream bitstream(size);
@@ -194,7 +204,7 @@ public:
 				logs[i] = 0;
 				continue;
 			}
-			
+
 			int ret = logs[i] = ilog2(val);
 			bitstream.write(val -(1<<ret), ret);
 		}
@@ -220,7 +230,10 @@ public:
 
 #ifdef ENTROPY_TESTS
 	int  zlib_compress(uchar *data, int size);
-	int  lz4_compress(uchar *data, int size);
+#endif
+
+#ifdef ENABLE_LZ4
+	void lz4_decompress(std::vector<uchar>& data);
 #endif
 
 	void init(int /*_size*/, const uchar *_buffer) {
@@ -358,7 +371,7 @@ public:
 		}
 		return (uint32_t)logs.size();
 	}
-	
+
 	//decode POSITIVE values
 	template <class T> uint32_t decodeIndices(T *values) {
 		BitStream bitstream;
@@ -366,10 +379,10 @@ public:
 
 		std::vector<uchar> logs;
 		decompress(logs);
-		
+
 		if(!values)
 			return (uint32_t)logs.size();
-		
+
 		for(uint32_t i =0; i < logs.size(); i++) {
 			T &p = values[i];
 			uchar &ret = logs[i];
@@ -381,7 +394,7 @@ public:
 		}
 		return (uint32_t)logs.size();
 	}
-	
+
 	//decode DIFFERENCES
 	template <class T> uint32_t decodeDiffs(T *values) {
 		BitStream bitstream;
@@ -389,12 +402,12 @@ public:
 
 		std::vector<uchar> logs;
 		decompress(logs);
-		
+
 		if(!values)
 			return (uint32_t)logs.size();
-		
+
 		for(uint32_t i =0; i < logs.size(); i++) {
-			
+
 			uchar &diff = logs[i];
 			if(diff == 0) {
 				values[i] = 0;
@@ -406,12 +419,12 @@ public:
 			int max = (1<<diff)>>1;
 			values[i] = (int)bitstream.read(diff) - ((1<<(diff)>>1);
 */
-					
+
 			int val = (int)bitstream.read(diff);
 			int middle = 1<<(diff-1);
 			if(val < middle)
 				val = -val -middle;
-			values[i] = (T)val; 
+			values[i] = (T)val;
 		}
 		return (uint32_t)logs.size();
 	}

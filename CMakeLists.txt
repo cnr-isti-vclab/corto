@@ -3,6 +3,7 @@ project(corto)
 
 option(BUILD_CORTO_CODEC_UNITY "Build the unity codec shared library of corto" ON)
 option(BUILD_CORTO_EXE "Build the command line binary of corto" ON)
+option(BUILD_CORTO_BENCHMARK	"Build the benchmark program of corto" ON)
 
 SET(CMAKE_CXX_STANDARD 11)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -42,6 +43,17 @@ SET(EXE_SOURCE
 	${CORTO_SOURCE_PATH}/tinyply.cpp)
 
 SET(EXE_HEADERS
+	${CORTO_SOURCE_PATH}/meshloader.h
+	${CORTO_SOURCE_PATH}/tinyply.h
+	${CORTO_SOURCE_PATH}/objload.h)
+
+SET(BENCHMARK_SOURCE
+	${CORTO_SOURCE_PATH}/benchmark.cpp
+	${CORTO_SOURCE_PATH}/meshloader.cpp
+	${CORTO_SOURCE_PATH}/tinyply.cpp
+)
+
+SET(BENCHMARK_HEADERS
 	${CORTO_SOURCE_PATH}/meshloader.h
 	${CORTO_SOURCE_PATH}/tinyply.h
 	${CORTO_SOURCE_PATH}/objload.h)
@@ -94,6 +106,7 @@ if (BUILD_CORTO_CODEC_UNITY)
 		target_compile_definitions(cortocodec_unity PRIVATE WIN_EXPORT)
 	endif()
 endif()
+
 if (BUILD_CORTO_EXE)
 	ADD_EXECUTABLE(cortoexe ${EXE_SOURCE} ${EXE_HEADERS})
 	target_include_directories(cortoexe PUBLIC ${CORTO_HEADER_PATH})
@@ -101,6 +114,35 @@ if (BUILD_CORTO_EXE)
 	set_target_properties(cortoexe PROPERTIES OUTPUT_NAME "corto")
 
 	INSTALL(TARGETS cortoexe
+		RUNTIME DESTINATION bin
+		BUNDLE DESTINATION bin
+		LIBRARY DESTINATION lib
+		ARCHIVE DESTINATION lib)
+endif()
+
+if (BUILD_CORTO_BENCHMARK)
+	ADD_EXECUTABLE(cortobenchmark ${BENCHMARK_SOURCE} ${BENCHMARK_HEADERS})
+	add_subdirectory(deps/lz4/build/cmake)
+
+	target_include_directories(cortobenchmark 
+		PUBLIC ${CORTO_HEADER_PATH}
+	)
+	target_include_directories(corto
+		PUBLIC deps/lz4/lib
+	)
+
+	target_link_libraries(cortobenchmark 
+		PUBLIC corto
+	)
+	target_link_libraries(corto 
+		PUBLIC lz4_static
+	)
+	
+	target_compile_definitions(corto PUBLIC ENABLE_LZ4)
+
+	set_target_properties(cortobenchmark PROPERTIES OUTPUT_NAME "corto_benchmark")
+
+	INSTALL(TARGETS cortobenchmark
 		RUNTIME DESTINATION bin
 		BUNDLE DESTINATION bin
 		LIBRARY DESTINATION lib

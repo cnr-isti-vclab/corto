@@ -11,7 +11,7 @@ the Free Software Foundation; either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received
 a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
@@ -48,6 +48,7 @@ public:
 	OutStream stream;
 
 	Encoder(uint32_t _nvert, uint32_t _nface = 0, Stream::Entropy entropy = Stream::TUNSTALL);
+	Encoder() = default;
 	~Encoder();
 
 
@@ -79,11 +80,11 @@ public:
 	}
 
 	void encode();
+	inline void setCompressionLevel(int l) { stream.setCompressionLevel(l); }
 
 private:
 	uint32_t current_vertex;
 	uint32_t last_index; //moved here so that it works across groups
-
 
 	std::vector<bool> boundary;
 	std::vector<int> encoded;    //encoded vertex number

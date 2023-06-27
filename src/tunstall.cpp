@@ -458,7 +458,6 @@ int Tunstall::decompress(unsigned char *data, unsigned char *output, int output_
 		memset(output, probabilities[0].symbol, output_size);
 		return 0;
 	}
-	exit(0);
 	while(1) {
 		int symbol = *data++;
 		assert(symbol < (int)index.size());

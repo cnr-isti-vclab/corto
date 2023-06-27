@@ -53,7 +53,11 @@ int OutStream::compress(uint32_t size, uchar *data) {
 	case LZ4:     return lz4_compress(data, size);
 #endif
 	default:
+#ifndef NO_EXCEPTIONS
 		throw "Unknown entropy";
+#else
+		break;
+#endif
 	}
 	return -1;
 }
@@ -74,7 +78,11 @@ void InStream::decompress(vector<uchar> &data) {
 	case LZ4:     lz4_decompress(data); break;
 #endif
 	default:
+#ifndef NO_EXCEPTIONS
 		throw "Unknown entropy";
+#else
+		break;
+#endif
 	}
 }
 

@@ -60,8 +60,11 @@ void ColorAttr::quantize(uint32_t nvert, const char *buffer) {
 		}
 	}
 		break;
-
+#ifndef NO_EXCEPTIONS
 	default: throw "Unsupported color input format.";
+#else
+	default: break;
+#endif
 	}
 	bits = 0;
 }
@@ -105,6 +108,11 @@ void ColorAttr::dequantize(uint32_t nvert) {
 		}
 		break;
 	}
+#ifndef NO_EXCEPTIONS
 	default: throw "Unsupported color output format.";
+#else
+	default: break;
+#endif
+
 	}
 }

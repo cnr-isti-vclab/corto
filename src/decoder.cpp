@@ -39,13 +39,17 @@ public:
 };
 
 Decoder::Decoder(int len, const uchar *input): vertex_count(0) {
+#ifndef NO_EXCEPTIONS
 	if((uintptr_t)input & 0x3)
 		throw "Memory must be alignegned on 4 bytes.";
+#endif
 
 	stream.init(len, input);
 	uint32_t magic = stream.readUint32();
+#ifndef NO_EXCEPTIONS
 	if(magic != 0x787A6300)
 		throw "Not a crt file.";
+#endif
 	uint32_t version = stream.readUint32();
 	stream.entropy = (Stream::Entropy)stream.readUint8();
 
@@ -265,8 +269,10 @@ void Decoder::decodeFaces(uint32_t start, uint32_t end, uint32_t &cler) {
 			f = delayed.back();
 			delayed.pop_back(); //or popfront?
 
+#ifndef NO_EXCEPTIONS
 		} else {
 			throw "Decoding topology failed";
+#endif
 		}
 
 		const DEdge2 e = front[f];

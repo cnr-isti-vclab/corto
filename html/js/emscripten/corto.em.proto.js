@@ -64,10 +64,13 @@ var CortoDecoder = (function() {
 	}
 
 	var promise =
-		WebAssembly.instantiate(unhex(wasm_base), { env:env, wasi_unstable:env })
+		WebAssembly.instantiate(unhex(wasm_base), { env:env, wasi_unstable:env, "wasi_snapshot_preview1": {
+			proc_exit() {
+			return 0;
+			}
+		} })
 		.then(function(result) {
 			instance = result.instance;
-			instance.exports._start();
 			env.emscripten_notify_memory_growth(0);
 		});
 

@@ -1,17 +1,21 @@
 #!/bin/bash
 
 #adjust this path before running. requires emsdk installed.
-source ~/devel/emsdk/emsdk_env.sh 
+#sour3ce ~/devel/emsdk/emsdk_env.sh 
 
 emcc -std=c++11 emcorto.cpp \
-../../src/cstream.cpp \
-../../src/bitstream.cpp \
-../../src/tunstall.cpp \
-../../src/normal_attribute.cpp \
-../../src/color_attribute.cpp \
-../../src/decoder.cpp \
--O3 -DNDEBUG \
--s EXPORTED_FUNCTIONS='["_ngroups", "_groups", "_nvert", "_nface", "_decode", "_malloc", "_free", "_sbrk","__start"]' \
+../../../src/cstream.cpp \
+../../../src/bitstream.cpp \
+../../../src/tunstall.cpp \
+../../../src/normal_attribute.cpp \
+../../../src/color_attribute.cpp \
+../../../src/decoder.cpp \
+-I../../../include/corto \
+-fno-exceptions \
+-O2 -DNDEBUG -DNO_EXCEPTIONS \
+-sDISABLE_EXCEPTION_CATCHING \
+--no-entry \
+-s EXPORTED_FUNCTIONS='["_ngroups", "_groups", "_nvert", "_nface", "_decode", "_malloc", "_free", "_sbrk"]' \
 -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=24576 -s TOTAL_MEMORY=1048576 -o decoder_base.wasm 
 
 #-g \

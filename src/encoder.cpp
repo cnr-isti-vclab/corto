@@ -237,13 +237,15 @@ void Encoder::encode() {
 //TODO: test pointclouds
 void Encoder::encodePointCloud() {
 	//look for positions
+#ifndef NO_EXCEPTIONS
 	if(data.find("position") == data.end())
 		throw "No position attribute found. Use DIFF normal strategy instead.";
-
+#endif
 	GenericAttr<int> *coord = dynamic_cast<GenericAttr<int> *>(data["position"]);
+#ifndef NO_EXCEPTIONS
 	if(!coord)
 		throw "Position attr has been overloaded, Use DIFF normal strategy instead.";
-
+#endif
 	Point3i *coords = (Point3i *)coord->values.data();
 
 	std::vector<ZPoint> zpoints(nvert);
@@ -615,9 +617,10 @@ void Encoder::encodeFaces(int start, int end) {
 			c = delayed.back();
 			delayed.pop_back();
 
-
+#ifndef NO_EXCEPTIONS
 		} else {
 			throw "Decoding topology failed";
+#endif
 		}
 		CEdge &e = front[c];
 		if(e.deleted) continue;

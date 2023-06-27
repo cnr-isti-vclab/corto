@@ -88,7 +88,12 @@ void NormalAttr::quantize(uint32_t nvert, const char *buffer) {
 			normals[i] = toOcta(Point3i(s[i][0], s[i][1], s[i][2]), (int)q);
 		break;
 	}
-	default: throw "Unsigned types not supported for normals";
+	default:
+#ifndef NO_EXCEPTIONS 
+		throw "Unsigned types not supported for normals";
+#else
+		break;
+#endif
 	}
 	Point2i min(values[0], values[1]);
 	Point2i max(min);
@@ -105,12 +110,17 @@ void NormalAttr::preDelta(uint32_t nvert,  uint32_t nface, std::map<std::string,
 	if(prediction == DIFF)
 		return;
 
+#ifndef NO_EXCEPTIONS
 	if(attrs.find("position") == attrs.end())
 		throw "No position attribute found. Use DIFF normal strategy instead.";
+#endif
 
 	GenericAttr<int> *coord = dynamic_cast<GenericAttr<int> *>(attrs["position"]);
+
+#ifndef NO_EXCEPTIONS
 	if(!coord)
 		throw "Position attr has been overloaded, Use DIFF normal strategy instead.";
+#endif
 
 	uint32_t *start = index.faces.data();
 	//estimate normals using vertices and faces existing.
@@ -206,13 +216,15 @@ void NormalAttr::postDelta(uint32_t nvert, uint32_t nface,
 	if(prediction == DIFF)
 		return;
 
+#ifndef NO_EXCEPTIONS
 	if(attrs.find("position") == attrs.end())
 		throw "No position attribute found. Use DIFF normal strategy instead.";
-
+#endif
 	GenericAttr<int> *coord = dynamic_cast<GenericAttr<int> *>(attrs["position"]);
+#ifndef NO_EXCEPTIONS
 	if(!coord)
 		throw "Position attr has been overloaded, Use DIFF normal strategy instead.";
-
+#endif
 	std::vector<Point3f> estimated(nvert, Point3f(0, 0, 0));
 	if(index.faces32)
 		estimateNormals<uint32_t>(nvert, (Point3i *)coord->buffer, nface, index.faces32, estimated);
@@ -233,7 +245,12 @@ void NormalAttr::postDelta(uint32_t nvert, uint32_t nface,
 	case INT16:
 		computeNormals((Point3s *)buffer, estimated);
 		break;
-	default: throw "Format not supported for normal attribute (float, int16 only)";
+	default: 
+#ifndef NO_EXCEPTIONS
+		throw "Format not supported for normal attribute (float, int16 only)";
+#else
+		break;
+#endif
 	}
 }
 
@@ -252,7 +269,12 @@ void NormalAttr::dequantize(uint32_t nvert) {
 		for(uint32_t i = 0; i < nvert; i++)
 			((Point3s *)buffer)[i] = toSphere(Point2s(diffs[i*2], diffs[i*2 + 1]), (int)q);
 		break;
-	default: throw "Format not supported for normal attribute (float, int32 or int16 only)";
+	default:
+#ifndef NO_EXCEPTIONS
+		throw "Format not supported for normal attribute (float, int32 or int16 only)";
+#else
+		break;
+#endif
 	}
 }
 

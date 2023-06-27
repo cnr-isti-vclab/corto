@@ -102,7 +102,12 @@ public:
 			for(uint32_t i = 0; i < n; i++)
 				values[i] = ((const double *)buffer)[i]/q;
 			break;
-		default: throw "Unsupported format.";
+		default:
+#ifndef NO_EXCEPTIONS 
+			throw "Unsupported format.";
+#else
+			break;
+#endif
 		}
 		bits = 0;
 		for(int k = 0; k < N; k++) {

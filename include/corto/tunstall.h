@@ -19,6 +19,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #ifndef CRT_TUNSTALL_H
 #define CRT_TUNSTALL_H
 
+#include <cstdint>
 #include <vector>
 
 

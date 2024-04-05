@@ -11,7 +11,7 @@ the Free Software Foundation; either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  You should have received
 a copy of the GNU General Public License along with Corto.
 If not, see <http://www.gnu.org/licenses/>.
 */
@@ -19,6 +19,7 @@ If not, see <http://www.gnu.org/licenses/>.
 #ifndef CRT_MESHLOADER_H
 #define CRT_MESHLOADER_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <map>

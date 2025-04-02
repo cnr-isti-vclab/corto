@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.10)
 project(corto)
 
 option(BUILD_CORTO_CODEC_UNITY "Build the unity codec shared library of corto" ON)

@@ -57,15 +57,38 @@ endif()
 
 ADD_LIBRARY(corto STATIC ${LIB_SOURCES} ${LIB_HEADERS})
 
-target_include_directories(corto PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(corto PUBLIC 
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> 
+	$<INSTALL_INTERFACE:include>
+)
 target_include_directories(corto PRIVATE ${CORTO_HEADER_PATH})
 set_target_properties     (corto PROPERTIES DEBUG_POSTFIX "d")
 
 INSTALL(TARGETS corto
+	EXPORT cortoTargets
 	RUNTIME DESTINATION bin
 	BUNDLE DESTINATION bin
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib)
+
+INSTALL(EXPORT cortoTargets
+	DESTINATION lib/cmake/corto
+	NAMESPACE corto::
+	FILE cortoTargets.cmake
+)
+
+include(CMakePackageConfigHelpers)
+# generate the config file that includes the exports
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+	"${CMAKE_CURRENT_BINARY_DIR}/cortoConfig.cmake"
+	INSTALL_DESTINATION lib/cmake/corto
+	NO_SET_AND_CHECK_MACRO
+	NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
+INSTALL(FILES
+	"${CMAKE_CURRENT_BINARY_DIR}/cortoConfig.cmake"
+	DESTINATION lib/cmake/corto
+)
 
 INSTALL(FILES
 	${CORTO_HEADER_PATH}/bitstream.h
